@@ -4,8 +4,11 @@ Ein Spiel, das Jakob (`codegodjakob`) und Vincenz (`vincenztellier`) gemeinsam b
 arbeiten über Claude Code im Browser. Beide sind nicht technisch: Erkläre in klarem Deutsch,
 ohne Fachbegriffe, die nicht sofort miterklärt werden.
 
-Worum es im Spiel geht, steht in `docs/SPIELIDEE.md`. Die Idee entsteht beim Bauen. Wird
-etwas entschieden, trage es dort ein. Ziel bei der Grafik: **so realistisch wie möglich**.
+Worum es im Spiel geht, steht in `docs/SPIELIDEE.md` (Idee und Entscheidungen) und
+`docs/SPIELENTWURF.md` (alle Systeme und Etappen). Die Idee entsteht beim Bauen. Wird etwas
+entschieden, trage es dort ein. Ziel bei der Grafik: **so realistisch wie möglich**.
+Inhalte (Gegenstände, Rezepte, Aufgaben, Berufe) stehen als Listen in `src/inhalte/`, damit sie
+sich leicht erweitern, nach Roblox übertragen und später per KI variieren lassen.
 
 ## Arbeitsweise (gilt für jede Claude-Sitzung in diesem Projekt)
 
