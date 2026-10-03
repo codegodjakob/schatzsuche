@@ -7,9 +7,10 @@ import { fileURLToPath } from 'node:url';
 
 const WURZEL = fileURLToPath(new URL('..', import.meta.url));
 
+const ENDUNGEN = ['.js', '.glb', '.jpg', '.png', '.webp'];
 async function alleDateien(ordner) {
   const eintraege = await readdir(join(WURZEL, ordner), { withFileTypes: true, recursive: true });
-  return eintraege.filter((e) => e.isFile() && e.name.endsWith('.js'))
+  return eintraege.filter((e) => e.isFile() && ENDUNGEN.some((n) => e.name.endsWith(n)))
     .map((e) => relative(WURZEL, join(e.parentPath ?? e.path, e.name)));
 }
 
@@ -25,6 +26,6 @@ const html = (await readFile(join(WURZEL, 'index.html'), 'utf8'))
 await mkdir(join(WURZEL, 'vorschau'), { recursive: true });
 await writeFile(join(WURZEL, 'vorschau/index.html'), html);
 
-const dateien = Object.fromEntries([...await alleDateien('src'), ...await alleDateien('vendor')].map((d) => [d, d]));
+const dateien = Object.fromEntries([...await alleDateien('src'), ...await alleDateien('vendor'), ...await alleDateien('assets')].map((d) => [d, d]));
 await writeFile(join(WURZEL, 'vorschau/dateien.json'), JSON.stringify(dateien, null, 2));
 console.log(`Vorschau bereit: vorschau/index.html (+ ${Object.keys(dateien).length} Dateien, Liste in vorschau/dateien.json)`);

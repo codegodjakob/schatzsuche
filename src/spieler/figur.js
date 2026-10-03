@@ -1,113 +1,132 @@
-// Die Spielfigur: ein Mensch mit nichts als einem Lendenschurz.
-// Zwei Startfiguren: 'er' und 'sie'. Gebaut aus einfachen Körpern,
-// bis es echte Modelle gibt (siehe docs/SPIELIDEE.md, offene Fragen).
+// Eine Figur aus assets/figuren/*.glb (gebaut mit werkzeuge/figuren): MakeHuman-Körper,
+// gemalte Haut, Haare, Kleidung und aufgezeichnete Bewegungen.
+// Hier: Materialien veredeln (Licht unter der Haut) und Bewegungen nach Tempo überblenden.
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-const HAUT = { er: 0xc28f6c, sie: 0xd2a07e };
-const HAAR = { er: 0x3a2a1c, sie: 0x5a3b22 };
+const lader = new GLTFLoader();
 
-function teil(geo, mat, x, y, z) {
-  const m = new THREE.Mesh(geo, mat);
-  m.position.set(x, y, z);
-  m.castShadow = true;
+// Licht dringt etwas in die Haut ein und färbt die Schattenkante rötlich (wie bei echter Haut)
+function hautMaterial(alt) {
+  const m = new THREE.MeshPhysicalMaterial({
+    map: alt.map, normalMap: alt.normalMap, normalScale: alt.normalScale, roughnessMap: alt.roughnessMap,
+    aoMap: alt.aoMap, roughness: 1, metalness: 0,
+    sheen: 0.25, sheenColor: new THREE.Color(0.9, 0.55, 0.45), sheenRoughness: 0.55,
+    specularIntensity: 0.6,
+  });
+  m.name = 'haut';
+  m.defines = { HAUT_STREUUNG: '' };
+  m.onBeforeCompile = (shader) => {
+    shader.fragmentShader = shader.fragmentShader.replace(
+      'vec3 irradiance = dotNL * directLight.color;',
+      `vec3 irradiance = dotNL * directLight.color;
+      #ifdef HAUT_STREUUNG
+        float hautRoh = dot( geometryNormal, directLight.direction );
+        float gestreut = saturate( ( hautRoh + 0.5 ) / 1.5 ) - dotNL;
+        reflectedLight.directDiffuse += gestreut * directLight.color * BRDF_Lambert( material.diffuseColor ) * vec3( 1.0, 0.42, 0.3 ) * 0.85;
+      #endif`,
+    );
+  };
   return m;
 }
 
-// Ein Gelenk: eine leere Gruppe am Drehpunkt, das Glied hängt darunter
-function glied(laenge, radius, mat) {
-  const gelenk = new THREE.Group();
-  const geo = new THREE.CapsuleGeometry(radius, laenge - radius * 2, 4, 10);
-  gelenk.add(teil(geo, mat, 0, -laenge / 2, 0));
-  return gelenk;
+function veredle(wurzel) {
+  wurzel.traverse((o) => {
+    if (!o.isMesh) return;
+    o.castShadow = true;
+    o.receiveShadow = true;
+    o.frustumCulled = false;
+    const name = o.material.name;
+    if (name === 'haut') o.material = hautMaterial(o.material);
+    if (name === 'haare') {
+      o.material.alphaToCoverage = true;
+      o.material.roughness = 0.5;
+    }
+    if (name === 'hornhaut') {
+      o.material.depthWrite = false;
+      o.castShadow = false;
+    }
+    if (name === 'leder' || name === 'wolle') o.material.side = THREE.DoubleSide;
+  });
 }
 
-export function erzeugeFigur(art = 'er') {
-  const sie = art === 'sie';
-  const haut = new THREE.MeshStandardMaterial({ color: HAUT[art], roughness: 0.65 });
-  const haar = new THREE.MeshStandardMaterial({ color: HAAR[art], roughness: 0.9 });
-  const leder = new THREE.MeshStandardMaterial({ color: 0x5b4127, roughness: 0.95 });
-
-  const figur = new THREE.Group();
-  figur.name = 'figur';
-  const schulter = sie ? 0.19 : 0.22;
-  const huefte = sie ? 0.11 : 0.1;
-
-  // Rumpf
-  const rumpf = new THREE.Group();
-  rumpf.position.y = 0.98;
-  figur.add(rumpf);
-  const brust = teil(new THREE.CapsuleGeometry(sie ? 0.15 : 0.17, 0.32, 4, 12), haut, 0, 0.33, 0);
-  brust.scale.set(sie ? 1.05 : 1.15, 1, 0.72);
-  const becken = teil(new THREE.CapsuleGeometry(0.15, 0.08, 4, 12), haut, 0, 0.04, 0);
-  becken.scale.set(sie ? 1.12 : 1.02, 1, 0.75);
-  rumpf.add(brust, becken);
-
-  // Lendenschurz: ein Gurt und zwei Lederlappen
-  rumpf.add(teil(new THREE.CylinderGeometry(0.165, 0.17, 0.06, 16), leder, 0, 0.1, 0));
-  const lappen = new THREE.BoxGeometry(0.2, 0.26, 0.02);
-  const vorne = teil(lappen, leder, 0, -0.06, 0.12);
-  const hinten = teil(lappen, leder, 0, -0.06, -0.12);
-  rumpf.add(vorne, hinten);
-  if (sie) rumpf.add(teil(new THREE.CylinderGeometry(0.16, 0.16, 0.09, 16).scale(1.05, 1, 0.75), leder, 0, 0.42, 0.005));
-
-  // Kopf und Hals
-  const kopf = new THREE.Group();
-  kopf.position.y = 0.66;
-  rumpf.add(kopf);
-  kopf.add(teil(new THREE.CylinderGeometry(0.05, 0.06, 0.1, 10), haut, 0, -0.02, 0));
-  const schaedel = teil(new THREE.SphereGeometry(0.11, 20, 16), haut, 0, 0.12, 0);
-  schaedel.scale.set(0.9, 1.08, 1);
-  kopf.add(schaedel);
-  const haarKappe = teil(new THREE.SphereGeometry(0.115, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), haar, 0, 0.13, -0.008);
-  haarKappe.scale.set(0.93, 1.08, 1.02);
-  kopf.add(haarKappe);
-  if (sie) {
-    const zopf = teil(new THREE.CapsuleGeometry(0.035, 0.28, 4, 8), haar, 0, -0.02, -0.11);
-    zopf.rotation.x = 0.25;
-    kopf.add(zopf);
+export async function ladeFigur(art) {
+  const gltf = await lader.loadAsync(new URL(`../../assets/figuren/${art}.glb`, import.meta.url).href);
+  const wurzel = gltf.scene;
+  veredle(wurzel);
+  const tempo = wurzel.children[0]?.userData?.tempo ?? wurzel.userData?.tempo ?? {};
+  const mischer = new THREE.AnimationMixer(wurzel);
+  const aktionen = {};
+  for (const clip of gltf.animations) {
+    const a = mischer.clipAction(clip);
+    a.play();
+    a.setEffectiveWeight(0);
+    a.timeScale = 0; // die Zeit setzen wir selbst (gleicher Schritt-Takt für alle Gangarten)
+    aktionen[clip.name] = { aktion: a, dauer: clip.duration, tempo: tempo[clip.name] || 0 };
   }
+  const kopf = wurzel.getObjectByName('head');
+  const hals = wurzel.getObjectByName('neck_01');
 
-  // Arme und Beine mit Ellbogen und Knien
-  const gliedmassen = {};
-  for (const seite of [-1, 1]) {
-    const oberarm = glied(0.3, 0.05, haut);
-    oberarm.position.set(seite * schulter, 0.5, 0);
-    const unterarm = glied(0.28, 0.042, haut);
-    unterarm.position.y = -0.3;
-    oberarm.add(unterarm);
-    rumpf.add(oberarm);
-
-    const oberschenkel = glied(0.44, 0.075, haut);
-    oberschenkel.position.set(seite * huefte, 0, 0);
-    const unterschenkel = glied(0.44, 0.055, haut);
-    unterschenkel.position.y = -0.44;
-    const fuss = teil(new THREE.BoxGeometry(0.08, 0.05, 0.2), haut, 0, -0.44, 0.05);
-    unterschenkel.add(fuss);
-    oberschenkel.add(unterschenkel);
-    rumpf.add(oberschenkel);
-
-    gliedmassen[seite] = { oberarm, unterarm, oberschenkel, unterschenkel };
-  }
-
-  // Bewegung: Gehen, Rennen, Stehen (Atmen)
-  let phase = 0;
-  function bewege(dt, tempo, inDerLuft) {
-    const gang = Math.min(tempo / 5, 1);
-    phase += dt * (3 + tempo * 1.6) * (tempo > 0.05 ? 1 : 0);
-    for (const seite of [-1, 1]) {
-      const g = gliedmassen[seite];
-      const s = Math.sin(phase + (seite > 0 ? 0 : Math.PI));
-      const schwung = tempo > 0.05 ? s * (0.35 + gang * 0.55) : 0;
-      g.oberschenkel.rotation.x = inDerLuft ? -0.5 : -schwung;
-      g.unterschenkel.rotation.x = inDerLuft ? 0.9 : Math.max(0, -Math.cos(phase + (seite > 0 ? 0 : Math.PI))) * (0.3 + gang * 0.9);
-      g.oberarm.rotation.x = schwung * 0.8;
-      g.oberarm.rotation.z = seite * 0.06;
-      g.unterarm.rotation.x = -0.15 - gang * 0.9;
+  // Gewichte der Gangarten je nach Tempo
+  let phase = 0, stehZeit = 0, einmal = null;
+  const gewicht = {};
+  function bewege(dt, v, { erschoepft = false } = {}) {
+    const gehen = erschoepft && aktionen.erschoepft ? 'erschoepft' : 'gehen';
+    const tGehen = aktionen[gehen]?.tempo || 1.3;
+    const tRennen = aktionen.rennen?.tempo || 3.5;
+    const tSprint = aktionen.sprinten?.tempo || 4.5;
+    const ziel = { stehen: 0, gehen: 0, erschoepft: 0, rennen: 0, sprinten: 0 };
+    if (v < 0.08 || !aktionen[gehen]) ziel.stehen = 1;
+    else if (v < tGehen) { const t = THREE.MathUtils.smoothstep(v, 0.08, Math.min(0.9, tGehen)); ziel.stehen = 1 - t; ziel[gehen] = t; }
+    else if (v < tRennen || !aktionen.rennen) { const t = aktionen.rennen ? THREE.MathUtils.smoothstep(v, tGehen * 1.05, tRennen) : 0; ziel[gehen] = 1 - t; ziel.rennen = t; }
+    else if (aktionen.sprinten) { const t = THREE.MathUtils.smoothstep(v, tRennen, tSprint); ziel.rennen = 1 - t; ziel.sprinten = t; }
+    else ziel.rennen = 1;
+    // weich überblenden
+    for (const n of Object.keys(ziel)) {
+      gewicht[n] = THREE.MathUtils.damp(gewicht[n] ?? ziel[n], ziel[n], 10, dt);
     }
-    const atem = Math.sin(performance.now() * 0.002) * 0.006;
-    rumpf.position.y = 0.98 + (tempo > 0.05 ? Math.abs(Math.cos(phase)) * 0.04 * gang : atem);
-    rumpf.rotation.x = gang * 0.12;
+    // gemeinsamer Schritt-Takt: jede Gangart läuft so schnell, wie es zum Tempo passt
+    let takt = 0, summe = 0;
+    for (const n of ['gehen', 'erschoepft', 'rennen', 'sprinten']) {
+      const a = aktionen[n];
+      if (!a || !gewicht[n]) continue;
+      const rate = a.tempo > 0 ? THREE.MathUtils.clamp(Math.max(v, 0.3) / a.tempo, 0.55, 1.6) : 1;
+      takt += gewicht[n] * rate / a.dauer;
+      summe += gewicht[n];
+    }
+    if (summe > 0.001) phase = (phase + dt * takt / summe) % 1;
+    stehZeit += dt;
+    for (const [n, a] of Object.entries(aktionen)) {
+      if (n === 'winken') continue;
+      a.aktion.setEffectiveWeight(gewicht[n] ?? 0);
+      a.aktion.time = n === 'stehen' ? stehZeit % a.dauer : phase * a.dauer;
+    }
+    if (einmal) {
+      einmal.zeit += dt;
+      const a = aktionen[einmal.name];
+      const w = Math.min(1, einmal.zeit / 0.4, (a.dauer - einmal.zeit) / 0.5);
+      a.aktion.setEffectiveWeight(Math.max(0, w));
+      a.aktion.time = Math.min(einmal.zeit, a.dauer - 0.001);
+      for (const [n, b] of Object.entries(aktionen)) if (n !== einmal.name) b.aktion.setEffectiveWeight((gewicht[n] ?? 0) * (1 - Math.max(0, w)));
+      if (einmal.zeit >= a.dauer) einmal = null;
+    }
+    mischer.update(0);
   }
 
-  return { objekt: figur, kopf, bewege, art };
+  function spiele(name) {
+    if (aktionen[name]) einmal = { name, zeit: 0 };
+  }
+
+  // Ich-Sicht: Kopf (mit Haaren, Augen) unsichtbar machen, Kamera an die Augen
+  function kopfSichtbar(ja) {
+    if (kopf) kopf.scale.setScalar(ja ? 1 : 0.001);
+  }
+  const augenVersatz = new THREE.Vector3(0, 0.125, 0.08);
+  function augenOrt(ziel) {
+    hals.updateWorldMatrix(true, false);
+    return ziel.copy(augenVersatz).applyMatrix4(hals.matrixWorld);
+  }
+
+  bewege(0, 0);
+  return { objekt: wurzel, bewege, spiele, kopfSichtbar, augenOrt, tempo, art };
 }

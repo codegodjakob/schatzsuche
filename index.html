@@ -95,7 +95,35 @@ h1 {
 #hinweise span { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
 #hinweise kbd { background: var(--pergament); }
 
-@media (prefers-reduced-motion: reduce) { .nachricht { transition: none; } }
+/* Laden */
+.laden { margin: 0; min-height: 1.5em; font-size: 0.9rem; color: var(--gedaempft); font-variant-numeric: tabular-nums; }
+.wahl button:disabled { opacity: 0.5; cursor: progress; }
+
+/* Überlebenswerte und Uhr */
+#werte {
+  position: fixed; left: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  display: grid; gap: 0.35rem; padding: 0.7rem 0.85rem; width: 12.5rem;
+}
+.wert { display: grid; grid-template-columns: 4.6rem 1fr; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--gedaempft); }
+.balken { height: 0.42rem; border-radius: 3px; background: rgba(236, 229, 210, 0.12); overflow: hidden; }
+.balken i { display: block; height: 100%; width: 100%; background: var(--moos); transition: width 0.4s; }
+.wert.knapp .balken i { background: var(--glut); }
+.wert.leer .balken i { background: #d0634a; }
+#uhr {
+  position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  padding: 0.45rem 0.8rem; font-size: 0.85rem; color: var(--gedaempft); font-variant-numeric: tabular-nums;
+}
+
+/* Tod */
+#tod {
+  position: fixed; inset: 0; display: grid; place-items: center; text-align: center; padding: 16px;
+  background: rgba(0, 0, 0, 0.82); transition: opacity 1.5s;
+}
+#tod h2 { margin: 0 0 0.6rem; font: 400 clamp(2rem, 7vw, 3.6rem)/1 var(--schrift-titel); }
+#tod p { margin: 0; color: var(--gedaempft); }
+
+@media (max-width: 640px) { #werte { width: 10rem; } #hinweise { display: none; } }
+@media (prefers-reduced-motion: reduce) { .nachricht, #tod, .balken i { transition: none; } }
 </style>
 <script type="importmap">
 { "imports": { "three": "./vendor/three/three.module.min.js", "three/addons/": "./vendor/three/addons/" } }
@@ -110,9 +138,10 @@ h1 {
     <h1 id="titel">Schatzsuche</h1>
     <p class="unterzeile">Du wachst auf einer Wiese auf, mit nichts als einem Lendenschurz. Was daraus wird, entscheidest du.</p>
     <div class="wahl">
-      <button type="button" class="tafel" data-figur="er" id="wahl-er">Als Mann beginnen<span>Er</span></button>
-      <button type="button" class="tafel" data-figur="sie" id="wahl-sie">Als Frau beginnen<span>Sie</span></button>
+      <button type="button" class="tafel" data-figur="er" id="wahl-er" disabled>Als Mann beginnen<span>Er</span></button>
+      <button type="button" class="tafel" data-figur="sie" id="wahl-sie" disabled>Als Frau beginnen<span>Sie</span></button>
     </div>
+    <p class="laden" id="laden" aria-live="polite">Die Welt entsteht …</p>
   </div>
 </section>
 
@@ -122,8 +151,25 @@ h1 {
   <span><kbd>␣</kbd> springen</span>
   <span><kbd>V</kbd> Blickwinkel</span>
   <span><kbd>I</kbd> Inventar</span>
+  <span><kbd>F</kbd> Feuer machen</span>
+  <span><kbd>G</kbd> Grafik: <b id="qualitaet-name">hoch</b></span>
   <span>Maus: umsehen · Klick: Maus einfangen</span>
 </div>
+
+<section id="werte" class="tafel" hidden aria-label="Zustand">
+  <div class="wert" id="wert-saettigung"><span>Sättigung</span><div class="balken"><i></i></div></div>
+  <div class="wert" id="wert-wasser"><span>Wasser</span><div class="balken"><i></i></div></div>
+  <div class="wert" id="wert-waerme"><span>Wärme</span><div class="balken"><i></i></div></div>
+  <div class="wert" id="wert-leben"><span>Leben</span><div class="balken"><i></i></div></div>
+</section>
+<div id="uhr" class="tafel" hidden></div>
+
+<section id="tod" hidden>
+  <div>
+    <h2 id="tod-titel">Du bist gestorben</h2>
+    <p id="tod-text">Du wachst wieder auf der Wiese auf.</p>
+  </div>
+</section>
 
 <section id="ereignis" class="tafel" hidden aria-live="polite">
   <p id="ereignis-text"></p>

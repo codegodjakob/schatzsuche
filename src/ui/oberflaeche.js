@@ -1,4 +1,5 @@
-// Alles, was über dem Spielbild liegt: Startbildschirm, Ereignisse, Inventar, Nachrichten.
+// Alles, was über dem Spielbild liegt: Startbildschirm, Ereignisse, Inventar, Nachrichten,
+// Überlebenswerte, Uhr, Tod.
 const $ = (id) => document.getElementById(id);
 
 export function erzeugeOberflaeche() {
@@ -51,27 +52,63 @@ export function erzeugeOberflaeche() {
     el.className = 'nachricht';
     el.textContent = text;
     nachrichten.append(el);
-    setTimeout(() => el.classList.add('weg'), 3800);
-    setTimeout(() => el.remove(), 4600);
+    while (nachrichten.children.length > 4) nachrichten.firstElementChild.remove();
+    setTimeout(() => el.classList.add('weg'), 4200);
+    setTimeout(() => el.remove(), 5000);
   }
 
   addEventListener('keydown', (e) => {
     if (e.code === 'KeyI' && $('start').hidden) inventar.hidden = !inventar.hidden;
   });
 
+  function laden(text, fertig = false) {
+    $('laden').textContent = text;
+    if (fertig) document.querySelectorAll('[data-figur]').forEach((k) => { k.disabled = false; });
+  }
+
   // Startbildschirm: Figur wählen. Gibt die Wahl ('er' / 'sie') zurück.
   function warteAufStart() {
     return new Promise((fertig) => {
       document.querySelectorAll('[data-figur]').forEach((knopf) => {
-        knopf.addEventListener('click', () => {
-          $('start').hidden = true;
-          $('hinweise').hidden = false;
-          fertig(knopf.dataset.figur);
-        }, { once: true });
+        knopf.addEventListener('click', () => fertig(knopf.dataset.figur), { once: true });
       });
     });
   }
 
+  function spielBeginnt() {
+    $('start').hidden = true;
+    $('hinweise').hidden = false;
+    $('werte').hidden = false;
+    $('uhr').hidden = false;
+  }
+
+  function zeigeWerte(w) {
+    for (const name of ['saettigung', 'wasser', 'waerme', 'leben']) {
+      const el = $(`wert-${name}`);
+      el.querySelector('i').style.width = `${Math.round(w[name])}%`;
+      el.classList.toggle('knapp', w[name] < 35 && w[name] >= 12);
+      el.classList.toggle('leer', w[name] < 12);
+    }
+  }
+
+  function zeigeUhr(text) { $('uhr').textContent = text; }
+  function zeigeQualitaet(name) { $('qualitaet-name').textContent = name; }
+
+  function tod(grund) {
+    const t = $('tod');
+    $('tod-titel').textContent = `Du bist ${grund}`;
+    t.hidden = false;
+    t.style.opacity = '1';
+  }
+  function todVorbei() {
+    const t = $('tod');
+    t.style.opacity = '0';
+    setTimeout(() => { t.hidden = true; }, 1500);
+  }
+
   zeigeInventar(new Map());
-  return { zeigeEreignis, versteckeEreignis, zeigeInventar, nachricht, warteAufStart };
+  return {
+    zeigeEreignis, versteckeEreignis, zeigeInventar, nachricht, warteAufStart, laden, spielBeginnt,
+    zeigeWerte, zeigeUhr, zeigeQualitaet, tod, todVorbei,
+  };
 }

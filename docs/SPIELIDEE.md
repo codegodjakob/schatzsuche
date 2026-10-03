@@ -23,8 +23,9 @@ eine eigene Siedlung führt.
 ## Der Bogen des Spiels
 
 1. **Erwachen.** Nichts außer einem Lendenschurz. Wiese, Teich, Wald. *(gebaut)*
-2. **Überleben.** Erste Werkzeuge aus dem, was herumliegt. *(angefangen: Feuerstein → Ast → Speer)*
-3. **Begegnungen.** Menschen, Tiere, erste Aufgaben. Die Welt baut sich auf, je nachdem, wohin du gehst.
+2. **Überleben.** Hunger, Durst, Kälte; Wasser am Teich, Beeren, Äste sammeln, Feuer machen,
+   ein Speer als erstes Werkzeug. *(gebaut)*
+3. **Begegnungen.** Menschen, Tiere, erste Aufgaben. *(angefangen: der Einsiedler am Lagerfeuer)*
 4. **Aufstieg.** Du wirst jemand: Ruf, Besitz, Währung.
 5. **Siedeln.** Häuser bauen, Rohstoffe verwalten. Der Blick wechselt zur Aufsicht wie bei den Siedlern.
 
@@ -32,15 +33,28 @@ eine eigene Siedlung führt.
 
 - Zwei Startfiguren, Mann und Frau. Beide starten gleich.
 - Zwei Blickwinkel, umschaltbar mit `V`: über die Schulter oder aus den eigenen Augen.
-- Ereignisse sind Entscheidungen mit Tasten (`E`, `Q` …). Sie stehen alle in `src/ereignisse/liste.js`.
+- Ereignisse sind Entscheidungen mit Tasten (`E`, `Q`, `R` …). Sie stehen alle in `src/ereignisse/liste.js`.
 - Das Spiel läuft im Browser. Man muss nichts installieren.
+- **Grafik so realistisch wie möglich** (Jakob, Oktober 2026): echte Menschenkörper (MakeHuman),
+  aufgezeichnete Bewegungen, Fototexturen, echte Bäume, Tag und Nacht. Die Grafik passt sich an den
+  Rechner an (Taste `G`: hoch, mittel, niedrig).
+- **Überleben** (Jakob, [Issue 3](https://github.com/codegodjakob/schatzsuche/issues/3)): ja zu allem.
+  - Sättigung und Wasser sinken mit der Zeit, beim Rennen schneller.
+  - Nachts wird es kalt; am Feuer wird man warm, tagsüber wärmt die Sonne.
+  - Ist ein Wert leer, schwindet das Leben. Bei null stirbt man: Man wacht am nächsten Morgen wieder
+    auf der Wiese auf, das Inventar ist weg. Was man in der Welt erlebt hat, bleibt.
+  - Tag und Nacht: Eine Spielstunde dauert eine echte Minute, ein Tag also 24 Minuten.
+- **Erste Begegnung** ([Issue 2](https://github.com/codegodjakob/schatzsuche/issues/2)): ein alter
+  Einsiedler in einer Wollkutte, der am Waldrand an seinem Lagerfeuer lebt. Ein Pfad führt von der Wiese
+  dorthin, sein Rauch ist von Weitem zu sehen. Er gibt zu essen und bringt einem bei, Feuer zu machen,
+  wenn man ihm drei trockene Äste bringt. Danach kann man mit `F` selbst Feuer machen.
 
 ## Offene Fragen
 
-- Wie realistisch soll die Grafik werden? Die Figuren sind bisher aus einfachen Formen gebaut.
-  Später könnten echte 3D-Modelle kommen.
-- Gibt es Hunger, Durst, Kälte? Gibt es Tag und Nacht?
-- Kann man sterben? Und was passiert dann?
 - Wie entsteht die Welt beim Herumlaufen: von Hand gebaut, zufällig erzeugt oder beides?
+- Welche Tiere gibt es, und kann man jagen? (Der Speer wartet darauf.)
+- Was erzählt der Einsiedler über die Welt, und wohin schickt er einen als Nächstes?
 - Wann und wie geht es vom Einzelkämpfer zur Siedlung über?
 - Wie heißt das Spiel wirklich? („Schatzsuche“ ist nur der Projektname.)
+- Soll das Spiel einmal verkauft werden? Dann müssen die Bewegungsaufnahmen ersetzt werden
+  (siehe `docs/QUELLEN.md`).

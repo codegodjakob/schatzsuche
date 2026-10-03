@@ -12,7 +12,7 @@
 1. Aufgabe als Issue anlegen (oder ein bestehendes nehmen) und sich selbst zuweisen.
 2. Zweig anlegen, Name nach dem Muster `kurz-was-passiert`, z. B. `erstes-raetsel`.
 3. Ändern, speichern (committen), hochladen (pushen).
-4. Pull Request öffnen, im Text `Schließt #<Nummer>` schreiben — dann schließt sich das Issue beim Zusammenführen von selbst.
+4. Pull Request öffnen, im Text `Closes #<Nummer>` schreiben — dann schließt sich das Issue beim Zusammenführen von selbst. (GitHub versteht dafür nur das englische Wort; „Schließt“ wirkt nicht.)
 5. Die andere Person liest drüber und gibt frei. Dann zusammenführen.
 
 ## Regeln
