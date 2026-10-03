@@ -63,13 +63,28 @@ const WIND_VERTEX = /* glsl */ `
   #endif
 `;
 
+// Laub und Äste direkt vor der Kamera gerastert ausblenden. Sonst schaut man durch eine Wand aus
+// Blättern, wenn man unter einem tiefen Ast steht oder sich durch einen Busch bewegt.
+const NAH_AUSBLENDEN = /* glsl */ `
+  {
+    float sicht = smoothstep(0.6, 1.3, vViewPosition.z);
+    float raster = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+    if (sicht < raster) discard;
+  }
+`;
+
 function windMaterial(mat, blaetter) {
   const uniforms = windUniforms({ uMassstab: { value: MASSSTAB }, uLichtDurch: { value: new THREE.Color() } });
   mat.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniforms);
     shader.vertexShader = (blaetter ? '#define BLAETTER\n' : '') + 'uniform float uMassstab;\n' + WIND_GLSL +
       shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n' + WIND_VERTEX);
-    if (blaetter && shader.fragmentShader.includes('#include <opaque_fragment>')) {
+    // Nur beim Zeichnen fürs Auge, nicht beim Schattenwurf (der hat keine Kamera-Entfernung)
+    const fuersAuge = shader.fragmentShader.includes('#include <opaque_fragment>');
+    if (fuersAuge) {
+      shader.fragmentShader = shader.fragmentShader.replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\n' + NAH_AUSBLENDEN);
+    }
+    if (blaetter && fuersAuge) {
       shader.fragmentShader = 'uniform vec3 uLichtDurch;\n' + shader.fragmentShader.replace('#include <opaque_fragment>', /* glsl */ `
         outgoingLight += diffuseColor.rgb * uLichtDurch * 0.6; // Gegenlicht schimmert durch die Blätter
         #include <opaque_fragment>
@@ -117,6 +132,9 @@ function materialien(optionen) {
 // ---------------------------------------------------------------- Bilder für ferne Bäume
 
 const ATLAS_SPALTEN = 8, ATLAS_ZEILEN = 4, ZELLE_B = 256, ZELLE_H = 512;
+// Leerer Rand um jedes Bild (Seitenverhältnis bleibt 1:2). Ohne ihn verschwimmen die Bilder aus der
+// Ferne mit ihren Nachbarn, und vom Stamm des Baums darüber landen dunkle Pünktchen im Himmel.
+const RAND_B = 24, RAND_H = 48, MAX_STUFE = 4.0;
 
 async function backeAtlas(renderer, varianten) {
   const dateien = new Set(varianten.flatMap((v) => [v.mat.blattDatei, v.mat.rindenDatei]));
@@ -149,8 +167,8 @@ async function backeAtlas(renderer, varianten) {
     kamera.position.set(0, 0, 150); kamera.lookAt(0, 0, 0);
     kamera.updateProjectionMatrix();
     const sp = i % ATLAS_SPALTEN, ze = Math.floor(i / ATLAS_SPALTEN);
-    ziel.viewport.set(sp * ZELLE_B, ze * ZELLE_H, ZELLE_B, ZELLE_H);
-    ziel.scissor.set(sp * ZELLE_B, ze * ZELLE_H, ZELLE_B, ZELLE_H);
+    ziel.viewport.set(sp * ZELLE_B + RAND_B, ze * ZELLE_H + RAND_H, ZELLE_B - 2 * RAND_B, ZELLE_H - 2 * RAND_H);
+    ziel.scissor.set(sp * ZELLE_B + RAND_B, ze * ZELLE_H + RAND_H, ZELLE_B - 2 * RAND_B, ZELLE_H - 2 * RAND_H);
     ziel.scissorTest = true;
     renderer.setRenderTarget(ziel);
     renderer.render(szene, kamera);
@@ -185,7 +203,9 @@ void main() {
   float b = bild.z * baum.w, h = bild.w * baum.w;
   vec3 ort = baum.xyz + rechts * position.x * b + vec3(0.0, position.y * h + unten * baum.w, 0.0);
   if (vBlende <= 0.0) ort = vec3(0.0, -1e5, 0.0);
-  vUv = (vec2(bild.x, bild.y) + vec2(position.x + 0.5, position.y)) / vec2(${ATLAS_SPALTEN.toFixed(1)}, ${ATLAS_ZEILEN.toFixed(1)});
+  vec2 zelle = vec2(${ZELLE_B.toFixed(1)}, ${ZELLE_H.toFixed(1)}), rand = vec2(${RAND_B.toFixed(1)}, ${RAND_H.toFixed(1)});
+  vec2 imBild = vec2(position.x + 0.5, position.y);
+  vUv = (vec2(bild.x, bild.y) * zelle + rand + imBild * (zelle - 2.0 * rand)) / (zelle * vec2(${ATLAS_SPALTEN.toFixed(1)}, ${ATLAS_ZEILEN.toFixed(1)}));
   vec4 mvPosition = viewMatrix * vec4(ort, 1.0);
   gl_Position = projectionMatrix * mvPosition;
   #include <fog_vertex>
@@ -198,7 +218,10 @@ varying float vBlende;
 #include <fog_pars_fragment>
 float raster(vec2 p) { return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715)))); }
 void main() {
-  vec4 f = texture2D(uAtlas, vUv);
+  // Verschwimmstufe begrenzen: weiter weg als bis zum leeren Rand darf nichts verschmieren
+  vec2 t = vUv * vec2(${(ATLAS_SPALTEN * ZELLE_B).toFixed(1)}, ${(ATLAS_ZEILEN * ZELLE_H).toFixed(1)});
+  float stufe = 0.5 * log2(max(dot(dFdx(t), dFdx(t)), dot(dFdy(t), dFdy(t))));
+  vec4 f = textureLod(uAtlas, vUv, clamp(stufe, 0.0, ${MAX_STUFE.toFixed(1)}));
   if (f.a < 0.45) discard;
   if (raster(gl_FragCoord.xy) > vBlende) discard; // weich einblenden (gerastert)
   gl_FragColor = vec4(f.rgb / max(f.a, 0.001) * uLicht, 1.0);

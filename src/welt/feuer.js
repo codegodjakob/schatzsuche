@@ -99,12 +99,8 @@ export function erzeugeFeuer(x, z, { felsMaterial = null, rindenMaterial = null 
     rauch.push(sp);
   }
 
-  // Licht
-  const licht = new THREE.PointLight(0xff8a3a, 6, 14, 1.6);
-  licht.position.set(0, 0.6, 0);
-  gruppe.add(licht);
-
-  let t = 0;
+  // Das Licht selbst kommt aus erzeugeFeuerlichter (siehe unten); hier nur, wie hell es flackert
+  let t = 0, helligkeit = 5;
   function aktualisiere(dt, windRichtung, hell = 1) {
     t += dt;
     for (const f of flammen) {
@@ -128,9 +124,28 @@ export function erzeugeFeuer(x, z, { felsMaterial = null, rindenMaterial = null 
       r.material.opacity = Math.sin(a * Math.PI) * 0.35;
       r.material.color.setScalar(0.12 + 0.45 * hell + (1 - a) * 0.15); // nachts dunkler Rauch, unten vom Feuer angeleuchtet
     }
-    licht.intensity = 5 + Math.sin(t * 13) * 0.7 + Math.sin(t * 7.3) * 0.9 + Math.sin(t * 23) * 0.4;
+    helligkeit = 5 + Math.sin(t * 13) * 0.7 + Math.sin(t * 7.3) * 0.9 + Math.sin(t * 23) * 0.4;
     glut.material.opacity = 0.75 + Math.sin(t * 3) * 0.1;
   }
 
-  return { objekt: gruppe, aktualisiere, ort: new THREE.Vector3(x, y, z) };
+  return { objekt: gruppe, aktualisiere, ort: new THREE.Vector3(x, y, z), helligkeit: () => helligkeit };
+}
+
+// Eine feste Zahl von Feuerlichtern. Brächte jedes neue Feuer ein eigenes Licht mit, müsste die
+// Grafikkarte alle Oberflächen neu übersetzen, und das Bild stünde kurz still. Darum wandern
+// diese Lichter zu den nächsten brennenden Feuern; übrige bleiben eingeschaltet, leuchten aber nicht.
+export function erzeugeFeuerlichter(anzahl = 2) {
+  const gruppe = new THREE.Group();
+  const lichter = Array.from({ length: anzahl }, () => new THREE.PointLight(0xff8a3a, 0, 14, 1.6));
+  gruppe.add(...lichter);
+  function verteile(stellen, blickpunkt) {
+    const brennend = stellen.filter((s) => s.brennt())
+      .sort((a, b) => a.ort.distanceToSquared(blickpunkt) - b.ort.distanceToSquared(blickpunkt));
+    lichter.forEach((licht, i) => {
+      const s = brennend[i];
+      licht.intensity = s ? s.feuer.helligkeit() : 0;
+      if (s) licht.position.set(s.ort.x, s.ort.y + 0.6, s.ort.z);
+    });
+  }
+  return { objekt: gruppe, verteile };
 }

@@ -90,7 +90,8 @@ h1 {
 #hinweise {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   display: flex; flex-wrap: wrap; justify-content: center; gap: 0.35rem 1rem; padding: 0.5rem 0.9rem;
-  width: max-content; max-width: calc(100% - 32px); font-size: 0.85rem; color: var(--gedaempft);
+  /* Platz lassen für die Anzeigen links und die Uhr rechts */
+  box-sizing: border-box; width: max-content; max-width: calc(100% - 2 * (14.2rem + 28px)); font-size: 0.85rem; color: var(--gedaempft);
 }
 #hinweise span { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
 #hinweise kbd { background: var(--pergament); }
@@ -122,7 +123,8 @@ h1 {
 #tod h2 { margin: 0 0 0.6rem; font: 400 clamp(2rem, 7vw, 3.6rem)/1 var(--schrift-titel); }
 #tod p { margin: 0; color: var(--gedaempft); }
 
-@media (max-width: 640px) { #werte { width: 10rem; } #hinweise { display: none; } }
+@media (max-width: 900px) { #hinweise { display: none; } }
+@media (max-width: 640px) { #werte { width: 10rem; } }
 @media (prefers-reduced-motion: reduce) { .nachricht, #tod, .balken i { transition: none; } }
 </style>
 <script type="importmap">

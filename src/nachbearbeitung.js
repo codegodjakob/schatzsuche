@@ -30,11 +30,29 @@ const FARBE = {
     }`,
 };
 
+// Umgebungsverdeckung aus der Tiefe des fertigen Bildes. Von Haus aus zeichnet GTAOPass die Welt
+// ein zweites Mal mit einem Einheitsmaterial: Blätter wären dort volle Rechtecke (eckige Schatten im
+// Himmel zwischen den Blättern), Gras und ferne Bäume lägen auf einem Haufen, und alles kostete
+// doppelt. Mit der echten Tiefe stimmt die Verdeckung mit dem Bild überein und der zweite Durchgang
+// entfällt. (Der Pass bekommt die Tiefe erst hier, weil setGBuffer im Konstruktor mit fremder Tiefe
+// an einem fehlenden Ziel scheitert.)
+class Verdeckung extends GTAOPass {
+  render(renderer, writeBuffer, readBuffer, ...rest) {
+    const tiefe = readBuffer.depthTexture;
+    if (this.depthTexture !== tiefe) {
+      const ersterWechsel = this._renderGBuffer;
+      this.setGBuffer(tiefe);
+      if (ersterWechsel) this.gtaoMaterial.needsUpdate = this.pdMaterial.needsUpdate = true;
+    }
+    super.render(renderer, writeBuffer, readBuffer, ...rest);
+  }
+}
+
 export function erzeugeNachbearbeitung(renderer, szene, kamera) {
-  const ziel = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 0 });
+  const ziel = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 0, depthTexture: new THREE.DepthTexture(1, 1) });
   const komponist = new EffectComposer(renderer, ziel);
   const render = new RenderPass(szene, kamera);
-  const verdeckung = new GTAOPass(szene, kamera, 1, 1);
+  const verdeckung = new Verdeckung(szene, kamera, 1, 1);
   verdeckung.output = GTAOPass.OUTPUT.Default;
   verdeckung.blendIntensity = 0.6;
   verdeckung.updateGtaoMaterial({ radius: 0.6, distanceExponent: 1.5, thickness: 1.2, scale: 1.0, samples: 12 });

@@ -7,7 +7,7 @@ import { erzeugeGras } from './welt/gras.js';
 import { erzeugeBaeume } from './welt/baeume.js';
 import { erzeugeNatur } from './welt/natur.js';
 import { erzeugeWasser } from './welt/wasser.js';
-import { erzeugeFeuer } from './welt/feuer.js';
+import { erzeugeFeuer, erzeugeFeuerlichter } from './welt/feuer.js';
 import { erzeugeFundstuecke } from './welt/fundstuecke.js';
 import { hindernis } from './welt/kollision.js';
 import { wind, windSchritt } from './welt/wind.js';
@@ -84,6 +84,8 @@ const lagerfeuer = erzeugeFeuer(LAGER.x, LAGER.z, { felsMaterial: natur.felsMate
 szene.add(lagerfeuer.objekt);
 hindernis(LAGER.x, LAGER.z, 0.75);
 const feuerstellen = [{ feuer: lagerfeuer, ort: lagerfeuer.ort, brennt: () => true }];
+const feuerlichter = erzeugeFeuerlichter();
+szene.add(feuerlichter.objekt);
 let einsiedler = null;
 try {
   einsiedler = await erzeugeEinsiedler();
@@ -212,6 +214,7 @@ renderer.setAnimationLoop(() => {
   gras.aktualisiere(blickpunkt, kamera);
   baeume.aktualisiere(dt, blickpunkt, himmel.licht, kamera, zeit.hell);
   for (const f of feuerstellen) if (f.brennt()) f.feuer.aktualisiere(dt, wind.richtung.value, zeit.hell);
+  feuerlichter.verteile(feuerstellen, blickpunkt);
   einsiedler?.aktualisiere(dt, blickpunkt);
   // Augen gewöhnen sich an die Dunkelheit
   renderer.toneMappingExposure = THREE.MathUtils.lerp(1.05, 0.62, zeit.hell);
