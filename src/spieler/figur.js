@@ -48,8 +48,8 @@ function veredle(wurzel) {
   });
 }
 
-export async function ladeFigur(art) {
-  const gltf = await ladeModell(new URL(`../../assets/figuren/${art}.glb`, import.meta.url).href);
+export async function ladeFigur(art, beiFortschritt) {
+  const gltf = await ladeModell(new URL(`../../assets/figuren/${art}.glb`, import.meta.url).href, beiFortschritt);
   const wurzel = gltf.scene;
   veredle(wurzel);
   const tempo = wurzel.children[0]?.userData?.tempo ?? wurzel.userData?.tempo ?? {};

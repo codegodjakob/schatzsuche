@@ -36,11 +36,13 @@ const bilder = async (n) => {
 
 try {
   await seite.goto(url);
-  await warte(() => window.spiel?.geladen && window.spiel?.bereit, null, 300);
-  pruefe(await spiel(() => document.documentElement.classList.contains('beruehrung')), 'Handy erkannt: Fingersteuerung eingeschaltet');
-
+  // Gleich tippen, noch während die Welt entsteht: Die Wahl muss gemerkt werden
   await seite.tap('#wahl-sie', { timeout: 120000 });
-  await warte(() => window.spiel.ereignisse?.aktuell === 'erwachen', null, 180);
+  const frueh = await spiel(() => !window.spiel?.geladen);
+  pruefe(await spiel(() => document.documentElement.classList.contains('beruehrung')), 'Handy erkannt: Fingersteuerung eingeschaltet');
+  pruefe(await spiel(() => document.getElementById('wahl-sie').classList.contains('gewaehlt')), 'Antippen zeigt sofort die Wahl');
+  await warte(() => window.spiel?.ereignisse?.aktuell === 'erwachen', null, 400);
+  pruefe(true, `Spiel beginnt von selbst${frueh ? ' (getippt, bevor die Welt fertig war)' : ''}`);
   await seite.screenshot({ path: foto('handy-1-erwachen'), timeout: 300000 });
   await seite.tap('#ereignis-optionen .option', { timeout: 60000 });
   await warte(() => !window.spiel.ereignisse.aktuell, null, 60);

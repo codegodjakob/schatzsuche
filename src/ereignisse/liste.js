@@ -100,7 +100,7 @@ const GESCHICHTE = [
   // --- Der Einsiedler (Issue #2) ---
   {
     id: 'einsiedler-sehen',
-    wann: (s) => beimLager(s, 26),
+    wann: (s) => s.einsiedlerDa && beimLager(s, 26),
     text: 'Auf einer kleinen Lichtung brennt ein Feuer. Daneben steht ein alter Mann in einer groben Wollkutte. '
       + 'Er hat dich längst bemerkt.',
     optionen: [

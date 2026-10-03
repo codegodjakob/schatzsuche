@@ -44,6 +44,7 @@ export function erzeugeEreignisse({ steuerung, oberflaeche, welt }) {
     beerenDa: (i) => !welt.beerenGepflueckt.has(i),
     pfluecke: (i) => { welt.beerenGepflueckt.set(i, zeit.tag + zeit.stunde / 24 + 1); welt.natur.beeren.pfluecke(i); },
     winke: () => welt.einsiedler?.winke(),
+    get einsiedlerDa() { return !!welt.einsiedler; },
   };
 
   function schliesse(ereignis, option) {

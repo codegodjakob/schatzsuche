@@ -61,17 +61,18 @@ export function erzeugeOberflaeche() {
     if (e.code === 'KeyI' && $('start').hidden) inventar.hidden = !inventar.hidden;
   });
 
-  function laden(text, fertig = false) {
+  // notieren: in den Startbericht schreiben (nicht bei jeder Prozentzahl)
+  function laden(text, notieren = true) {
     $('laden').textContent = text;
-    if (fertig) document.querySelectorAll('[data-figur]').forEach((k) => { k.disabled = false; });
+    if (notieren) window.notiere?.(text);
   }
 
-  // Startbildschirm: Figur wählen. Gibt die Wahl ('er' / 'sie') zurück.
+  // Startbildschirm: Die Knöpfe nimmt schon das kleine Skript in index.html entgegen, damit ein
+  // Klick nie verloren geht, auch bevor dieses Programm geladen ist. Gibt 'er' oder 'sie' zurück.
   function warteAufStart() {
     return new Promise((fertig) => {
-      document.querySelectorAll('[data-figur]').forEach((knopf) => {
-        knopf.addEventListener('click', () => fertig(knopf.dataset.figur), { once: true });
-      });
+      if (window.startWahl) fertig(window.startWahl);
+      else window.beiWahl = fertig;
     });
   }
 

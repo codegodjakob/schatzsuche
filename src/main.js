@@ -25,6 +25,8 @@ import { erzeugeNachbearbeitung } from './nachbearbeitung.js';
 const atmen = () => new Promise((r) => setTimeout(r, 0));
 const flaeche = document.getElementById('welt');
 const oberflaeche = erzeugeOberflaeche();
+// Die Wahl gilt ab sofort, auch während die Welt noch entsteht
+const wahl = oberflaeche.warteAufStart();
 let qualitaet = startStufe();
 oberflaeche.zeigeQualitaet(qualitaet.name);
 
@@ -33,6 +35,11 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.6;
+{
+  const gl = renderer.getContext();
+  const info = gl.getExtension('WEBGL_debug_renderer_info');
+  window.notiere?.(`Grafikkarte: ${info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)} · Stufe ${qualitaet.name}`);
+}
 
 const szene = new THREE.Scene();
 const kamera = new THREE.PerspectiveCamera(60, 1, 0.05, 5000);
@@ -87,21 +94,26 @@ hindernis(LAGER.x, LAGER.z, 0.75);
 const feuerstellen = [{ feuer: lagerfeuer, ort: lagerfeuer.ort, brennt: () => true }];
 const feuerlichter = erzeugeFeuerlichter();
 szene.add(feuerlichter.objekt);
-let einsiedler = null;
-try {
-  einsiedler = await erzeugeEinsiedler();
-  szene.add(einsiedler.objekt);
-} catch (e) {
-  window.zeigeFehler?.(`Der Einsiedler konnte nicht geladen werden (${e.message})`);
-}
 
-// Figuren schon vorab laden, damit der Start schnell geht
-const figurenLaden = { er: ladeFigur('er'), sie: ladeFigur('sie') };
+// Die Figuren zuerst, damit der Start schnell geht. Der Einsiedler lädt danach nebenher;
+// bis man beim Lager ist, steht er längst dort.
+const fortschritt = { er: [0, 0], sie: [0, 0] };
+const figurenLaden = {
+  er: ladeFigur('er', (geladen, gesamt) => { fortschritt.er = [geladen, gesamt]; }),
+  sie: ladeFigur('sie', (geladen, gesamt) => { fortschritt.sie = [geladen, gesamt]; }),
+};
 figurenLaden.er.catch(() => {});
 figurenLaden.sie.catch(() => {});
+let einsiedler = null;
+Promise.allSettled([figurenLaden.er, figurenLaden.sie]).then(() => erzeugeEinsiedler()).then((e) => {
+  einsiedler = e;
+  welt.einsiedler = e;
+  szene.add(e.objekt);
+  window.notiere?.('Einsiedler geladen');
+}).catch((e) => window.zeigeFehler?.(`Der Einsiedler konnte nicht geladen werden (${e.message})`));
 
 window.spiel.geladen = true;
-oberflaeche.laden('Bereit.', true);
+oberflaeche.laden('Bereit. Wähle deine Figur.');
 
 // ---------------------------------------------------------------- Spiel
 const steuerung = erzeugeSteuerung({ kamera, flaeche });
@@ -120,14 +132,22 @@ Object.assign(window.spiel, {
 });
 let figur = null;
 
-oberflaeche.warteAufStart().then(async (art) => {
-  oberflaeche.laden('Figur wird geladen …');
+wahl.then(async (art) => {
+  oberflaeche.laden('Deine Figur wird geladen …');
+  const anzeige = setInterval(() => {
+    const [geladen, gesamt] = fortschritt[art];
+    const wieviel = gesamt && geladen <= gesamt ? ` ${Math.floor((geladen / gesamt) * 100)} %` : geladen ? ` ${(geladen / 1e6).toFixed(1)} MB` : '';
+    oberflaeche.laden(`Deine Figur wird geladen …${wieviel}`, false);
+  }, 250);
   try {
     figur = await figurenLaden[art];
   } catch (e) {
     window.zeigeFehler?.(`Die Figur konnte nicht geladen werden (${e.message})`);
     return;
+  } finally {
+    clearInterval(anzeige);
   }
+  window.notiere?.('Figur geladen, Spiel beginnt');
   szene.add(figur.objekt);
   steuerung.setzeFigur(figur);
   steuerung.setzeOrt(START.x, START.z);
@@ -198,8 +218,18 @@ const waechter = erzeugeTempoWaechter((bps) => {
 const uhr = new THREE.Clock();
 const blickpunkt = new THREE.Vector3();
 let anzeigeTakt = 0;
+const messung = { ab: null, bilder: 0, fertig: false };
 renderer.setAnimationLoop(() => {
   const dt = Math.min(uhr.getDelta(), 0.05);
+  if (figur && !messung.fertig) {
+    const jetzt = performance.now();
+    messung.ab ??= jetzt + 5000;
+    if (jetzt >= messung.ab) messung.bilder += 1;
+    if (jetzt >= messung.ab + 5000) {
+      messung.fertig = true;
+      window.notiere?.(`Bilder pro Sekunde: ${(messung.bilder / 5).toFixed(1)} · Stufe ${qualitaet.name}`);
+    }
+  }
   windSchritt(dt);
   const imSpiel = steuerung.zustand.aktiv || ueberleben.tot;
   if (imSpiel) tageszeitSchritt(dt); else tageszeitSchritt(0);

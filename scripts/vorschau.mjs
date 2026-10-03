@@ -31,7 +31,9 @@ const html = (await readFile(join(WURZEL, 'index.html'), 'utf8'))
   .replace(/<\/?head>\s*/gi, '')
   .replace(/<\/?body>\s*/gi, '')
   .replace(/<meta charset[^>]*>\s*/i, '')
-  .replace(/<meta name="viewport"[^>]*>\s*/i, '');
+  .replace(/<meta name="viewport"[^>]*>\s*/i, '')
+  // Stand der Vorschau sichtbar machen, damit klar ist, welche Fassung jemand gerade sieht
+  .replace('<!--STAND-->', ` · Stand ${new Intl.DateTimeFormat('de-DE', { timeZone: 'Europe/Berlin', day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date())} Uhr`);
 
 await rm(ZIEL, { recursive: true, force: true });
 await mkdir(ZIEL, { recursive: true });

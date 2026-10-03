@@ -98,7 +98,11 @@ h1 {
 
 /* Laden */
 .laden { margin: 0; min-height: 1.5em; font-size: 0.9rem; color: var(--gedaempft); font-variant-numeric: tabular-nums; }
-.wahl button:disabled { opacity: 0.5; cursor: progress; }
+/* Gewählt: Die Wahl ist sofort sichtbar, auch wenn die Welt noch lädt */
+#start.gewaehlt .wahl button { cursor: progress; }
+#start.gewaehlt .wahl button:not(.gewaehlt) { opacity: 0.4; }
+.wahl button.gewaehlt { border-color: var(--moos); background: rgba(40, 52, 32, 0.85); }
+#start.gewaehlt .laden { color: var(--pergament); font-size: 1rem; }
 
 /* Überlebenswerte und Uhr */
 #werte {
@@ -179,12 +183,12 @@ html.beruehrung .option kbd { display: none; }
 
 <section id="start" aria-labelledby="titel">
   <div class="start-inhalt">
-    <p class="stand">Arbeitsstand · die Welt wächst beim Bauen</p>
+    <p class="stand">Arbeitsstand · die Welt wächst beim Bauen<!--STAND--></p>
     <h1 id="titel">Schatzsuche</h1>
     <p class="unterzeile">Du wachst auf einer Wiese auf, mit nichts als einem Lendenschurz. Was daraus wird, entscheidest du.</p>
     <div class="wahl">
-      <button type="button" class="tafel" data-figur="er" id="wahl-er" disabled>Als Mann beginnen<span>Er</span></button>
-      <button type="button" class="tafel" data-figur="sie" id="wahl-sie" disabled>Als Frau beginnen<span>Sie</span></button>
+      <button type="button" class="tafel" data-figur="er" id="wahl-er" aria-pressed="false">Als Mann beginnen<span>Er</span></button>
+      <button type="button" class="tafel" data-figur="sie" id="wahl-sie" aria-pressed="false">Als Frau beginnen<span>Sie</span></button>
     </div>
     <p class="laden" id="laden" aria-live="polite">Die Welt entsteht …</p>
     <p class="unterzeile nur-beruehrung">Daumen links: laufen (ganz ausgelenkt rennen). Rechts wischen: umsehen.</p>
@@ -247,12 +251,77 @@ html.beruehrung .option kbd { display: none; }
 </section>
 
 <script>
-// Fehler sichtbar machen statt still hängen zu bleiben, auch wenn die Spielmodule gar nicht starten
+// Fehler sichtbar machen statt still hängen zu bleiben, auch wenn die Spielmodule gar nicht starten.
+// Auf claude.ai legt die Seite außerdem einen kurzen Startbericht ab (Gerät, Ladeschritte, Klicks,
+// Fehler). Claude liest ihn, um Fehler auf Geräten zu finden, die es selbst nicht hat.
 (function () {
   var box = document.getElementById('fehler'), text = document.getElementById('fehler-text');
+  var t0 = performance.now();
+  var bericht = {
+    start: new Date().toISOString(),
+    stand: (document.querySelector('.stand') || {}).textContent || '',
+    geraet: {
+      browser: navigator.userAgent, breite: innerWidth, hoehe: innerHeight, pixel: devicePixelRatio,
+      finger: matchMedia('(pointer: coarse)').matches, beruehrungspunkte: navigator.maxTouchPoints || 0,
+    },
+    schritte: [],
+  };
+  var ablage = null, kette = Promise.resolve(), geplant = false;
+  function speichern() {
+    if (!ablage || geplant) return;
+    geplant = true;
+    setTimeout(function () {
+      geplant = false;
+      var stand = JSON.parse(JSON.stringify(bericht));
+      kette = kette.then(function () { return ablage.set(stand); }).catch(function () {});
+    }, 400);
+  }
+  function notiere(was) {
+    if (bericht.schritte.length >= 150) return;
+    bericht.schritte.push({ t: Math.round(performance.now() - t0) / 1000, was: String(was).slice(0, 300) });
+    speichern();
+  }
+  window.notiere = notiere;
+  notiere('Seite geöffnet');
+  if (window.claude && window.claude.use) {
+    window.claude.use('db').then(function (db) {
+      if (!db) return;
+      var id = bericht.start.replace(/[^0-9]/g, '').slice(0, 14) + '-' + Math.random().toString(36).slice(2, 8);
+      ablage = db.collection('protokoll').doc(id);
+      speichern();
+    }).catch(function () {});
+  }
+  // Fingersteuerung schon auf dem Startbildschirm ankündigen
+  if (matchMedia('(pointer: coarse)').matches) document.documentElement.classList.add('beruehrung');
+
+  // Die Wahl der Figur gilt sofort, auch bevor das Spielprogramm geladen ist. Das Spiel holt sie
+  // sich ab (window.startWahl) oder wird benachrichtigt (window.beiWahl), sobald es so weit ist.
+  document.querySelectorAll('[data-figur]').forEach(function (knopf) {
+    knopf.addEventListener('click', function () {
+      if (window.startWahl) return;
+      window.startWahl = knopf.dataset.figur;
+      document.getElementById('start').classList.add('gewaehlt');
+      knopf.classList.add('gewaehlt');
+      knopf.setAttribute('aria-pressed', 'true');
+      var zustand = !window.spiel ? ' (Programm lädt noch)' : !window.spiel.geladen ? ' (Welt lädt noch)' : '';
+      notiere('Wahl: ' + window.startWahl + zustand);
+      if (!window.spiel) document.getElementById('laden').textContent = 'Gewählt. Das Spiel startet …';
+      if (window.beiWahl) window.beiWahl(window.startWahl);
+    });
+  });
+  // Die ersten Berührungen festhalten: Landen sie woanders als gedacht, liegt etwas darüber
+  var druecke = 0;
+  document.addEventListener('pointerdown', function (e) {
+    if (++druecke > 6) return;
+    var el = e.target;
+    notiere('Druck auf ' + (el.id ? '#' + el.id : el.tagName.toLowerCase() + (el.className && typeof el.className === 'string' ? '.' + el.className.split(' ')[0] : '')));
+  }, true);
+  document.addEventListener('visibilitychange', function () { notiere(document.hidden ? 'Seite verdeckt' : 'Seite wieder sichtbar'); });
+
   function zeige(meldung) {
     if (text.textContent.indexOf(meldung) === -1) text.textContent += (text.textContent ? '\n' : '') + meldung;
     box.hidden = false;
+    notiere('Fehler: ' + meldung);
   }
   window.zeigeFehler = zeige;
   addEventListener('error', function (e) {
