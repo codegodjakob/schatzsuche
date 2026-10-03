@@ -60,7 +60,7 @@ node werkzeuge/foto_spiel.mjs hoch "name:x:z:blickSeite:blickHoehe:stunde"   # F
 `npm test` legt Bildschirmfotos in `test-ergebnisse/` ab (Grafik „niedrig“, weil der Test-Browser
 keine Grafikkarte hat). Schau sie dir an, bevor du sagst, dass etwas fertig ist. Vor jedem Pull
 Request muss `npm test` grün sein. `foto_spiel.mjs` macht Fotos in jeder Stufe, ist aber ohne
-Grafikkarte langsam (ein Bild in „hoch“ dauert etwa eine Minute).
+Grafikkarte langsam (ein Bild in „hoch“ dauert zwischen einer und sechs Minuten).
 
 ## Figuren neu bauen (nur wenn sich Figuren ändern sollen)
 
@@ -76,7 +76,11 @@ Aussehen, Körperform, Haare, Kleidung und Bewegungen jeder Figur stehen oben in
 
 ## Vorschau veröffentlichen
 
-1. `npm run vorschau` → erzeugt `vorschau/index.html` und `vorschau/dateien.json`.
-2. Mit dem Artifact-Werkzeug `vorschau/index.html` veröffentlichen, als `files` die Liste aus
-   `vorschau/dateien.json`. Gleiche Datei = gleicher Link, die Vorschau wird also aktualisiert.
+1. `npm run vorschau -- <ordner>` → legt im Ordner (ohne Angabe: `vorschau/`) `index.html`, alle
+   nötigen Dateien und `dateien.json` an. Der Ordner muss dort liegen, wo das Artifact-Werkzeug
+   lesen darf (Arbeitsverzeichnis oder Scratchpad). Artifacts liefern keine `.glb`-Dateien aus,
+   darum wandelt das Skript die Modelle in `.gltf.json` um und passt die Verweise in der Kopie an.
+2. Mit dem Artifact-Werkzeug `<ordner>/index.html` veröffentlichen, `root` = der Ordner, als `files`
+   die Liste aus `dateien.json`. Damit der Link gleich bleibt, den bisherigen Link als `url` mitgeben.
+   Aktuelle Vorschau: https://claude.ai/artifact/8bKmkunsU8BGSamBnMTpCi
 3. Den Link nennen.
