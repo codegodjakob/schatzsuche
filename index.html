@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Schatzsuche</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+/* Ein Bild füllt alles; Tafeln aus dunklem Moos liegen darüber. Bewusst nur ein (dunkles) Erscheinungsbild. */
+:root {
+  --nacht: #10140e;
+  --tafel: rgba(16, 20, 14, 0.74);
+  --kante: rgba(233, 226, 207, 0.16);
+  --pergament: #ece5d2;
+  --gedaempft: #b8b4a3;
+  --moos: #a8bc84;
+  --glut: #e0ac55;
+  --schrift-titel: "IM Fell English SC", "Iowan Old Style", Georgia, serif;
+  --schrift-text: "Alegreya Sans", "Gill Sans", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0; overflow: hidden; background: var(--nacht); color: var(--pergament);
+  font: 16px/1.5 var(--schrift-text);
+}
+#welt { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none; }
+.tafel {
+  background: var(--tafel); border: 1px solid var(--kante); border-radius: 6px;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+kbd {
+  display: inline-grid; place-items: center; min-width: 1.6em; height: 1.6em; padding: 0 0.35em;
+  font: 700 0.8rem/1 var(--schrift-text); color: var(--nacht); background: var(--glut);
+  border-radius: 3px; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
+}
+
+/* Startbildschirm */
+#start {
+  position: fixed; inset: 0; display: grid; place-items: center; padding: 16px;
+  background: linear-gradient(180deg, rgba(16, 20, 14, 0) 30%, rgba(16, 20, 14, 0.82) 100%);
+}
+.start-inhalt { display: grid; gap: 1.4rem; justify-items: center; text-align: center; max-width: 34rem; align-self: end; padding-bottom: 6vh; }
+h1 {
+  margin: 0; font: 400 clamp(2.8rem, 9vw, 5.6rem)/0.95 var(--schrift-titel); letter-spacing: 0.02em;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.55); text-wrap: balance;
+}
+.unterzeile { margin: 0; color: var(--gedaempft); max-width: 30rem; text-wrap: balance; }
+.wahl { display: flex; flex-wrap: wrap; gap: 0.8rem; justify-content: center; }
+.wahl button {
+  font: 500 1.05rem/1 var(--schrift-text); color: var(--pergament); cursor: pointer;
+  padding: 0.9rem 1.6rem; min-width: 9.5rem;
+}
+.wahl button span { display: block; margin-top: 0.35rem; font-size: 0.8rem; color: var(--gedaempft); }
+.wahl button:hover, .wahl button:focus-visible { border-color: var(--moos); outline: none; background: rgba(40, 52, 32, 0.85); }
+.stand { margin: 0; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--moos); }
+
+/* Ereignis-Tafel */
+#ereignis {
+  position: fixed; left: 50%; bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  width: min(36rem, calc(100% - 32px)); padding: 1.1rem 1.3rem; display: grid; gap: 0.9rem;
+}
+#ereignis-text { margin: 0; font-size: 1.05rem; text-wrap: pretty; }
+#ereignis-optionen { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.option {
+  display: inline-flex; align-items: center; gap: 0.55rem; cursor: pointer;
+  font: 500 0.95rem/1 var(--schrift-text); color: var(--pergament);
+  background: transparent; border: 1px solid var(--kante); border-radius: 4px; padding: 0.45rem 0.8rem 0.45rem 0.45rem;
+}
+.option:hover:not(:disabled), .option:focus-visible { border-color: var(--moos); outline: none; }
+.option:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Inventar */
+#inventar { position: fixed; top: calc(16px + env(safe-area-inset-top, 0px)); right: 16px; width: min(16rem, calc(100% - 32px)); padding: 0.9rem 1rem; }
+#inventar h2 { margin: 0 0 0.5rem; font: 400 1.3rem/1 var(--schrift-titel); }
+#inventar-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; }
+#inventar-liste li { display: flex; justify-content: space-between; gap: 1rem; }
+#inventar-liste .leer { color: var(--gedaempft); font-style: italic; }
+.anzahl { color: var(--gedaempft); font-variant-numeric: tabular-nums; }
+
+/* Nachrichten */
+#nachrichten { position: fixed; top: calc(16px + env(safe-area-inset-top, 0px)); left: 16px; display: grid; gap: 0.4rem; max-width: calc(100% - 32px); pointer-events: none; }
+.nachricht { margin: 0; padding: 0.5rem 0.8rem; background: var(--tafel); border-left: 2px solid var(--glut); border-radius: 0 4px 4px 0; transition: opacity 0.8s; }
+.nachricht.weg { opacity: 0; }
+
+/* Steuerungshinweise */
+#hinweise {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 0.35rem 1rem; padding: 0.5rem 0.9rem;
+  width: max-content; max-width: calc(100% - 32px); font-size: 0.85rem; color: var(--gedaempft);
+}
+#hinweise span { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+#hinweise kbd { background: var(--pergament); }
+
+@media (prefers-reduced-motion: reduce) { .nachricht { transition: none; } }
+</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/three.module.min.js", "three/addons/": "./vendor/three/addons/" } }
+</script>
+</head>
+<body>
+<canvas id="welt" tabindex="0" aria-label="Spielwelt"></canvas>
+
+<section id="start" aria-labelledby="titel">
+  <div class="start-inhalt">
+    <p class="stand">Arbeitsstand · die Welt wächst beim Bauen</p>
+    <h1 id="titel">Schatzsuche</h1>
+    <p class="unterzeile">Du wachst auf einer Wiese auf, mit nichts als einem Lendenschurz. Was daraus wird, entscheidest du.</p>
+    <div class="wahl">
+      <button type="button" class="tafel" data-figur="er" id="wahl-er">Als Mann beginnen<span>Er</span></button>
+      <button type="button" class="tafel" data-figur="sie" id="wahl-sie">Als Frau beginnen<span>Sie</span></button>
+    </div>
+  </div>
+</section>
+
+<div id="hinweise" class="tafel" hidden>
+  <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> laufen</span>
+  <span><kbd>⇧</kbd> rennen</span>
+  <span><kbd>␣</kbd> springen</span>
+  <span><kbd>V</kbd> Blickwinkel</span>
+  <span><kbd>I</kbd> Inventar</span>
+  <span>Maus: umsehen · Klick: Maus einfangen</span>
+</div>
+
+<section id="ereignis" class="tafel" hidden aria-live="polite">
+  <p id="ereignis-text"></p>
+  <div id="ereignis-optionen"></div>
+</section>
+
+<aside id="inventar" class="tafel" hidden>
+  <h2>Inventar</h2>
+  <ul id="inventar-liste"></ul>
+</aside>
+
+<div id="nachrichten" aria-live="polite"></div>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
