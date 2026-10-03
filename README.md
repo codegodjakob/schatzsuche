@@ -1,6 +1,6 @@
 # Schatzsuche
 
-Ein gemeinsames Projekt von Jakob und Mitstreiter:in.
+Ein gemeinsames Projekt von Jakob (`codegodjakob`) und Vincenz (`vincenztellier`).
 
 ## Worum geht es?
 
