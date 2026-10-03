@@ -191,6 +191,7 @@ addEventListener('keydown', (e) => {
   if (e.code === 'KeyG') {
     qualitaet = naechsteStufe(qualitaet);
     merkeStufe(qualitaet);
+    waechter.festhalten();
     setzeQualitaet(qualitaet);
     oberflaeche.nachricht(`Grafik: ${qualitaet.name}`);
   }

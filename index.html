@@ -296,8 +296,14 @@ html.beruehrung .option kbd { display: none; }
 
   // Die Wahl der Figur gilt sofort, auch bevor das Spielprogramm geladen ist. Das Spiel holt sie
   // sich ab (window.startWahl) oder wird benachrichtigt (window.beiWahl), sobald es so weit ist.
+  function knopfLage(id) {
+    var r = document.getElementById(id).getBoundingClientRect();
+    return Math.round(r.top) + '–' + Math.round(r.bottom);
+  }
+  bericht.geraet.knoepfe = 'Mann ' + knopfLage('wahl-er') + ', Frau ' + knopfLage('wahl-sie') + ' von ' + innerHeight
+    + (window.visualViewport ? ' (sichtbar ' + Math.round(visualViewport.height) + ')' : '');
   document.querySelectorAll('[data-figur]').forEach(function (knopf) {
-    knopf.addEventListener('click', function () {
+    function waehle() {
       if (window.startWahl) return;
       window.startWahl = knopf.dataset.figur;
       document.getElementById('start').classList.add('gewaehlt');
@@ -307,15 +313,21 @@ html.beruehrung .option kbd { display: none; }
       notiere('Wahl: ' + window.startWahl + zustand);
       if (!window.spiel) document.getElementById('laden').textContent = 'Gewählt. Das Spiel startet …';
       if (window.beiWahl) window.beiWahl(window.startWahl);
-    });
+    }
+    knopf.addEventListener('click', waehle);
+    knopf.addEventListener('pointerup', waehle);
   });
   // Die ersten Berührungen festhalten: Landen sie woanders als gedacht, liegt etwas darüber
   var druecke = 0;
-  document.addEventListener('pointerdown', function (e) {
-    if (++druecke > 6) return;
-    var el = e.target;
-    notiere('Druck auf ' + (el.id ? '#' + el.id : el.tagName.toLowerCase() + (el.className && typeof el.className === 'string' ? '.' + el.className.split(' ')[0] : '')));
-  }, true);
+  function druck(art) {
+    return function (e) {
+      if (++druecke > 8) return;
+      var el = e.target;
+      notiere(art + ' auf ' + (el.id ? '#' + el.id : el.tagName.toLowerCase() + (el.className && typeof el.className === 'string' ? '.' + el.className.split(' ')[0] : '')));
+    };
+  }
+  document.addEventListener('pointerdown', druck('Druck'), true);
+  document.addEventListener('touchstart', druck('Berührung'), { capture: true, passive: true });
   document.addEventListener('visibilitychange', function () { notiere(document.hidden ? 'Seite verdeckt' : 'Seite wieder sichtbar'); });
 
   function zeige(meldung) {

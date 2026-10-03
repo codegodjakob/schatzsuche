@@ -27,10 +27,13 @@ export function merkeStufe(stufe) {
 }
 
 // Misst die Bildrate und meldet, wenn eine niedrigere Stufe nötig ist.
+// Auch eine gespeicherte Stufe geht herunter, wenn es ruckelt. Nur wer in dieser Sitzung selbst
+// die Stufe wechselt (festhalten), behält sie.
 export function erzeugeTempoWaechter(beiZuLangsam) {
   let zeit = 0, bilder = 0, pause = 4, runter = 0;
-  const fest = window.SCHATZSUCHE_QUALITAET != null || gespeichert() != null;
+  let fest = window.SCHATZSUCHE_QUALITAET != null;
   return {
+    festhalten() { fest = true; },
     schritt(dt) {
       if (fest || runter >= 2) return;
       if (pause > 0) { pause -= dt; return; }
