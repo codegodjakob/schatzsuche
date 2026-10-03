@@ -19,6 +19,7 @@ import { erzeugeEinsiedler } from './figuren/einsiedler.js';
 import { erzeugeEreignisse } from './ereignisse/ereignisse.js';
 import { erzeugeUeberleben } from './ueberleben/werte.js';
 import { erzeugeOberflaeche } from './ui/oberflaeche.js';
+import { erzeugeBeruehrung } from './ui/beruehrung.js';
 import { erzeugeNachbearbeitung } from './nachbearbeitung.js';
 
 const atmen = () => new Promise((r) => setTimeout(r, 0));
@@ -91,7 +92,7 @@ try {
   einsiedler = await erzeugeEinsiedler();
   szene.add(einsiedler.objekt);
 } catch (e) {
-  console.warn('Einsiedler konnte nicht geladen werden', e);
+  window.zeigeFehler?.(`Der Einsiedler konnte nicht geladen werden (${e.message})`);
 }
 
 // Figuren schon vorab laden, damit der Start schnell geht
@@ -104,6 +105,7 @@ oberflaeche.laden('Bereit.', true);
 
 // ---------------------------------------------------------------- Spiel
 const steuerung = erzeugeSteuerung({ kamera, flaeche });
+erzeugeBeruehrung({ flaeche, steuerung });
 const beerenGepflueckt = new Map();
 const ueberleben = erzeugeUeberleben({ beiTod: sterben, beiWarnung: (t) => oberflaeche.nachricht(t) });
 ueberleben.setzeWaermequellen(feuerstellen);
@@ -120,7 +122,12 @@ let figur = null;
 
 oberflaeche.warteAufStart().then(async (art) => {
   oberflaeche.laden('Figur wird geladen …');
-  figur = await figurenLaden[art];
+  try {
+    figur = await figurenLaden[art];
+  } catch (e) {
+    window.zeigeFehler?.(`Die Figur konnte nicht geladen werden (${e.message})`);
+    return;
+  }
   szene.add(figur.objekt);
   steuerung.setzeFigur(figur);
   steuerung.setzeOrt(START.x, START.z);

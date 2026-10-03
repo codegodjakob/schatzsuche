@@ -1,6 +1,6 @@
 // Felsen (echte Felstextur, Moos auf der Oberseite), Wildblumen und Beeren an den Sträuchern.
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { ladeModell } from '../modelle.js';
 import { hoeheBei, maskeBei, neigungBei, wasserspiegel, WELT_GROESSE } from './gelaende.js';
 import { START } from './orte.js';
 import { zufall } from './zufall.js';
@@ -150,9 +150,8 @@ function erzeugeFelsen(z, qualitaet) {
 
 async function erzeugeBlumen(z, qualitaet) {
   const gruppe = new THREE.Group();
-  const lader = new GLTFLoader();
   const dateien = ['flower_white.glb', 'flower_yellow.glb', 'flower_blue.glb'];
-  const modelle = await Promise.all(dateien.map((d) => lader.loadAsync(new URL(`../../assets/natur/${d}`, import.meta.url).href)));
+  const modelle = await Promise.all(dateien.map((d) => ladeModell(new URL(`../../assets/natur/${d}`, import.meta.url).href)));
   const wsp = wasserspiegel();
   const anzahl = Math.round(1800 * qualitaet.gras + 200);
   // Blumen wachsen in Grüppchen

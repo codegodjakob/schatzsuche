@@ -39,7 +39,8 @@ etwas entschieden, trage es dort ein. Ziel bei der Grafik: **so realistisch wie 
 | `src/ueberleben/werte.js` | Sättigung, Wasser, Wärme, Leben, Tod |
 | `src/ereignisse/liste.js` | **Alle Ereignisse und Entscheidungen.** Hier wächst die Geschichte |
 | `src/ereignisse/ereignisse.js` | Die Mechanik dahinter (nur ändern, wenn sie etwas Neues können muss) |
-| `src/ui/` | Startbildschirm, Ereignis-Tafel, Inventar, Nachrichten, Anzeigen |
+| `src/ui/` | Startbildschirm, Ereignis-Tafel, Inventar, Nachrichten, Anzeigen; `beruehrung.js` = Fingersteuerung für Handy und Tablet |
+| `src/modelle.js` | Lädt 3D-Modelle (auch in der Vorschau, wo sie als Text vorliegen) |
 | `src/qualitaet.js`, `src/nachbearbeitung.js` | Grafikstufen (hoch/mittel/niedrig) und Bild-Nachbearbeitung |
 | `werkzeuge/figuren/` | Python-Werkzeug, das die Figuren baut (MakeHuman + Bewegungen) |
 | `docs/SPIELIDEE.md` | Die Spielidee: entschieden und offen |
@@ -52,13 +53,14 @@ Einträge in Listen. Neue Systeme (Bauen, Tiere) bekommen eine eigene Datei.
 
 ```
 npm install        # einmal pro Sitzung (passiert automatisch beim Sitzungsstart)
-npm test           # startet das Spiel unsichtbar und prüft: läuft, bewegt sich, keine Fehler
+npm test           # spielt das Spiel unsichtbar durch, am Rechner und auf einem nachgebauten Handy
 npm start          # Spiel lokal starten
 node werkzeuge/foto_spiel.mjs hoch "name:x:z:blickSeite:blickHoehe:stunde"   # Fotos zur Grafikprüfung
 ```
 
 `npm test` legt Bildschirmfotos in `test-ergebnisse/` ab (Grafik „niedrig“, weil der Test-Browser
-keine Grafikkarte hat). Schau sie dir an, bevor du sagst, dass etwas fertig ist. Vor jedem Pull
+keine Grafikkarte hat). Der Handytest (`test/handytest.mjs`) bedient das Spiel nur mit dem Finger:
+Stick, Wischen, Knöpfe, Ereignisse antippen. Schau sie dir an, bevor du sagst, dass etwas fertig ist. Vor jedem Pull
 Request muss `npm test` grün sein. `foto_spiel.mjs` macht Fotos in jeder Stufe, ist aber ohne
 Grafikkarte langsam (ein Bild in „hoch“ dauert zwischen einer und sechs Minuten).
 
@@ -78,9 +80,13 @@ Aussehen, Körperform, Haare, Kleidung und Bewegungen jeder Figur stehen oben in
 
 1. `npm run vorschau -- <ordner>` → legt im Ordner (ohne Angabe: `vorschau/`) `index.html`, alle
    nötigen Dateien und `dateien.json` an. Der Ordner muss dort liegen, wo das Artifact-Werkzeug
-   lesen darf (Arbeitsverzeichnis oder Scratchpad). Artifacts liefern keine `.glb`-Dateien aus,
-   darum wandelt das Skript die Modelle in `.gltf.json` um und passt die Verweise in der Kopie an.
-2. Mit dem Artifact-Werkzeug `<ordner>/index.html` veröffentlichen, `root` = der Ordner, als `files`
+   lesen darf (Arbeitsverzeichnis oder Scratchpad). Artifacts liefern keine `.glb`-Dateien aus und
+   sperren Nachladen über data:-Adressen. Darum legt das Skript die Modelle als Text ab (`.glb.txt`),
+   und `src/modelle.js` entpackt sie beim Laden.
+2. `npm run vorschau:pruefen -- <ordner>` → startet die Vorschau unter denselben Sperren wie auf
+   claude.ai (dort ist fast alles blockiert, was nicht direkt eine eigene Datei ist). Nur
+   veröffentlichen, wenn hier alles grün ist. Lokal kann etwas laufen, das auf claude.ai hängt.
+3. Mit dem Artifact-Werkzeug `<ordner>/index.html` veröffentlichen, `root` = der Ordner, als `files`
    die Liste aus `dateien.json`. Damit der Link gleich bleibt, den bisherigen Link als `url` mitgeben.
    Aktuelle Vorschau: https://claude.ai/artifact/8bKmkunsU8BGSamBnMTpCi
-3. Den Link nennen.
+4. Den Link nennen. Die Vorschau soll auf Rechner und Handy spielbar sein.

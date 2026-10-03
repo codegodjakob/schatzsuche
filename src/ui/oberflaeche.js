@@ -80,6 +80,7 @@ export function erzeugeOberflaeche() {
     $('hinweise').hidden = false;
     $('werte').hidden = false;
     $('uhr').hidden = false;
+    $('beruehrung').hidden = false;
   }
 
   function zeigeWerte(w) {

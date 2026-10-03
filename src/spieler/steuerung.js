@@ -23,7 +23,13 @@ export function erzeugeSteuerung({ kamera, flaeche }) {
   };
   let figur = null;
   const tasten = new Set();
+  // Laufstick auf Handy und Tablet (src/ui/beruehrung.js): Richtung von -1 bis 1, ganz ausgelenkt = rennen
+  const stick = { vor: 0, seit: 0, rennt: false };
   let ziehen = false;
+  // Nach einer Berührung schickt der Browser nachgeahmte Mausereignisse; die sollen die Kamera nicht drehen
+  let letzteBeruehrung = -Infinity;
+  addEventListener('touchstart', () => { letzteBeruehrung = performance.now(); }, { capture: true, passive: true });
+  const nachgeahmt = () => performance.now() - letzteBeruehrung < 1000;
   const bewegung = new THREE.Vector3();
   const ziel = new THREE.Vector3(), kameraZiel = new THREE.Vector3(), kameraOrt = new THREE.Vector3();
   const wsp = wasserspiegel();
@@ -40,6 +46,7 @@ export function erzeugeSteuerung({ kamera, flaeche }) {
 
   // Umsehen: mit Mauszeiger-Sperre (Pointer Lock), sonst bei gedrückter Maustaste
   flaeche.addEventListener('mousedown', () => {
+    if (nachgeahmt()) return;
     ziehen = true;
     if (z.aktiv && document.pointerLockElement !== flaeche) {
       try { flaeche.requestPointerLock()?.catch?.(() => {}); } catch { /* nicht verfügbar */ }
@@ -47,11 +54,22 @@ export function erzeugeSteuerung({ kamera, flaeche }) {
   });
   addEventListener('mouseup', () => { ziehen = false; });
   addEventListener('mousemove', (e) => {
-    if (!z.aktiv) return;
     if (document.pointerLockElement !== flaeche && !ziehen) return;
-    z.blickSeite -= e.movementX * 0.0025;
-    z.blickHoehe = THREE.MathUtils.clamp(z.blickHoehe - e.movementY * 0.0022, -1.3, 1.2);
+    if (!nachgeahmt()) umsehen(e.movementX, e.movementY);
   });
+
+  function umsehen(dx, dy) {
+    if (!z.aktiv) return;
+    z.blickSeite -= dx * 0.0025;
+    z.blickHoehe = THREE.MathUtils.clamp(z.blickHoehe - dy * 0.0022, -1.3, 1.2);
+  }
+
+  function setzeStick(vor, seit, rennt) {
+    stick.vor = vor;
+    stick.seit = seit;
+    stick.rennt = rennt;
+  }
+
   flaeche.addEventListener('wheel', (e) => {
     z.abstand = THREE.MathUtils.clamp(z.abstand + e.deltaY * 0.004, 1.6, 9);
   }, { passive: true });
@@ -67,9 +85,11 @@ export function erzeugeSteuerung({ kamera, flaeche }) {
   }
 
   function schritt(dt) {
-    const vor = (tasten.has('KeyW') || tasten.has('ArrowUp') ? 1 : 0) - (tasten.has('KeyS') || tasten.has('ArrowDown') ? 1 : 0);
-    const seit = (tasten.has('KeyD') || tasten.has('ArrowRight') ? 1 : 0) - (tasten.has('KeyA') || tasten.has('ArrowLeft') ? 1 : 0);
-    const rennt = (tasten.has('ShiftLeft') || tasten.has('ShiftRight')) && !z.erschoepft;
+    const vorTaste = (tasten.has('KeyW') || tasten.has('ArrowUp') ? 1 : 0) - (tasten.has('KeyS') || tasten.has('ArrowDown') ? 1 : 0);
+    const seitTaste = (tasten.has('KeyD') || tasten.has('ArrowRight') ? 1 : 0) - (tasten.has('KeyA') || tasten.has('ArrowLeft') ? 1 : 0);
+    const vor = THREE.MathUtils.clamp(vorTaste + stick.vor, -1, 1);
+    const seit = THREE.MathUtils.clamp(seitTaste + stick.seit, -1, 1);
+    const rennt = (tasten.has('ShiftLeft') || tasten.has('ShiftRight') || stick.rennt) && !z.erschoepft;
 
     bewegung.set(0, 0, 0);
     if (z.aktiv && (vor || seit)) {
@@ -147,5 +167,5 @@ export function erzeugeSteuerung({ kamera, flaeche }) {
     }
   }
 
-  return { zustand: z, schritt, tasten, setzeFigur, setzeOrt };
+  return { zustand: z, schritt, tasten, setzeFigur, setzeOrt, umsehen, setzeStick };
 }

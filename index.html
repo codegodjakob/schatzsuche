@@ -123,6 +123,49 @@ h1 {
 #tod h2 { margin: 0 0 0.6rem; font: 400 clamp(2rem, 7vw, 3.6rem)/1 var(--schrift-titel); }
 #tod p { margin: 0; color: var(--gedaempft); }
 
+/* Fehler: lieber eine klare Meldung als ein Spiel, das still hängen bleibt */
+#fehler {
+  position: fixed; top: calc(16px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
+  width: min(34rem, calc(100% - 32px)); padding: 1rem 1.2rem; display: grid; gap: 0.5rem; border-color: #d0634a;
+}
+#fehler h2 { margin: 0; font: 400 1.4rem/1.1 var(--schrift-titel); }
+#fehler p { margin: 0; }
+#fehler-text { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.9rem; color: var(--glut); }
+
+/* Handy und Tablet: Stick links, Knöpfe rechts, Anzeigen oben */
+#welt { touch-action: none; }
+.nur-beruehrung { display: none; }
+html:not(.beruehrung) #beruehrung { display: none !important; }
+#stick {
+  position: fixed; left: calc(24px + 64px + env(safe-area-inset-left, 0px)); top: calc(100% - 24px - 64px - env(safe-area-inset-bottom, 0px));
+  width: 128px; height: 128px; margin: -64px 0 0 -64px; border-radius: 50%; pointer-events: none;
+  display: grid; place-items: center; border: 1px solid var(--kante); background: rgba(16, 20, 14, 0.35);
+  opacity: 0.55; transition: opacity 0.2s;
+}
+#stick.aktiv { opacity: 1; }
+#stick-knauf { width: 56px; height: 56px; border-radius: 50%; background: rgba(236, 229, 210, 0.85); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4); }
+#knoepfe {
+  position: fixed; right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  display: grid; grid-template-columns: repeat(2, 4.2rem); gap: 0.5rem;
+}
+.knopf {
+  min-height: 2.9rem; font: 500 0.85rem/1 var(--schrift-text); color: var(--pergament); background: var(--tafel);
+  border: 1px solid var(--kante); border-radius: 999px; touch-action: none; user-select: none;
+  -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.knopf.gross { grid-column: span 2; min-height: 3.6rem; font-weight: 700; }
+.knopf:active { background: rgba(60, 76, 44, 0.92); border-color: var(--moos); }
+html.beruehrung .nur-beruehrung { display: block; }
+html.beruehrung #hinweise { display: none !important; }
+html.beruehrung #uhr { top: calc(16px + env(safe-area-inset-top, 0px)); bottom: auto; right: auto; left: 16px; padding: 0.3rem 0.6rem; font-size: 0.78rem; }
+html.beruehrung #nachrichten { top: calc(16px + 2.6rem + env(safe-area-inset-top, 0px)); max-width: calc(100% - 32px - 11.2rem - 12px); font-size: 0.9rem; }
+html.beruehrung #werte { top: calc(16px + env(safe-area-inset-top, 0px)); bottom: auto; left: auto; right: 16px; width: 9.5rem; padding: 0.5rem 0.65rem; gap: 0.25rem; }
+html.beruehrung .wert { grid-template-columns: 4rem 1fr; font-size: 0.72rem; }
+html.beruehrung #inventar { top: calc(16px + 7.4rem + env(safe-area-inset-top, 0px)); }
+html.beruehrung #ereignis { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+html.beruehrung .option { min-height: 2.75rem; padding: 0.45rem 0.9rem; }
+html.beruehrung .option kbd { display: none; }
+
 @media (max-width: 900px) { #hinweise { display: none; } }
 @media (max-width: 640px) { #werte { width: 10rem; } }
 @media (prefers-reduced-motion: reduce) { .nachricht, #tod, .balken i { transition: none; } }
@@ -144,6 +187,7 @@ h1 {
       <button type="button" class="tafel" data-figur="sie" id="wahl-sie" disabled>Als Frau beginnen<span>Sie</span></button>
     </div>
     <p class="laden" id="laden" aria-live="polite">Die Welt entsteht …</p>
+    <p class="unterzeile nur-beruehrung">Daumen links: laufen (ganz ausgelenkt rennen). Rechts wischen: umsehen.</p>
   </div>
 </section>
 
@@ -166,6 +210,17 @@ h1 {
 </section>
 <div id="uhr" class="tafel" hidden></div>
 
+<div id="beruehrung" hidden>
+  <div id="stick" aria-hidden="true"><div id="stick-knauf"></div></div>
+  <div id="knoepfe" role="group" aria-label="Steuerung">
+    <button type="button" class="knopf" data-taste="KeyI">Inventar</button>
+    <button type="button" class="knopf" data-taste="KeyG">Grafik</button>
+    <button type="button" class="knopf" data-taste="KeyF">Feuer</button>
+    <button type="button" class="knopf" data-taste="KeyV">Blick</button>
+    <button type="button" class="knopf gross" data-taste="Space">Springen</button>
+  </div>
+</div>
+
 <section id="tod" hidden>
   <div>
     <h2 id="tod-titel">Du bist gestorben</h2>
@@ -185,6 +240,30 @@ h1 {
 
 <div id="nachrichten" aria-live="polite"></div>
 
+<section id="fehler" class="tafel" hidden role="alert">
+  <h2>Das Spiel hängt</h2>
+  <p id="fehler-text"></p>
+  <p>Lade die Seite neu. Passiert es wieder, schick Claude den Text oben.</p>
+</section>
+
+<script>
+// Fehler sichtbar machen statt still hängen zu bleiben, auch wenn die Spielmodule gar nicht starten
+(function () {
+  var box = document.getElementById('fehler'), text = document.getElementById('fehler-text');
+  function zeige(meldung) {
+    if (text.textContent.indexOf(meldung) === -1) text.textContent += (text.textContent ? '\n' : '') + meldung;
+    box.hidden = false;
+  }
+  window.zeigeFehler = zeige;
+  addEventListener('error', function (e) {
+    if (e instanceof ErrorEvent) zeige(e.message || 'Unbekannter Fehler');
+    else if (e.target && e.target.tagName === 'SCRIPT') zeige('Ein Programmteil konnte nicht geladen werden: ' + e.target.src);
+  }, true);
+  addEventListener('unhandledrejection', function (e) {
+    zeige((e.reason && e.reason.message) || String(e.reason));
+  });
+})();
+</script>
 <script type="module" src="./src/main.js"></script>
 </body>
 </html>

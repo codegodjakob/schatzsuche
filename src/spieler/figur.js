@@ -2,9 +2,7 @@
 // gemalte Haut, Haare, Kleidung und aufgezeichnete Bewegungen.
 // Hier: Materialien veredeln (Licht unter der Haut) und Bewegungen nach Tempo überblenden.
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-
-const lader = new GLTFLoader();
+import { ladeModell } from '../modelle.js';
 
 // Licht dringt etwas in die Haut ein und färbt die Schattenkante rötlich (wie bei echter Haut)
 function hautMaterial(alt) {
@@ -51,7 +49,7 @@ function veredle(wurzel) {
 }
 
 export async function ladeFigur(art) {
-  const gltf = await lader.loadAsync(new URL(`../../assets/figuren/${art}.glb`, import.meta.url).href);
+  const gltf = await ladeModell(new URL(`../../assets/figuren/${art}.glb`, import.meta.url).href);
   const wurzel = gltf.scene;
   veredle(wurzel);
   const tempo = wurzel.children[0]?.userData?.tempo ?? wurzel.userData?.tempo ?? {};

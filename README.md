@@ -25,6 +25,15 @@ Claude veröffentlicht nach jeder Änderung eine Vorschau als Link. Der steht im
 | `F` | Feuer machen (wenn man es gelernt hat) |
 | `G` | Grafikqualität: hoch, mittel, niedrig |
 
+Auf Handy und Tablet erscheint eine Fingersteuerung:
+
+| Finger | Was passiert |
+|---|---|
+| Daumen links aufsetzen und ziehen | laufen, ganz ausgelenkt rennen |
+| Rechts wischen | umsehen |
+| Knöpfe unten rechts | springen, Blickwinkel, Feuer, Inventar, Grafik |
+| Ereignis antippen | Entscheidung treffen |
+
 ## Wie wir zusammenarbeiten
 
 Neu dabei? → [EINSTIEG.md](EINSTIEG.md). Kurzfassung — die Einzelheiten stehen in [ZUSAMMENARBEIT.md](ZUSAMMENARBEIT.md):
