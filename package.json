@@ -1,0 +1,13 @@
+{
+  "name": "schatzsuche",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/server.mjs",
+    "test": "node test/rauchtest.mjs",
+    "vorschau": "node scripts/vorschau.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
+}
