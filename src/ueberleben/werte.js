@@ -62,6 +62,13 @@ export function erzeugeUeberleben({ beiTod, beiWarnung, zehrFaktor = () => 1, he
     trinke: (n) => { w.wasser = Math.min(100, w.wasser + n); },
     waerme: (n) => { w.waerme = Math.min(100, w.waerme + n); },
     heile: (n) => { w.leben = Math.min(100, w.leben + n); },
+    // Schaden von außen (Schläge); grund steht auf dem Bildschirm: „Du bist …“
+    verletze(n, grund = 'gestorben') {
+      if (tot) return;
+      w.leben = Math.max(0, w.leben - n);
+      warne('leben', 'Du wirst schwach …', w.leben < 30);
+      if (w.leben <= 0) { tot = true; beiTod(grund); }
+    },
     // Aus dem Spielstand
     setze(werte) { for (const k of Object.keys(w)) if (Number.isFinite(werte?.[k])) w[k] = Math.min(100, Math.max(1, werte[k])); },
     setzeWaermequellen: (liste) => { waermequellen = liste; },

@@ -82,6 +82,23 @@ export function erzeugeInventar({ beiAenderung = () => {}, nachricht = () => {} 
     return beste;
   }
 
+  // Die stärkste Waffe, die man dabeihat (id oder null = Fäuste)
+  function besteWaffe() {
+    let beste = null, schaden = 0;
+    for (const id of dinge.keys()) {
+      const w = GEGENSTAENDE[id]?.waffe;
+      if (w && w.schaden > schaden) { schaden = w.schaden; beste = id; }
+    }
+    return beste;
+  }
+
+  // Die beste Rüstung schützt (Anteil des Schadens, der abgehalten wird)
+  function schutz() {
+    let beste = 0;
+    for (const id of dinge.keys()) beste = Math.max(beste, GEGENSTAENDE[id]?.schutz ?? 0);
+    return beste;
+  }
+
   function leeren() {
     dinge.clear();
     inHand = null;
@@ -89,7 +106,7 @@ export function erzeugeInventar({ beiAenderung = () => {}, nachricht = () => {} 
   }
 
   return {
-    gib, nimm, passt, liste, leeren, werkzeugStufe, gibMuenzen, zahle, nimmInDieHand,
+    gib, nimm, passt, liste, leeren, werkzeugStufe, besteWaffe, schutz, gibMuenzen, zahle, nimmInDieHand,
     hat: (id, n = 1) => (dinge.get(id) ?? 0) >= n,
     anzahl: (id) => dinge.get(id) ?? 0,
     get muenzen() { return muenzen; },

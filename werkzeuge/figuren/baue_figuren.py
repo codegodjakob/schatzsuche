@@ -29,6 +29,12 @@ D1 = mh.QUELLEN / 'bandai' / 'dataset' / 'Bandai-Namco-Research-Motiondataset-1'
 D2 = mh.QUELLEN / 'bandai' / 'dataset' / 'Bandai-Namco-Research-Motiondataset-2' / 'data'
 
 AUSGABE = Path(__file__).resolve().parents[2] / 'assets' / 'figuren'
+
+# Einzelne Schläge aus längeren Aufnahmen (Einzelbilder, 30 je Sekunde): kurz ausholen, zuschlagen,
+# zurückkehren. Im Spiel trifft der Schlag im schnellsten Moment (bei 18 von 30, 12 von 20, 15 von 36).
+HIEB = ('hieb', 'ganz', D1 / 'dataset-1_slash_normal_001.bvh', 189, 219)
+SCHLAG = ('schlag', 'ganz', D1 / 'dataset-1_punch_normal_002.bvh', 139, 159)
+TRITT = ('tritt', 'ganz', D1 / 'dataset-1_kick_normal_001.bvh', 177, 213)
 HAUT_STAND = (Path(__file__).parent / 'haut.py').read_text()
 
 FIGUREN = {
@@ -43,6 +49,7 @@ FIGUREN = {
             ('rennen', 'zyklus', D1 / 'dataset-1_run_masculinity_001.bvh'),
             ('sprinten', 'zyklus', D1 / 'dataset-1_dash_masculinity_001.bvh'),
             ('erschoepft', 'zyklus', D1 / 'dataset-1_walk_tired_001.bvh'),
+            HIEB, SCHLAG,
         ],
     ),
     'sie': dict(
@@ -57,6 +64,7 @@ FIGUREN = {
             ('rennen', 'zyklus', D1 / 'dataset-1_run_feminine_001.bvh'),
             ('sprinten', 'zyklus', D1 / 'dataset-1_dash_feminine_001.bvh'),
             ('erschoepft', 'zyklus', D1 / 'dataset-1_walk_tired_002.bvh'),
+            HIEB, SCHLAG,
         ],
     ),
     'einsiedler': dict(
@@ -71,6 +79,87 @@ FIGUREN = {
             ('stehen', 'stehen', D2 / 'dataset-2_wave-right-hand_normal_003.bvh'),
             ('gehen', 'zyklus', D1 / 'dataset-1_walk_old_001.bvh'),
             ('winken', 'ganz', D2 / 'dataset-2_wave-right-hand_elderly_001.bvh'),
+        ],
+    ),
+    # Räuber: jung, kräftig, sonnenverbrannt und schmutzig, im kurzen Kittel; Gang wie ein Halbstarker
+    'raeuber': dict(
+        makro=dict(gender=1.0, age=0.42, muscle=0.72, weight=0.5, height=0.5, proportions=0.7,
+                   rassen={'caucasian': 0.7, 'african': 0.15, 'asian': 0.15}),
+        haut=dict(hautfarbe=(0.64, 0.47, 0.36), haarfarbe=(0.09, 0.07, 0.05), bart=0.75, alter=0.2, schmutz=0.85),
+        haare=dict(art='kurz', laenge=(0.03, 0.07), anzahl=1500, breite=0.012),
+        kleidung='kutte',
+        kutte=dict(saum=0.5, weite=0.16, farbe=(0.21, 0.20, 0.16), saat=23, guertel=(0.16, 0.11, 0.07, 1)),
+        textur=1024,
+        bewegungen=[
+            ('stehen', 'stehen', D2 / 'dataset-2_wave-right-hand_normal_004.bvh'),
+            ('gehen', 'zyklus', D1 / 'dataset-1_walk_chimpira_001.bvh'),
+            ('rennen', 'zyklus', D1 / 'dataset-1_run_chimpira_001.bvh'),
+            HIEB, SCHLAG,
+        ],
+    ),
+    # Der Räuberhauptmann: groß, schwer, kahl mit rotem Bart, im dunkelroten Kittel; Gang wie ein Riese
+    'hauptmann': dict(
+        makro=dict(gender=1.0, age=0.62, muscle=0.9, weight=0.68, height=0.95, proportions=0.9,
+                   rassen={'caucasian': 0.85, 'african': 0.05, 'asian': 0.1}),
+        haut=dict(hautfarbe=(0.62, 0.45, 0.35), haarfarbe=(0.36, 0.13, 0.06), bart=1.0, alter=0.5, glatze=True,
+                  schmutz=0.7),
+        haare=dict(art='kurz', glatze=True, laenge=(0.02, 0.05), anzahl=900, breite=0.010, bart=True,
+                   bart_laenge=(0.07, 0.17), bart_anzahl=1400),
+        kleidung='kutte',
+        kutte=dict(saum=0.6, weite=0.22, farbe=(0.33, 0.10, 0.08), saat=31, guertel=(0.10, 0.07, 0.05, 1)),
+        textur=1024,
+        bewegungen=[
+            ('stehen', 'stehen', D2 / 'dataset-2_wave-right-hand_normal_005.bvh'),
+            ('gehen', 'zyklus', D1 / 'dataset-1_walk_giant_001.bvh'),
+            ('rennen', 'zyklus', D1 / 'dataset-1_run_giant_001.bvh'),
+            HIEB, TRITT,
+        ],
+    ),
+    # Erlenbach: Gerold, der alte Kartenleser, in einer langen blauen Kutte
+    'gerold': dict(
+        makro=dict(gender=1.0, age=0.85, muscle=0.35, weight=0.45, height=0.45, proportions=0.6,
+                   rassen={'caucasian': 0.85, 'african': 0.05, 'asian': 0.1}),
+        haut=dict(hautfarbe=(0.72, 0.56, 0.46), haarfarbe=(0.78, 0.77, 0.74), bart=0.9, alter=0.9, schmutz=0.1),
+        haare=dict(art='kurz', laenge=(0.04, 0.09), anzahl=1300, breite=0.011, bart=True,
+                   bart_laenge=(0.10, 0.24), bart_anzahl=1300),
+        kleidung='kutte',
+        kutte=dict(farbe=(0.20, 0.24, 0.38), saat=41, guertel=(0.55, 0.45, 0.25, 1)),
+        textur=1024,
+        bewegungen=[
+            ('stehen', 'stehen', D2 / 'dataset-2_wave-right-hand_elderly_002.bvh'),
+            ('gehen', 'zyklus', D1 / 'dataset-1_walk_old_001.bvh'),
+            ('winken', 'ganz', D2 / 'dataset-2_wave-right-hand_elderly_003.bvh'),
+        ],
+    ),
+    # Erlenbach: Marta, die Händlerin, im langen grünen Kleid
+    'marta': dict(
+        makro=dict(gender=0.0, age=0.52, muscle=0.45, weight=0.55, height=0.45, proportions=0.8,
+                   cupsize=0.55, firmness=0.5, rassen={'caucasian': 0.75, 'african': 0.1, 'asian': 0.15}),
+        haut=dict(hautfarbe=(0.76, 0.58, 0.47), haarfarbe=(0.32, 0.17, 0.09), bart=0, alter=0.3, weiblich=True,
+                  lippen=(0.66, 0.38, 0.38), schmutz=0.15),
+        haare=dict(art='lang', laenge=(0.20, 0.32), anzahl=1800, breite=0.016),
+        kleidung='kutte',
+        kutte=dict(farbe=(0.22, 0.32, 0.20), saat=53, guertel=(0.42, 0.30, 0.16, 1)),
+        textur=1024,
+        bewegungen=[
+            ('stehen', 'stehen', D2 / 'dataset-2_wave-right-hand_normal_006.bvh'),
+            ('gehen', 'zyklus', D1 / 'dataset-1_walk_feminine_001.bvh'),
+            ('winken', 'ganz', D2 / 'dataset-2_wave-right-hand_normal_007.bvh'),
+        ],
+    ),
+    # Erlenbach: Jost, der Fischer, wettergegerbt, im kurzen graublauen Kittel
+    'jost': dict(
+        makro=dict(gender=1.0, age=0.58, muscle=0.62, weight=0.55, height=0.55, proportions=0.75,
+                   rassen={'caucasian': 0.8, 'african': 0.1, 'asian': 0.1}),
+        haut=dict(hautfarbe=(0.66, 0.48, 0.37), haarfarbe=(0.36, 0.31, 0.26), bart=0.85, alter=0.55, schmutz=0.4),
+        haare=dict(art='kurz', laenge=(0.03, 0.06), anzahl=1500, breite=0.012),
+        kleidung='kutte',
+        kutte=dict(saum=0.5, weite=0.16, farbe=(0.30, 0.33, 0.37), saat=67, guertel=(0.25, 0.18, 0.10, 1)),
+        textur=1024,
+        bewegungen=[
+            ('stehen', 'stehen', D2 / 'dataset-2_wave-right-hand_normal_008.bvh'),
+            ('gehen', 'zyklus', D1 / 'dataset-1_walk_normal_001.bvh'),
+            ('winken', 'ganz', D2 / 'dataset-2_wave-right-hand_normal_009.bvh'),
         ],
     ),
 }
@@ -128,10 +217,10 @@ def baue(name, einstellung):
         farbe, normal, orm = z['farbe'], z['normal'], z['orm']
     else:
         farbe, normal, orm = haut.male_haut(k, skelett, haut_teil['pos'], haut_teil['normal'], haut_teil['uv'], tri,
-                                           einstellung['haut'], groesse=2048)
+                                           einstellung['haut'], groesse=einstellung.get('textur', 2048))
         zwischen.parent.mkdir(exist_ok=True)
         np.savez(zwischen, farbe=farbe, normal=normal, orm=orm)
-    klein = lambda a: np.asarray(Image.fromarray(a).resize((1024, 1024), Image.LANCZOS))
+    klein = lambda a: np.asarray(Image.fromarray(a).resize((einstellung.get('textur', 2048) // 2,) * 2, Image.LANCZOS))
     haut_teil['material'] = glb.material(
         'haut', farb_textur=glb.bild(jpg(farbe, 90), 'image/jpeg'),
         normal_textur=glb.bild(jpg(normal, 92), 'image/jpeg'), normal_staerke=1.0,
@@ -190,8 +279,10 @@ def baue(name, einstellung):
     kg, kw = gelenke_roh[koerper_idx], gewichte_roh[koerper_idx]
     if einstellung.get('kleidung') == 'kutte':
         stuecke = []
-        kidx, kpunkte, ktri, kuv = kleidung.kutte(k, normalen_roh, skelett, koerper_flaechen=flaechen)
-        wf, wn, wo = kleidung.wolle_textur()
+        schnitt = einstellung.get('kutte', {})
+        kidx, kpunkte, ktri, kuv = kleidung.kutte(k, normalen_roh, skelett, koerper_flaechen=flaechen,
+                                                  saum=schnitt.get('saum'), weite=schnitt.get('weite', 0.35))
+        wf, wn, wo = kleidung.wolle_textur(grund=schnitt.get('farbe', (0.42, 0.37, 0.30)), saat=schnitt.get('saat', 11))
         wolle = glb.material('wolle', farb_textur=glb.bild(jpg(wf, 88), 'image/jpeg'),
                              normal_textur=glb.bild(jpg(wn, 90), 'image/jpeg'),
                              orm_textur=glb.bild(jpg(wo, 90), 'image/jpeg'), rauheit=1.0, doppelseitig=True)
@@ -201,7 +292,7 @@ def baue(name, einstellung):
         sp, st, suv = kleidung.strick(kleidung.huellring(kpunkte, guertel_y, abstand=0.004, bruecke_grad=25,
                                                            dicke=0.02, nur_rumpf=0.35))
         g, w = netz.uebertrage_gewichte(sp, kp, kg, kw)
-        strick_mat = glb.material('strick', farbe=(0.30, 0.24, 0.16, 1), rauheit=0.95)
+        strick_mat = glb.material('strick', farbe=schnitt.get('guertel', (0.30, 0.24, 0.16, 1)), rauheit=0.95)
         teile.append(dict(pos=sp, normal=netz.normalen(sp, st), uv=suv, gelenke=g, gewichte=w, index=st,
                           material=strick_mat))
     else:
@@ -231,13 +322,13 @@ def baue(name, einstellung):
 
     # --- Bewegungen ---
     bewegungen = []
-    for bname, art, quelle in einstellung.get('bewegungen', []):
+    for bname, art, quelle, *bereich in einstellung.get('bewegungen', []):
         if art == 'stehen':
             bewegungen.append(bewegung.stehen_aus(bewegung.Quelle(quelle), skelett))
         elif art == 'zyklus':
             bewegungen.append(bewegung.zyklus_bewegung(quelle, skelett, bname))
-        else:
-            bewegungen.append(bewegung.ganze_bewegung(quelle, skelett, bname))
+        else:  # 'ganz' oder ein Abschnitt (von, bis) in Einzelbildern, z. B. ein einzelner Hieb
+            bewegungen.append(bewegung.ganze_bewegung(quelle, skelett, bname, *bereich))
     finger = bewegungen[0]['finger'] if bewegungen else {}
 
     # --- Skelett-Knoten (Grundhaltung: erste Stellung des Stehens, Finger locker gekrümmt) ---

@@ -10,10 +10,12 @@ import { erzeugeWasser } from './welt/wasser.js';
 import { erzeugeFeuer, erzeugeFeuerlichter } from './welt/feuer.js';
 import { erzeugeSammeln } from './welt/sammeln.js';
 import { erzeugeMarkierung } from './welt/markierung.js';
+import { erzeugeRaeuberlager } from './welt/raeuberlager.js';
+import { inDieHand } from './welt/waffen.js';
 import { entferneHindernis, hindernis } from './welt/kollision.js';
 import { wind, windSchritt } from './welt/wind.js';
 import { SEKUNDEN_JE_STUNDE, tageszeitSchritt, uhrzeitText, zeit } from './welt/tageszeit.js';
-import { LAGER, START } from './welt/orte.js';
+import { LAGER, RAEUBERLAGER, START } from './welt/orte.js';
 import { ladeFigur } from './spieler/figur.js';
 import { erzeugeSteuerung } from './spieler/steuerung.js';
 import { erzeugeInventar } from './spieler/inventar.js';
@@ -23,10 +25,13 @@ import { erzeugeBenutzen } from './spieler/benutzen.js';
 import { erzeugeEinsiedler } from './figuren/einsiedler.js';
 import { erzeugeEreignisse } from './ereignisse/ereignisse.js';
 import { erzeugeAufgaben } from './ereignisse/aufgaben.js';
+import { erzeugeGegner } from './kampf/gegner.js';
+import { erzeugeKampf } from './kampf/kampf.js';
 import { erzeugeUeberleben } from './ueberleben/werte.js';
 import { erzeugeOberflaeche } from './ui/oberflaeche.js';
 import { erzeugeBeruehrung } from './ui/beruehrung.js';
 import { erzeugeMenue } from './ui/menue.js';
+import { erzeugeKampfanzeige } from './ui/kampfanzeige.js';
 import { erzeugeNachbearbeitung } from './nachbearbeitung.js';
 import { BERUFE } from './inhalte/berufe.js';
 import { gegenstand } from './inhalte/gegenstaende.js';
@@ -109,7 +114,15 @@ await atmen();
 const lagerfeuer = erzeugeFeuer(LAGER.x, LAGER.z, { felsMaterial: natur.felsMaterial, rindenMaterial: baeume.rinde });
 szene.add(lagerfeuer.objekt);
 hindernis(LAGER.x, LAGER.z, 0.75);
-const feuerstellen = [{ feuer: lagerfeuer, ort: lagerfeuer.ort, brennt: () => true }];
+const raeuberlager = erzeugeRaeuberlager({ rindenMaterial: baeume.rinde });
+szene.add(raeuberlager.objekt);
+const raeuberfeuer = erzeugeFeuer(RAEUBERLAGER.x, RAEUBERLAGER.z, { felsMaterial: natur.felsMaterial, rindenMaterial: baeume.rinde });
+szene.add(raeuberfeuer.objekt);
+hindernis(RAEUBERLAGER.x, RAEUBERLAGER.z, 0.75);
+const feuerstellen = [
+  { feuer: lagerfeuer, ort: lagerfeuer.ort, brennt: () => true },
+  { feuer: raeuberfeuer, ort: raeuberfeuer.ort, brennt: () => true },
+];
 const feuerlichter = erzeugeFeuerlichter();
 szene.add(feuerlichter.objekt);
 
@@ -128,7 +141,10 @@ Promise.allSettled([figurenLaden.er, figurenLaden.sie]).then(() => erzeugeEinsie
   welt.einsiedler = e;
   szene.add(e.objekt);
   window.notiere?.('Einsiedler geladen');
-}).catch((e) => window.zeigeFehler?.(`Der Einsiedler konnte nicht geladen werden (${e.message})`));
+}).catch((e) => window.zeigeFehler?.(`Der Einsiedler konnte nicht geladen werden (${e.message})`))
+  .then(() => gegner.lade())
+  .then(() => window.notiere?.('Räuber geladen'))
+  .catch((e) => window.zeigeFehler?.(`Die Räuber konnten nicht geladen werden (${e.message})`));
 
 window.spiel.geladen = true;
 oberflaeche.laden('Bereit. Wähle deine Figur.');
@@ -149,7 +165,8 @@ const fortschritt = erzeugeFortschritt({
   },
   beiBerufsstufe: (beruf, stufe) => nachricht(`${BERUFE[beruf].name}: jetzt Stufe ${stufe}.`),
 });
-const inventar = erzeugeInventar({ nachricht });
+let waffeNeu = true; // die Waffe in der Hand muss neu bestimmt werden
+const inventar = erzeugeInventar({ nachricht, beiAenderung: () => { waffeNeu = true; } });
 const ueberleben = erzeugeUeberleben({
   beiTod: sterben,
   beiWarnung: nachricht,
@@ -180,6 +197,55 @@ const benutzen = erzeugeBenutzen({
   sammeln, inventar, fortschritt, ueberleben, nachricht, gewinn,
   merke: (m) => ereignisse.merker.add(m),
 });
+
+// ---------------------------------------------------------------- Kampf
+const anzeige = erzeugeKampfanzeige(kamera);
+const zufallZwischen = (a, b) => Math.round(a + Math.random() * (b - a));
+const gegner = erzeugeGegner({
+  szene,
+  istAktiv: () => steuerung.zustand.aktiv && spielLaeuft,
+  beiAlarm: (g) => {
+    if (g.def.boss) nachricht(`Der ${g.def.name} hat dich gesehen!`);
+    tipp('kampf', amHandy() ? 'Tippe auf „Schlagen“, um zuzuschlagen. Iss zwischendurch, wenn das Leben knapp wird.' : 'Linksklick oder X: zuschlagen. Iss zwischendurch, wenn das Leben knapp wird.');
+  },
+  beiWarnung: (g, text) => {
+    nachricht(`Der ${g.def.name} ${text}! Geh aus dem Weg!`);
+    anzeige.zahl(g.objekt.position, '!', 'warnung', anzeige.kopfhoehe(g.art) + 0.3);
+  },
+  beiAngriff: (g, schaden) => {
+    const echt = Math.max(1, Math.round(schaden * (1 - inventar.schutz())));
+    anzeige.blitzen();
+    anzeige.zahl(steuerung.zustand.ort, `−${echt}`, 'spieler', 1.7);
+    ueberleben.verletze(echt, 'erschlagen worden');
+    if (ueberleben.werte.leben < 45) tipp('heilen', 'Das Leben wird knapp: Zieh dich zurück und iss etwas, oder trag Heilsalbe auf (Menü, Inventar).');
+  },
+  beiTreffer: (g, schaden, volltreffer) => {
+    anzeige.zahl(g.objekt.position, volltreffer ? `${schaden}!` : `${schaden}`, volltreffer ? 'voll' : '', anzeige.kopfhoehe(g.art) - 0.2);
+  },
+  beiSieg: (g) => {
+    const def = g.def;
+    fortschritt.merkeBesiegt(g.art);
+    const ep = fortschritt.gibErfahrung(def.erfahrung);
+    gewinn(`+${ep} Erfahrung`, 'erfahrung');
+    const muenzen = zufallZwischen(...def.beute.muenzen);
+    inventar.gibMuenzen(muenzen);
+    gewinn(`+${muenzen} Kupfer`, 'muenzen');
+    for (const [id, chance, n] of def.beute.gegenstaende) {
+      if (Math.random() < chance && inventar.gib(id, n, { leise: true })) gewinn(`+${n > 1 ? `${n} × ` : ''}${gegenstand(id).name}`, id);
+    }
+    for (const [id, n] of Object.entries(def.einmalig ?? {})) {
+      if (ereignisse.merker.has(`beute-${id}`)) continue;
+      ereignisse.merker.add(`beute-${id}`);
+      inventar.gib(id, n, { leise: true });
+      gewinn(`+${gegenstand(id).name}`, id);
+    }
+    if (def.boss) oberflaeche.band(`${def.name} besiegt`, 'Er trug ein Stück Pergament bei sich: ein Teil der Karte!', 'aufgabe');
+    else nachricht(`${def.name} besiegt.`);
+    window.notiere?.(`Besiegt: ${g.id}`);
+    speichereBald();
+  },
+});
+const kampf = erzeugeKampf({ steuerung, inventar, fortschritt, gegner, figur: () => figur });
 
 // ---------------------------------------------------------------- Feuer
 const spielStunde = () => zeit.tag * 24 + zeit.stunde;
@@ -295,7 +361,7 @@ function tippsPruefen() {
 }
 
 Object.assign(window.spiel, {
-  steuerung, ereignisse, ueberleben, inventar, fortschritt, herstellen, aufgaben, sammeln, benutzen, menue,
+  steuerung, ereignisse, ueberleben, inventar, fortschritt, herstellen, aufgaben, sammeln, benutzen, menue, gegner, kampf,
   speichere: () => speichereJetzt(),
   fackelBrennt: () => fackelAn,
   // Prüfhilfen (für werkzeuge/foto_spiel.mjs und die Browser-Konsole)
@@ -320,6 +386,7 @@ function spielstand() {
     aufgaben: aufgaben.speichern(),
     ereignisse: ereignisse.speichern(),
     sammeln: sammeln.speichern(),
+    gegner: gegner.speichern(),
     feuer: feuerstellen.filter((f) => f.eigenes && f.brennt()).map((f) => ({ x: f.ort.x, z: f.ort.z, bis: f.bis })),
   };
 }
@@ -346,6 +413,7 @@ function ladeStand(st) {
   ereignisse.laden(st.ereignisse);
   aufgaben.laden(st.aufgaben);
   sammeln.laden(st.sammeln);
+  gegner.laden(st.gegner);
   for (const f of st.feuer ?? []) if (f.bis > spielStunde()) entzuende(f.x, f.z, f.bis);
 }
 
@@ -382,6 +450,7 @@ wahl.then(async (art) => {
   spielLaeuft = true;
   window.spiel.figur = figur;
   if (stand) nachricht(`Willkommen zurück. ${uhrzeitText()}.`);
+  if (ereignisse.merker.has('hilfe-aus')) document.getElementById('hinweise').hidden = true;
   speichereJetzt();
 });
 
@@ -389,6 +458,7 @@ function sterben(grund) {
   steuerung.zustand.aktiv = false;
   menue.schliesse();
   ereignisse.vergiss();
+  gegner.zurueck();
   // Was man bei sich trägt, ist fort. Was man gelernt hat, bleibt, und das Pergament auch.
   for (const d of inventar.liste()) if (d.art !== 'aufgabe') inventar.nimm(d.id, d.anzahl);
   inventar.zahle(inventar.muenzen);
@@ -419,10 +489,15 @@ addEventListener('keydown', (e) => {
   if (!steuerung.zustand.aktiv) return;
   if (e.code === 'KeyE' && !ereignisse.aktuell) benutzen.benutze(steuerung.zustand.ort, steuerung.zustand.blickSeite);
   if (e.code === 'KeyF') machFeuer();
+  if (e.code === 'KeyX') kampf.schlage();
   if (e.code === 'KeyG') {
     wechsleGrafik();
     nachricht(`Grafik: ${qualitaet.name}`);
   }
+});
+
+flaeche.addEventListener('mousedown', (e) => {
+  if (e.button === 0 && document.pointerLockElement === flaeche && steuerung.zustand.aktiv) kampf.schlage();
 });
 
 function wechsleGrafik() {
@@ -481,8 +556,12 @@ const uhr = new THREE.Clock();
 const blickpunkt = new THREE.Vector3();
 let anzeigeTakt = 0, aktionTakt = 0, wachsTakt = 0;
 const messung = { ab: null, bilder: 0, fertig: false };
+// Längster Zeitschritt je Bild. Prüfungen im langsamen Test-Browser dürfen ihn vergrößern
+// (window.SCHATZSUCHE_SCHRITT), damit dort die Spielzeit nicht im Schneckentempo vergeht.
+const MAX_SCHRITT = window.SCHATZSUCHE_SCHRITT ?? 0.05;
+let spielzeit = 0;
 renderer.setAnimationLoop(() => {
-  const dt = Math.min(uhr.getDelta(), 0.05);
+  const dt = Math.min(uhr.getDelta(), MAX_SCHRITT);
   // Bei offenem Menü steht das Bild still: Das spart Strom, und das Menü reagiert sofort
   if (pausiert) return;
   if (figur && !messung.fertig) {
@@ -504,6 +583,10 @@ renderer.setAnimationLoop(() => {
     ereignisse.schritt(dt);
     ueberleben.schritt(dt, { ort: steuerung.zustand.ort, tempo: steuerung.zustand.tempo });
     benutzen.schritt(dt);
+    kampf.schritt(dt);
+    gegner.schritt(dt, { ort: steuerung.zustand.ort, lebt: !ueberleben.tot });
+    anzeige.aktualisiere(gegner.alle, steuerung.zustand.ort);
+    if (waffeNeu) { waffeNeu = false; inDieHand(figur, inventar.besteWaffe()); }
     blickpunkt.copy(steuerung.zustand.ort);
   } else {
     // Vor dem Start: langsamer Kameraflug über die Wiese
@@ -532,6 +615,7 @@ renderer.setAnimationLoop(() => {
       const v = z.aktiv && !ereignisse.aktuell ? benutzen.vorschlag(z.ort, z.blickSeite) : null;
       oberflaeche.zeigeAktion(v);
       markierung.zeige(v?.stelle ?? null);
+      document.getElementById('knopf-schlagen').classList.toggle('bereit', gegner.imKampf().length > 0);
     }
     anzeigeTakt -= dt;
     if (anzeigeTakt <= 0) {
@@ -545,6 +629,11 @@ renderer.setAnimationLoop(() => {
       wachsTakt = 1;
       sammeln.wachsen();
       loescheAus();
+    }
+    spielzeit += dt;
+    if (spielzeit > 240 && !ereignisse.merker.has('hilfe-aus')) {
+      ereignisse.merker.add('hilfe-aus');
+      if (!amHandy()) { document.getElementById('hinweise').hidden = true; nachricht('Tipp: Mit H zeigst du die Tastenhilfe wieder an.'); }
     }
     if (!ueberleben.tot) {
       speicherUhr -= dt;

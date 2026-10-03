@@ -1,7 +1,7 @@
 // Rauchtest: Startet das Spiel in einem unsichtbaren Browser und spielt die wichtigsten Abläufe durch:
 // Start, Laufen, Blickwechsel, Trinken, Einsiedler und Pergament, Sammeln mit „Benutzen“,
-// Feuer lernen, Herstellen im Menü, Stufenaufstieg, Punkte verteilen, Feuer machen, Spielstand
-// speichern und weiterspielen, Nacht, Sterben.
+// Feuer lernen, Herstellen im Menü, Stufenaufstieg, Punkte verteilen, Feuer machen, Kampf gegen
+// Räuber und Hauptmann, Spielstand speichern und weiterspielen, Nacht, Sterben.
 // Bildschirmfotos landen in test-ergebnisse/ (nicht im Projekt gespeichert).
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
@@ -15,7 +15,8 @@ const { server, url } = await starteServer();
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const seite = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 // Im unsichtbaren Test-Browser gibt es keine Grafikkarte: niedrigste Qualität
-await seite.addInitScript(() => { window.SCHATZSUCHE_QUALITAET = 'niedrig'; });
+// Ohne Grafikkarte entstehen nur wenige Bilder je Sekunde; größere Zeitschritte halten die Spielzeit in Gang
+await seite.addInitScript(() => { window.SCHATZSUCHE_QUALITAET = 'niedrig'; window.SCHATZSUCHE_SCHRITT = 0.15; });
 // Schriften kommen aus dem Internet; der Test braucht sie nicht
 await seite.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
 const fehler = [];
@@ -89,7 +90,7 @@ async function stelleHer(rezept) {
 }
 
 try {
-  await seite.goto(url);
+  await seite.goto(url, { timeout: 300000 });
   await warte(() => window.spiel?.geladen && window.spiel?.bereit, null, 300);
   await seite.waitForTimeout(1500);
   await seite.screenshot({ path: foto('1-start'), timeout: 300000 });
@@ -202,10 +203,42 @@ try {
   pruefe(feuerNachher === feuerVorher + 1, 'Mit F brennt ein eigenes Feuer');
   await seite.screenshot({ path: foto('10-eigenes-feuer'), timeout: 300000 });
 
+  // Kampf: mit der Keule des Hauptmanns gegen einen Räuber an der Straße
+  await warte(() => window.spiel.gegner.alle.length === 5, null, 300);
+  await spiel(() => window.spiel.inventar.gib('eisenkeule', 1));
+  // Gegen einen Gegner kämpfen: dicht heran, zu ihm schauen, zuschlagen, bis er fällt
+  async function kaempfe(nummer, sekunden = 240) {
+    const ende = Date.now() + sekunden * 1000;
+    while (Date.now() < ende) {
+      const g = await spiel((n) => { const g = window.spiel.gegner.alle[n]; return { x: g.objekt.position.x, z: g.objekt.position.z, tot: g.zustand === 'tot' }; }, nummer);
+      if (g.tot) return true;
+      await spiel((p) => {
+        const o = window.spiel.steuerung.zustand.ort;
+        if (Math.hypot(o.x - p.x, o.z - p.z) > 2.2) window.spiel.teleport(p.x - 1.6, p.z);
+        window.spiel.blick(Math.atan2(-(p.x - o.x), -(p.z - o.z)), -0.1);
+      }, g);
+      await tafelnWeg();
+      await taste('KeyX');
+      await seite.waitForTimeout(400);
+    }
+    return false;
+  }
+  const vorKampf = await spiel(() => ({ ep: window.spiel.fortschritt.zustand.erfahrung + 1000 * window.spiel.fortschritt.stufe, muenzen: window.spiel.inventar.muenzen }));
+  const gesiegt = await kaempfe(0);
+  await seite.screenshot({ path: foto('11-kampf'), timeout: 300000 });
+  const nachKampf = await spiel(() => ({ ep: window.spiel.fortschritt.zustand.erfahrung + 1000 * window.spiel.fortschritt.stufe, muenzen: window.spiel.inventar.muenzen, besiegt: window.spiel.fortschritt.besiegt('raeuber') }));
+  pruefe(gesiegt && nachKampf.besiegt >= 1, 'Ein Räuber ist im Kampf besiegt');
+  pruefe(nachKampf.ep > vorKampf.ep && nachKampf.muenzen > vorKampf.muenzen, `Sieg bringt Erfahrung und Kupfer (+${nachKampf.muenzen - vorKampf.muenzen} Kupfer)`);
+  pruefe(await spiel(() => window.spiel.aufgaben.istAktiv('raeuber') || window.spiel.aufgaben.istErledigt('raeuber')), 'Aufgabe „Räuber an der Straße“ läuft');
+  // Der Hauptmann (für den Test geschwächt) trägt das erste Kartenteil
+  await spiel(() => { const h = window.spiel.gegner.alle[4]; h.leben = 12; });
+  const bossBesiegt = await kaempfe(4);
+  pruefe(bossBesiegt && await spiel(() => window.spiel.inventar.hat('kartenteil_1')), 'Räuberhauptmann besiegt, das Kartenteil ist im Inventar');
+
   // Spielstand: speichern, Seite neu laden, weiterspielen
   const stand = await spiel(() => ({ stufe: window.spiel.fortschritt.stufe, messer: window.spiel.inventar.hat('steinmesser'), holz: window.spiel.aufgaben.istAktiv('holz') }));
   await spiel(() => window.spiel.speichere());
-  await seite.reload();
+  await seite.reload({ timeout: 300000 });
   await warte(() => window.spiel?.geladen && window.spiel?.bereit, null, 300);
   pruefe(await spiel(() => !document.getElementById('weiter').hidden), `Nach dem Neuladen: „Weiterspielen“ (${await spiel(() => document.getElementById('weiter-info').textContent)})`);
   await seite.click('#weiter');
@@ -214,11 +247,13 @@ try {
   pruefe(geladen.stufe === stand.stufe && geladen.messer && geladen.holz, 'Spielstand geladen: Stufe, Inventar und Aufgaben sind wieder da');
   await seite.waitForTimeout(3000);
   pruefe(await spiel(() => window.spiel.ereignisse.aktuell !== 'erwachen'), 'Beim Weiterspielen beginnt die Geschichte nicht von vorn');
+  await warte(() => window.spiel.gegner.alle.length === 5, null, 300);
+  pruefe(await spiel(() => window.spiel.gegner.alle[4].zustand === 'tot'), 'Der besiegte Hauptmann bleibt nach dem Neuladen besiegt');
 
   // Nacht, mit einer Fackel
   await spiel(() => { window.spiel.inventar.gib('fackel', 1); window.spiel.teleport(-54, 80); window.spiel.blick(3.4, 0.05); window.spiel.setzeZeit(23); });
   await seite.waitForTimeout(2500);
-  await seite.screenshot({ path: foto('11-nacht'), timeout: 300000 });
+  await seite.screenshot({ path: foto('12-nacht'), timeout: 300000 });
   pruefe(await spiel(() => window.spiel.zeit.hell < 0.2), 'Es wird Nacht');
   pruefe(await warte(() => window.spiel.fackelBrennt(), null, 60).then(() => true, () => false), 'Nachts brennt die Fackel von selbst');
 
@@ -228,10 +263,10 @@ try {
   pruefe(true, 'Tod wird angezeigt');
   await warte(() => window.spiel.steuerung.zustand.aktiv && window.spiel.ueberleben.werte.leben >= 99, null, 300);
   const nachTod = await spiel(() => ({
-    dinge: window.spiel.inventar.liste().map((d) => d.id), stufe: window.spiel.fortschritt.stufe,
+    dinge: window.spiel.inventar.liste().map((d) => [d.id, d.art]), stufe: window.spiel.fortschritt.stufe,
   }));
-  pruefe(nachTod.dinge.length === 1 && nachTod.dinge[0] === 'pergament' && nachTod.stufe === stand.stufe,
-    `Nach dem Tod: Inventar leer bis aufs Pergament, Stufe ${nachTod.stufe} bleibt`);
+  pruefe(nachTod.dinge.every(([, art]) => art === 'aufgabe') && nachTod.dinge.some(([id]) => id === 'pergament') && nachTod.stufe === stand.stufe,
+    `Nach dem Tod: nur Pergament und Kartenteil bleiben (${nachTod.dinge.map(([id]) => id).join(', ')}), Stufe ${nachTod.stufe} bleibt`);
 } catch (e) {
   pruefe(false, `Abbruch: ${e.message.split('\n')[0]}`);
   await seite.screenshot({ path: foto('fehler') }).catch(() => {});

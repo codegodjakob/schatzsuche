@@ -14,6 +14,7 @@ export const REZEPTE = [
   { id: 'speer', ergebnis: 'speer', zutaten: { ast: 1 }, werkzeug: ['feuerstein', 'steinmesser'], ort: 'hand', beruf: 'handwerk', stufe: 1, erfahrung: 6 },
   { id: 'steinmesser', ergebnis: 'steinmesser', zutaten: { stein: 1, ast: 1, schnur: 1 }, werkzeug: ['feuerstein'], ort: 'hand', beruf: 'handwerk', stufe: 1, erfahrung: 12 },
   { id: 'steinaxt', ergebnis: 'steinaxt', zutaten: { stein: 2, ast: 1, schnur: 2 }, werkzeug: ['feuerstein', 'steinmesser'], ort: 'hand', beruf: 'handwerk', stufe: 2, erfahrung: 18 },
+  { id: 'lederwams', ergebnis: 'lederwams', zutaten: { lederfetzen: 4, schnur: 2 }, werkzeug: ['steinmesser'], ort: 'hand', beruf: 'handwerk', stufe: 2, erfahrung: 20 },
   { id: 'keule', ergebnis: 'keule', zutaten: { holzscheit: 2, schnur: 1 }, werkzeug: ['steinmesser'], ort: 'hand', beruf: 'handwerk', stufe: 2, erfahrung: 10 },
   { id: 'lagerfeuer', bauwerk: 'lagerfeuer', zutaten: { ast: 3 }, werkzeug: ['feuerstein'], ort: 'hand', beruf: 'handwerk', stufe: 1, erfahrung: 8, merker: 'kann-feuer' },
   { id: 'fackel', ergebnis: 'fackel', zutaten: { ast: 1, fasern: 2 }, ort: 'feuer', beruf: 'handwerk', stufe: 1, erfahrung: 3 },

@@ -15,6 +15,7 @@ export function erzeugeFortschritt({ beiStufe = () => {}, beiBerufsstufe = () =>
     werte: Object.fromEntries(Object.keys(WERTE).map((w) => [w, 1])),
     berufe: Object.fromEntries(Object.keys(BERUFE).map((b) => [b, { stufe: 1, erfahrung: 0 }])),
     hergestellt: {}, // id -> wie oft
+    besiegt: {}, // Gegnerart -> wie oft
   };
 
   // Wirkungen der Werte (jeder Punkt über 1 zählt)
@@ -29,6 +30,9 @@ export function erzeugeFortschritt({ beiStufe = () => {}, beiBerufsstufe = () =>
       return Math.min(0.6, staerke + 0.03 * (berufsStufe(beruf) - 1));
     },
     mehrHergestellt: () => Math.min(0.4, 0.04 * ueber('geschick')),
+    // Kampf: Stärke macht Schläge härter, Geschick bringt Volltreffer (doppelter Schaden)
+    schlagFaktor: () => 1 + 0.08 * ueber('staerke'),
+    volltreffer: () => Math.min(0.4, 0.05 + 0.025 * ueber('geschick')),
     preisFaktor: () => Math.max(0.7, 1 - 0.03 * ueber('ausstrahlung')),
   };
 
@@ -71,12 +75,17 @@ export function erzeugeFortschritt({ beiStufe = () => {}, beiBerufsstufe = () =>
   function merkeHergestellt(id, n = 1) {
     z.hergestellt[id] = (z.hergestellt[id] ?? 0) + n;
   }
+  function merkeBesiegt(art) {
+    z.besiegt[art] = (z.besiegt[art] ?? 0) + 1;
+    beiAenderung();
+  }
 
   return {
     zustand: z,
     wirkung,
-    gibErfahrung, verteile, berufsStufe, berufsRang, merkeHergestellt,
+    gibErfahrung, verteile, berufsStufe, berufsRang, merkeHergestellt, merkeBesiegt,
     hergestellt: (id) => z.hergestellt[id] ?? 0,
+    besiegt: (art) => z.besiegt[art] ?? 0,
     get stufe() { return z.stufe; },
     speichern: () => JSON.parse(JSON.stringify(z)),
     laden(daten) {
@@ -87,6 +96,7 @@ export function erzeugeFortschritt({ beiStufe = () => {}, beiBerufsstufe = () =>
       for (const w of Object.keys(z.werte)) z.werte[w] = daten.werte?.[w] ?? 1;
       for (const b of Object.keys(z.berufe)) z.berufe[b] = { stufe: daten.berufe?.[b]?.stufe ?? 1, erfahrung: daten.berufe?.[b]?.erfahrung ?? 0 };
       z.hergestellt = { ...(daten.hergestellt ?? {}) };
+      z.besiegt = { ...(daten.besiegt ?? {}) };
       beiAenderung();
     },
   };

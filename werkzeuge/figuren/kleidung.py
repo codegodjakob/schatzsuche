@@ -284,8 +284,10 @@ def _glaetten(punkte, dreiecke, schritte=8, staerke=0.5):
     return p
 
 
-def kutte(koerper, normalen_alle, skelett, aermel_bis=0.40, koerper_flaechen=None):
-    """Lange Wollkutte aus den MakeHuman-Hilfsformen ('helper-tights' oben, 'helper-skirt' unten).
+def kutte(koerper, normalen_alle, skelett, aermel_bis=0.40, koerper_flaechen=None, saum=None, weite=0.35):
+    """Wollkutte aus den MakeHuman-Hilfsformen ('helper-tights' oben, 'helper-skirt' unten).
+    saum: wo der Stoff endet, als Anteil zwischen Hüfte (0) und Knöchel (1); None = ganz lang.
+    weite: wie weit der Rock nach unten auseinandergeht.
     Gibt Punktindizes im Grundkörper (für die Gewichte), neue Punkte, Dreiecke, UV."""
     import netz
     k = {b['name']: b for b in skelett}
@@ -293,6 +295,10 @@ def kutte(koerper, normalen_alle, skelett, aermel_bis=0.40, koerper_flaechen=Non
     rock_f, _ = koerper.gruppen_flaechen('helper-skirt')
     oben_f, _ = koerper.gruppen_flaechen('helper-tights')
     rock_oben = P[koerper.vgruppen['helper-skirt']][:, 1].max()
+    if saum is not None:
+        knoechel_y, huefte_y = k['foot_l']['kopf'][1], k['pelvis']['kopf'][1]
+        saum_y = huefte_y - saum * (huefte_y - knoechel_y)
+        rock_f = [f for f in rock_f if P[f][:, 1].mean() > saum_y]
     behalten = []
     for f in oben_f:
         m = P[f].mean(axis=0)
@@ -331,7 +337,7 @@ def kutte(koerper, normalen_alle, skelett, aermel_bis=0.40, koerper_flaechen=Non
     tiefe = np.clip((huefte - p[:, 1]) / (huefte - knoechel), 0, 1)
     radial = p - achse
     radial[:, 1] = 0
-    p[ist_rock] += radial[ist_rock] * (0.35 * tiefe[ist_rock] ** 1.3)[:, None]
+    p[ist_rock] += radial[ist_rock] * (weite * tiefe[ist_rock] ** 1.3)[:, None]
     # Saum nicht ganz bis zum Boden
     # UV: Umfangswinkel und Höhe (Wollmuster ohne sichtbare Richtung)
     winkel = np.arctan2(p[:, 0], p[:, 2] - achse[2])

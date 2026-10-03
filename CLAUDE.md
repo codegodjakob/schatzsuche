@@ -36,15 +36,16 @@ sich leicht erweitern, nach Roblox übertragen und später per KI variieren lass
 
 | Ordner / Datei | Inhalt |
 |---|---|
-| `src/welt/` | Gelände (`gelaende.js`), Himmel und Tageszeit, Gras (wächst mit dem Spieler mit), Wald (`baeume.js`), Felsen/Blumen/Beeren (`natur.js`), Wasser, Feuer, Zusammenstöße. `sammeln.js` = alles, was man aufheben oder abbauen kann (wächst nach), `markierung.js` = der Ring darunter. `orte.js` = feste Orte |
-| `src/inhalte/` | **Inhalte als Listen**: Gegenstände, Rezepte, Berufe und Werte, Aufgaben, Sammelstellen. Neues Material, neues Rezept, neue Aufgabe = ein neuer Eintrag hier |
+| `src/welt/` | Gelände (`gelaende.js`), Himmel und Tageszeit, Gras (wächst mit dem Spieler mit), Wald (`baeume.js`), Felsen/Blumen/Beeren (`natur.js`), Wasser, Feuer, Zusammenstöße. `sammeln.js` = alles, was man aufheben oder abbauen kann (wächst nach), `markierung.js` = der Ring darunter, `raeuberlager.js` = Zelte und Stämme, `waffen.js` = Waffen in der Hand. `orte.js` = feste Orte (auch Straße und Räuberlager) |
+| `src/inhalte/` | **Inhalte als Listen**: Gegenstände, Rezepte, Berufe und Werte, Aufgaben, Sammelstellen, Gegner (mit Beute und Besatzung des Räuberlagers). Neues Material, neues Rezept, neue Aufgabe, neuer Gegner = ein neuer Eintrag hier |
+| `src/kampf/` | `gegner.js` = Verhalten der Gegner (warten, jagen, ausholen, getroffen, heimkehren, tot, wiederkommen); `kampf.js` = Zuschlagen des Spielers |
 | `src/spieler/` | Figur (lädt GLB, überblendet Bewegungen), Steuerung (Laufen, Kamera), Inventar, Fortschritt (Stufen, Werte, Berufe), Herstellen, Benutzen (E) |
 | `src/figuren/` | Andere Figuren, z. B. der Einsiedler |
 | `src/ueberleben/werte.js` | Sättigung, Wasser, Wärme, Leben, Tod |
 | `src/ereignisse/liste.js` | **Alle Ereignisse und Entscheidungen.** Hier wächst die Geschichte |
 | `src/ereignisse/ereignisse.js` | Die Mechanik dahinter (nur ändern, wenn sie etwas Neues können muss) |
 | `src/ereignisse/aufgaben.js` | Führt die Aufgaben aus `src/inhalte/aufgaben.js`: starten, Schritte abhaken, belohnen |
-| `src/ui/` | Startbildschirm, Ereignis-Tafel, Nachrichten, Anzeigen; `menue.js` = Inventar, Herstellen, Figur, Aufgaben; `beruehrung.js` = Fingersteuerung für Handy und Tablet |
+| `src/ui/` | Startbildschirm, Ereignis-Tafel, Nachrichten, Anzeigen; `menue.js` = Inventar, Herstellen, Figur, Aufgaben; `kampfanzeige.js` = Lebensbalken, Schadenszahlen, Boss-Balken; `beruehrung.js` = Fingersteuerung für Handy und Tablet |
 | `src/spielstand.js` | Speichern und Laden im Browser (localStorage); das Skript in `index.html` liest ihn für „Weiterspielen“ |
 | `src/modelle.js` | Lädt 3D-Modelle (auch in der Vorschau, wo sie als Text vorliegen) |
 | `src/qualitaet.js`, `src/nachbearbeitung.js` | Grafikstufen (hoch/mittel/niedrig) und Bild-Nachbearbeitung |
@@ -75,7 +76,7 @@ Grafikkarte langsam (ein Bild in „hoch“ dauert zwischen einer und sechs Minu
 ```
 werkzeuge/figuren/hole_quellen.sh                       # Rohdaten holen (MakeHuman, Bewegungen)
 python3 -m venv /tmp/venv && /tmp/venv/bin/pip install -r werkzeuge/figuren/requirements.txt
-/tmp/venv/bin/python werkzeuge/figuren/baue_figuren.py  # baut assets/figuren/er|sie|einsiedler.glb
+/tmp/venv/bin/python werkzeuge/figuren/baue_figuren.py  # baut alle: er, sie, einsiedler, raeuber, hauptmann (oder nur die genannten)
 node werkzeuge/figuren/foto.mjs er:vorne sie:seite:gehen:0.3   # Prüfbilder in werkzeuge/figuren/ausgabe-pruefung/
 ```
 

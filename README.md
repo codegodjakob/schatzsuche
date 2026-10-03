@@ -21,6 +21,7 @@ Claude veröffentlicht nach jeder Änderung eine Vorschau als Link. Der steht im
 | Maus | umsehen (einmal ins Bild klicken) |
 | `V` | Blick über die Schulter oder aus den eigenen Augen |
 | `E` | benutzen: aufheben, pflücken, Holz hacken, trinken (ein goldener Ring zeigt, was gemeint ist) |
+| Linksklick oder `X` | zuschlagen, mit der stärksten Waffe, die man dabeihat (sonst mit den Fäusten) |
 | `E`, `Q`, `R` | Entscheidungen, solange eine Erzähltafel offen ist |
 | `I` | Inventar: 48 Plätze, Essen, Wegwerfen |
 | `K` | Herstellen: das Rezeptbuch |
@@ -40,7 +41,7 @@ Auf Handy und Tablet erscheint eine Fingersteuerung:
 | Daumen links aufsetzen und ziehen | laufen, ganz ausgelenkt rennen |
 | Rechts wischen | umsehen |
 | Großer Knopf unten rechts | benutzen; er zeigt an, was gerade geht („Ast aufheben“) |
-| Knöpfe darüber | springen, Blickwinkel, Menü |
+| Knöpfe darüber | springen, schlagen (leuchtet rot, wenn Gegner da sind), Blickwinkel, Menü |
 | Menü | Inventar, Herstellen, Figur (auch die Grafik), Aufgaben |
 | Ereignis antippen | Entscheidung treffen |
 
@@ -62,4 +63,5 @@ Neu dabei? → [EINSTIEG.md](EINSTIEG.md). Kurzfassung — die Einzelheiten steh
 | Überleben: Hunger, Durst, Kälte, Tod | Jakob | fertig |
 | Erste Begegnung: der Einsiedler am Lagerfeuer, Feuer machen | Jakob | fertig |
 | Rollenspiel-Kern: Stufen, Werte, Berufe, Inventar, Sammeln, Herstellen, Aufgaben, Münzen, Spielstand | Jakob | fertig (Etappe M1, Stufe 1) |
-| Kampf, Dorf Erlenbach, Charakter-Editor | – | nächste Stufen, siehe [docs/SPIELENTWURF.md](docs/SPIELENTWURF.md) |
+| Kampf: Waffen in der Hand, Räuberlager an der Straße nach Osten, der Räuberhauptmann als erster Boss, Beute, Lederwams, erstes Kartenteil | Jakob | fertig (Etappe M1, Stufe 2) |
+| Dorf Erlenbach, Charakter-Editor | – | nächste Stufen, siehe [docs/SPIELENTWURF.md](docs/SPIELENTWURF.md) |

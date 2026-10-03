@@ -136,7 +136,8 @@ export function erzeugeMenue({
       const fakten = el('ul', 'fakten');
       if (g.essen) for (const w of wirkungen(g.essen)) fakten.append(el('li', '', w));
       if (g.werkzeug) fakten.append(el('li', '', `Werkzeug: ${WERKZEUGNAMEN[g.werkzeug.art] ?? g.werkzeug.art}`));
-      if (g.waffe) fakten.append(el('li', '', `Schaden ${g.waffe.schaden}`));
+      if (g.waffe) fakten.append(el('li', '', `Schaden ${g.waffe.schaden}`), el('li', '', `Reichweite ${String(g.waffe.reichweite ?? 1.3).replace('.', ',')} m`));
+      if (g.schutz) fakten.append(el('li', '', `Schutz ${Math.round(g.schutz * 100)} %`));
       if (g.hoechstens) fakten.append(el('li', '', `Schwer: höchstens ${g.hoechstens} tragbar`));
       fakten.append(el('li', '', `Wert ${g.wert} Kupfer`));
       const knoepfe = el('div', 'knoepfe-zeile');
@@ -197,10 +198,14 @@ export function erzeugeMenue({
 
     const stufe = el('section', 'karte');
     const noetig = erfahrungFuer(z.stufe);
+    const waffeId = inventar.besteWaffe();
+    const w = waffeId ? gegenstand(waffeId) : null;
+    const schaden = Math.round((w?.waffe.schaden ?? 3) * fortschritt.wirkung.schlagFaktor());
     stufe.append(
       el('h3', 'gross', `Stufe ${z.stufe}`),
       balken(z.erfahrung / noetig, 'gold'),
       el('p', 'klein', `${z.erfahrung} von ${noetig} Erfahrung bis Stufe ${z.stufe + 1}`),
+      el('p', 'klein', `Im Kampf: ${w ? w.name : 'Fäuste'}, Schaden ${schaden}, Volltreffer ${Math.round(fortschritt.wirkung.volltreffer() * 100)} %, Schutz ${Math.round(inventar.schutz() * 100)} %`),
       el('p', 'klein', z.stufe >= 5 ? 'Die Wahl der Klasse kommt bald.' : 'Ab Stufe 5 wählst du eine Klasse: Krieger, Waldläufer, Handwerker, Händler oder Heiler.'),
     );
 

@@ -22,9 +22,13 @@ export function erzeugeOberflaeche() {
       return knopf;
     }));
     ereignis.hidden = false;
+    document.body.classList.add('tafel-offen');
   }
 
-  function versteckeEreignis() { ereignis.hidden = true; }
+  function versteckeEreignis() {
+    ereignis.hidden = true;
+    document.body.classList.remove('tafel-offen');
+  }
 
   function nachricht(text) {
     const el = document.createElement('p');

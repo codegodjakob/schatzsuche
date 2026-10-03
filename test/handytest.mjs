@@ -1,6 +1,6 @@
 // Handytest: Startet das Spiel wie auf einem Handy (Touchscreen, schmaler Bildschirm) und bedient
 // es nur mit dem Finger: Figur wählen, Ereignis antippen, mit dem Stick laufen und rennen,
-// wischend umsehen, mit „Benutzen“ etwas aufheben, das Menü öffnen. Bildschirmfotos landen in
+// wischend umsehen, mit „Benutzen“ etwas aufheben, zuschlagen, das Menü öffnen. Bildschirmfotos landen in
 // test-ergebnisse/.
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
@@ -36,7 +36,7 @@ const bilder = async (n) => {
 };
 
 try {
-  await seite.goto(url);
+  await seite.goto(url, { timeout: 300000 });
   // Gleich tippen, noch während die Welt entsteht: Die Wahl muss gemerkt werden
   await seite.tap('#wahl-sie', { timeout: 120000 });
   const frueh = await spiel(() => !window.spiel?.geladen);
@@ -96,6 +96,11 @@ try {
     genommen = await warte((id) => !window.spiel.sammeln.istDa(window.spiel.sammeln.stelle(id)), ast.id, 15).then(() => true, () => false);
   }
   pruefe(genommen && await spiel(() => window.spiel.inventar.hat('ast')), 'Antippen von „Benutzen“ hebt den Ast auf');
+
+  // „Schlagen“: ohne Waffe ein Faustschlag
+  await seite.tap('#knopf-schlagen');
+  const schlaegt = await warte(() => ['schlag', 'hieb'].includes(window.spiel.figur.spielt), null, 30).then(() => true, () => false);
+  pruefe(schlaegt, 'Knopf „Schlagen“ lässt die Figur zuschlagen');
 
   // Menü: öffnen, Reiter wechseln, schließen
   await seite.tap('[data-taste="KeyI"]');

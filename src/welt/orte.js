@@ -11,3 +11,9 @@ export const BEERENSTRAEUCHER = [
 export const PFAD = [
   [4, 6], [-4, 22], [-14, 36], [-26, 50], [-38, 64], [-50, 78], [-58, 86],
 ];
+// Lichtung der Räuber an der Straße nach Osten
+export const RAEUBERLAGER = { x: 112, z: -10, radius: 11 };
+// Die Straße nach Osten: von der Wiese am Räuberlager vorbei Richtung Erlenbach
+export const STRASSE = [
+  [10, -3], [30, -4], [52, -2], [74, -4], [96, 0], [112, 2], [134, 2], [160, 6],
+];

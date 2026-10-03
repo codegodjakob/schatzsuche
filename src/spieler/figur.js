@@ -1,8 +1,14 @@
 // Eine Figur aus assets/figuren/*.glb (gebaut mit werkzeuge/figuren): MakeHuman-Körper,
 // gemalte Haut, Haare, Kleidung und aufgezeichnete Bewegungen.
 // Hier: Materialien veredeln (Licht unter der Haut) und Bewegungen nach Tempo überblenden.
+// Von einer geladenen Vorlage lassen sich viele Figuren machen (z. B. mehrere Räuber); sie teilen
+// sich Netze und Bilder, jede hat ihr eigenes Skelett und ihre eigenen Bewegungen.
 import * as THREE from 'three';
+import { clone as klonen } from 'three/addons/utils/SkeletonUtils.js';
 import { ladeModell } from '../modelle.js';
+
+// Bewegungen, die einmal ablaufen statt im Takt der Schritte (Winken, Schläge)
+const EINMALIG = new Set(['winken', 'hieb', 'schlag', 'tritt']);
 
 // Licht dringt etwas in die Haut ein und färbt die Schattenkante rötlich (wie bei echter Haut)
 function hautMaterial(alt) {
@@ -48,14 +54,29 @@ function veredle(wurzel) {
   });
 }
 
-export async function ladeFigur(art, beiFortschritt) {
+export async function ladeVorlage(art, beiFortschritt) {
   const gltf = await ladeModell(new URL(`../../assets/figuren/${art}.glb`, import.meta.url).href, beiFortschritt);
-  const wurzel = gltf.scene;
-  veredle(wurzel);
+  veredle(gltf.scene);
+  let benutzt = false;
+  return {
+    // Die erste Figur bekommt das Original, jede weitere einen Klon
+    erzeuge() {
+      const wurzel = benutzt ? klonen(gltf.scene) : gltf.scene;
+      benutzt = true;
+      return belebe(wurzel, gltf.animations, art);
+    },
+  };
+}
+
+export async function ladeFigur(art, beiFortschritt) {
+  return (await ladeVorlage(art, beiFortschritt)).erzeuge();
+}
+
+function belebe(wurzel, animationen, art) {
   const tempo = wurzel.children[0]?.userData?.tempo ?? wurzel.userData?.tempo ?? {};
   const mischer = new THREE.AnimationMixer(wurzel);
   const aktionen = {};
-  for (const clip of gltf.animations) {
+  for (const clip of animationen) {
     const a = mischer.clipAction(clip);
     a.play();
     a.setEffectiveWeight(0);
@@ -95,24 +116,25 @@ export async function ladeFigur(art, beiFortschritt) {
     if (summe > 0.001) phase = (phase + dt * takt / summe) % 1;
     stehZeit += dt;
     for (const [n, a] of Object.entries(aktionen)) {
-      if (n === 'winken') continue;
+      if (EINMALIG.has(n)) { a.aktion.setEffectiveWeight(0); continue; }
       a.aktion.setEffectiveWeight(gewicht[n] ?? 0);
       a.aktion.time = n === 'stehen' ? stehZeit % a.dauer : phase * a.dauer;
     }
     if (einmal) {
-      einmal.zeit += dt;
+      einmal.zeit += dt * einmal.tempo;
       const a = aktionen[einmal.name];
-      const w = Math.min(1, einmal.zeit / 0.4, (a.dauer - einmal.zeit) / 0.5);
+      const w = Math.min(1, einmal.zeit / einmal.ein, (a.dauer - einmal.zeit) / einmal.aus);
       a.aktion.setEffectiveWeight(Math.max(0, w));
       a.aktion.time = Math.min(einmal.zeit, a.dauer - 0.001);
-      for (const [n, b] of Object.entries(aktionen)) if (n !== einmal.name) b.aktion.setEffectiveWeight((gewicht[n] ?? 0) * (1 - Math.max(0, w)));
+      for (const [n, b] of Object.entries(aktionen)) if (n !== einmal.name && !EINMALIG.has(n)) b.aktion.setEffectiveWeight((gewicht[n] ?? 0) * (1 - Math.max(0, w)));
       if (einmal.zeit >= a.dauer) einmal = null;
     }
     mischer.update(0);
   }
 
-  function spiele(name) {
-    if (aktionen[name]) einmal = { name, zeit: 0 };
+  // Eine Bewegung einmal abspielen; tempo > 1 = schneller, ein/aus = Überblendzeit (in Clip-Sekunden)
+  function spiele(name, { tempo: t = 1, ein = 0.4, aus = 0.5 } = {}) {
+    if (aktionen[name]) einmal = { name, zeit: 0, tempo: t, ein, aus };
   }
 
   // Ich-Sicht: Kopf (mit Haaren, Augen) unsichtbar machen, Kamera an die Augen
@@ -126,5 +148,11 @@ export async function ladeFigur(art, beiFortschritt) {
   }
 
   bewege(0, 0);
-  return { objekt: wurzel, bewege, spiele, kopfSichtbar, augenOrt, tempo, art };
+  return {
+    objekt: wurzel, bewege, spiele, kopfSichtbar, augenOrt, tempo, art,
+    rechteHand: wurzel.getObjectByName('hand_r'),
+    hat: (name) => !!aktionen[name],
+    dauer: (name) => aktionen[name]?.dauer ?? 0,
+    get spielt() { return einmal?.name ?? null; },
+  };
 }

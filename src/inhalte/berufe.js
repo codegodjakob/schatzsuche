@@ -2,8 +2,8 @@
 // hier steht, wie sie heißen und was man dem Spieler darüber sagt.
 
 export const WERTE = {
-  staerke: { name: 'Stärke', wirkung: 'Mehr Ertrag beim Holzhacken und Steinesammeln. Später: härtere Schläge, sichtbare Muskeln.' },
-  geschick: { name: 'Geschick', wirkung: 'Beim Herstellen manchmal ein Stück mehr. Später: Treffen und Fernkampf.' },
+  staerke: { name: 'Stärke', wirkung: 'Härtere Schläge und mehr Ertrag beim Holzhacken und Sammeln. Später: sichtbare Muskeln.' },
+  geschick: { name: 'Geschick', wirkung: 'Öfter Volltreffer (doppelter Schaden), beim Herstellen manchmal ein Stück mehr. Später: Fernkampf.' },
   ausdauer: { name: 'Ausdauer', wirkung: 'Hunger, Durst und Kälte zehren langsamer; Leben heilt schneller.' },
   verstand: { name: 'Verstand', wirkung: 'Mehr Erfahrung für alles. Später: mehr Rezepte und Magie.' },
   ausstrahlung: { name: 'Ausstrahlung', wirkung: 'Bessere Preise und mehr Einfluss. Wirkt ab dem Dorf Erlenbach.' },

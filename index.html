@@ -131,6 +131,7 @@ h1 {
 }
 #hinweise span { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
 #hinweise kbd { background: var(--pergament); }
+.tafel-offen #hinweise { visibility: hidden; }
 
 /* Laden */
 .laden { margin: 0; min-height: 1.5em; font-size: 0.9rem; color: var(--gedaempft); font-variant-numeric: tabular-nums; }
@@ -164,6 +165,32 @@ h1 {
   position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   padding: 0.45rem 0.8rem; font-size: 0.85rem; color: var(--gedaempft); font-variant-numeric: tabular-nums;
 }
+
+/* Kampf: Balken über den Gegnern, Schadenszahlen, Boss-Balken, roter Rand bei Treffern */
+#kampf { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+.feind-balken {
+  position: absolute; left: 0; top: 0; width: 64px; height: 6px; margin: -3px 0 0 -32px; border-radius: 3px;
+  background: rgba(0, 0, 0, 0.6); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35); overflow: hidden;
+}
+.feind-balken i { display: block; height: 100%; background: #c9473a; transition: width 0.2s; }
+.schadenszahl {
+  position: absolute; transform: translate(-50%, -50%); font: 800 1.3rem/1 var(--schrift-text); color: #fff; white-space: nowrap;
+  text-shadow: 0 1px 3px #000, 0 0 8px rgba(0, 0, 0, 0.6); animation: zahl 0.9s ease-out forwards;
+}
+.schadenszahl.voll { color: #ffd04d; font-size: 1.7rem; }
+.schadenszahl.spieler { color: #ff6b5b; }
+.schadenszahl.warnung { color: #ffb347; font-size: 2rem; }
+@keyframes zahl {
+  0% { opacity: 0; transform: translate(-50%, -30%) scale(0.7); }
+  15% { opacity: 1; transform: translate(-50%, -60%) scale(1.15); }
+  100% { opacity: 0; transform: translate(-50%, -170%) scale(1); }
+}
+#boss { position: fixed; top: calc(16px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); width: min(26rem, 40%); text-align: center; pointer-events: none; }
+#boss-name { margin: 0; font: 400 1.15rem/1 var(--schrift-titel); color: var(--glut); text-shadow: 0 1px 4px #000; }
+#boss .balken { height: 0.65rem; margin-top: 0.35rem; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5); }
+#boss .balken i { background: #c9473a; }
+#rot { position: fixed; inset: 0; pointer-events: none; box-shadow: inset 0 0 140px 50px rgba(190, 20, 10, 0.55); opacity: 0; transition: opacity 0.4s; }
+#rot.an { opacity: 1; transition: none; }
 
 /* Menü: Inventar, Herstellen, Figur, Aufgaben */
 #menue {
@@ -298,6 +325,8 @@ html:not(.beruehrung) #beruehrung { display: none !important; }
   -webkit-user-select: none; -webkit-touch-callout: none;
 }
 .knopf.gross { grid-column: span 2; min-height: 3.4rem; font-weight: 700; }
+.knopf.mittel { min-height: 3.4rem; font-weight: 700; }
+#knopf-schlagen.bereit { background: rgba(178, 58, 44, 0.9); border-color: #e0806e; }
 .knopf.haupt { min-height: 3.9rem; padding: 0.3rem 0.6rem; font-size: 0.92rem; line-height: 1.15; }
 .knopf.haupt.bereit { background: rgba(224, 172, 85, 0.92); color: var(--nacht); border-color: var(--glut); }
 .knopf:active { background: rgba(60, 76, 44, 0.92); border-color: var(--moos); }
@@ -313,12 +342,14 @@ html.beruehrung #werte { top: calc(16px + env(safe-area-inset-top, 0px)); bottom
 html.beruehrung .wert { grid-template-columns: 4rem 1fr; font-size: 0.72rem; }
 html.beruehrung .stufe-zeile { font-size: 0.75rem; gap: 0.3rem; }
 html.beruehrung #ereignis { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+html.beruehrung #boss { top: calc(16px + 9.5rem + env(safe-area-inset-top, 0px)); width: calc(100% - 64px); }
 html.beruehrung .option { min-height: 2.75rem; padding: 0.45rem 0.9rem; }
 html.beruehrung .option kbd, html.beruehrung #aktion kbd, html.beruehrung .reiter kbd { display: none; }
 /* Auf dem Handy steht die Aktion direkt auf dem großen Knopf */
 html.beruehrung #aktion { display: none !important; }
 
 @media (max-width: 900px) { #hinweise { display: none; } }
+@media (max-width: 1100px) { html:not(.beruehrung) #boss { top: calc(16px + 6.5rem + env(safe-area-inset-top, 0px)); } }
 @media (max-width: 640px) {
   #werte { width: 10rem; }
   #menue { width: 100%; height: 100%; border: 0; border-radius: 0; background: var(--nacht); padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
@@ -328,7 +359,7 @@ html.beruehrung #aktion { display: none !important; }
 }
 @media (prefers-reduced-motion: reduce) {
   .nachricht, #tod, .balken i, #band, #ziel-pfeil { transition: none; }
-  .gewinn, #hud-punkte { animation: none; }
+  .gewinn, #hud-punkte, .schadenszahl { animation: none; }
 }
 </style>
 <script type="importmap">
@@ -359,6 +390,7 @@ html.beruehrung #aktion { display: none !important; }
   <span><kbd>⇧</kbd> rennen</span>
   <span><kbd>␣</kbd> springen</span>
   <span><kbd>E</kbd> benutzen</span>
+  <span><kbd>X</kbd> oder Klick: schlagen</span>
   <span><kbd>V</kbd> Blickwinkel</span>
   <span><kbd>I</kbd> Inventar</span>
   <span><kbd>K</kbd> Herstellen</span>
@@ -395,7 +427,8 @@ html.beruehrung #aktion { display: none !important; }
   <div id="knoepfe" role="group" aria-label="Steuerung">
     <button type="button" class="knopf" data-taste="KeyI">Menü</button>
     <button type="button" class="knopf" data-taste="KeyV">Blick</button>
-    <button type="button" class="knopf gross" data-taste="Space">Springen</button>
+    <button type="button" class="knopf mittel" data-taste="Space">Springen</button>
+    <button type="button" class="knopf mittel" id="knopf-schlagen" data-taste="KeyX">Schlagen</button>
     <button type="button" class="knopf gross haupt" id="knopf-benutzen" data-taste="KeyE">Benutzen</button>
   </div>
 </div>
@@ -411,6 +444,10 @@ html.beruehrung #aktion { display: none !important; }
   <p id="ereignis-text"></p>
   <div id="ereignis-optionen"></div>
 </section>
+
+<div id="kampf" aria-hidden="true"></div>
+<div id="rot" aria-hidden="true"></div>
+<section id="boss" hidden aria-live="polite"><p id="boss-name"></p><div class="balken"><i></i></div></section>
 
 <section id="menue" class="tafel" hidden role="dialog" aria-modal="true" aria-label="Menü">
   <header class="menue-kopf">

@@ -35,6 +35,8 @@ B=/dataset/Bandai-Namco-Research-Motiondataset
 hole https://github.com/BandaiNamcoResearchInc/Bandai-Namco-Research-Motiondataset bandai \
   '/README.md' "$B-1/LICENSE" "$B-2/LICENSE" \
   "$B-1/data/dataset-1_walk_*" "$B-1/data/dataset-1_run_*" "$B-1/data/dataset-1_dash_*" \
+  "$B-1/data/dataset-1_slash_*" "$B-1/data/dataset-1_punch_*" "$B-1/data/dataset-1_kick_*" \
+  "$B-1/data/dataset-1_walk-back_*" \
   "$B-2/data/dataset-2_wave-right-hand_normal_00*" "$B-2/data/dataset-2_wave-right-hand_elderly_00*" \
   "$B-2/data/dataset-2_raise-up-right-hand_normal_00*"
 

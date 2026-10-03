@@ -303,7 +303,7 @@ Etappe ein Stück besser.
 
 | Etappe | Inhalt |
 |---|---|
-| **M1 Fundament** (die Grundversion) | 1. RPG-Kern: Werte, Stufen, Statuspunkte, großes Inventar, Sammeln, Rezeptbuch, Aufgabenbuch, Münzen (**fertig**, siehe unten). 2. Kampf: Waffen, Räuber, der Räuberhauptmann als erster Boss, Beute. 3. Dorf Erlenbach: Händler, Fischer mit Angelrute, Angeln, Jobs. 4. Charakter-Editor: Gesicht, Haut, Haare, Bart, Körper; Haare und Bart wachsen; Muskeln wachsen; erste Kleidung sichtbar |
+| **M1 Fundament** (die Grundversion) | 1. RPG-Kern: Werte, Stufen, Statuspunkte, großes Inventar, Sammeln, Rezeptbuch, Aufgabenbuch, Münzen (**fertig**, siehe unten). 2. Kampf (**fertig**, siehe unten): Waffen, Räuber, der Räuberhauptmann als erster Boss, Beute. 3. Dorf Erlenbach: Händler, Fischer mit Angelrute, Angeln, Jobs. 4. Charakter-Editor: Gesicht, Haut, Haare, Bart, Körper; Haare und Bart wachsen; Muskeln wachsen; erste Kleidung sichtbar |
 | **M2 Leben im Dorf** | Weitere Berufe (Bergbau, Schmieden, Kochen, Gerben), Beziehungen, Tagesabläufe, Haus mieten, Truhe, Pferd |
 | **M3 Abenteuer** | Neue Gebiete, Tiere, Höhlen, Bogen, weitere Bosse, Kartenteile 1 bis 3 |
 | **M4 Aufstieg** | Klassen und Fähigkeitsbäume vollständig, Ränge in Militär, Rat und Gilden, Burgstadt Rabenfels |
@@ -330,6 +330,28 @@ Etappe ein Stück besser.
 
 Alle Inhalte stehen als Listen in `src/inhalte/`. Neue Materialien, Rezepte und Aufgaben sind neue
 Einträge dort; dieselben Listen kann später eine KI für Welt-Varianten füllen.
+
+### Was in M1, Stufe 2 gebaut ist
+
+- **Zuschlagen** mit Linksklick, X oder dem Knopf „Schlagen“, mit der stärksten Waffe, die man
+  dabeihat (sie ist in der Hand zu sehen), sonst mit den Fäusten. Die Figur dreht sich zum nächsten
+  Gegner; ein Hieb trifft alle im Bogen davor. Stärke macht Schläge härter, Geschick bringt
+  Volltreffer mit doppeltem Schaden.
+- **Die Straße nach Osten** führt von der Wiese zum **Räuberlager**: zwei Wegelagerer an der Straße,
+  zwei Räuber am Feuer, der **Räuberhauptmann** hinten bei seinem Zelt. Räuber gehen wie Halbstarke,
+  der Hauptmann wie ein Riese; beide sind eigene Figuren.
+- Gegner warten, entdecken einen, rennen heran, holen aus und schlagen zu. Wer zu weit wegläuft, den
+  lassen sie ziehen; sie gehen heim und heilen sich. Getroffene taumeln kurz, aber nicht öfter als
+  alle anderthalb Sekunden. Der Hauptmann kündigt jeden dritten Angriff an: einen schweren Tritt.
+- **Beute**: Erfahrung, Kupfer, Lederfetzen, Brot, manchmal eine Keule. Der Hauptmann lässt seine
+  eisenbeschlagene Keule fallen und, nur beim ersten Sieg, das **erste Kartenteil**. Besiegte kommen
+  nach ein bis drei Spieltagen wieder.
+- **Rüstung**: Aus vier Lederfetzen und zwei Schnüren wird ein Lederwams; es hält ein Fünftel jedes
+  Schlags ab und wird von selbst getragen.
+- **Geschichte**: Der Einsiedler erzählt vom Hauptmann und seinem Pergament. Nach dem Sieg erkennt
+  er im Kartenteil ein Stück der Karte zum Schatz und schickt einen nach Erlenbach (Stufe 3).
+- **Anzeigen**: Lebensbalken über den Gegnern, aufsteigende Schadenszahlen (gelb bei Volltreffern),
+  ein großer Balken für den Hauptmann, ein roter Rand, wenn man getroffen wird.
 
 ## Offene Fragen für Jakob und Vincenz
 

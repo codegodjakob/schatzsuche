@@ -13,7 +13,7 @@
 //   danach        – ids von Aufgaben, die nach dieser beginnen
 //
 // Was s kann, steht in src/ereignisse/liste.js.
-import { LAGER, TEICH } from '../welt/orte.js';
+import { LAGER, RAEUBERLAGER, TEICH } from '../welt/orte.js';
 
 const bis = (n, max) => Math.min(n, max);
 
@@ -28,6 +28,8 @@ export const AUFGABEN = [
       { text: 'Folge dem Rauch und zeig jemandem das Pergament', fertig: (s) => s.weiss('pergament-erkannt'), ort: LAGER },
       { text: (s) => `Werde stärker: Erreiche Stufe 3 (jetzt ${s.stufe})`, fertig: (s) => s.stufe >= 3 },
       { text: 'Frag den Einsiedler nach dem Weg', fertig: (s) => s.weiss('weg-nach-erlenbach'), ort: LAGER },
+      { text: 'Besiege den Räuberhauptmann an der Straße nach Osten und nimm ihm das Kartenteil ab', fertig: (s) => s.hat('kartenteil_1') || s.weiss('kartenteil-gezeigt'), ort: RAEUBERLAGER },
+      { text: 'Zeig dem Einsiedler das Kartenteil', fertig: (s) => s.weiss('kartenteil-gezeigt'), ort: LAGER },
       { text: 'Reise nach Erlenbach im Osten (das Dorf wird gerade gebaut)', fertig: () => false },
     ],
     belohnung: { erfahrung: 0 },
@@ -87,6 +89,25 @@ export const AUFGABEN = [
       { text: 'Bring dem Einsiedler fünf Holzscheite', fertig: (s) => s.weiss('holz-gebracht'), ort: LAGER },
     ],
     belohnung: { erfahrung: 70, muenzen: 12 },
+  },
+  {
+    id: 'raeuber',
+    titel: 'Räuber an der Straße',
+    beschreibung: 'An der Straße nach Osten lauern Räuber. Wer dort entlanggeht, verliert alles, manchmal mehr.',
+    schritte: [
+      { text: (s) => `Besiege drei Räuber (${bis(s.besiegt('raeuber'), 3)}/3)`, fertig: (s) => s.besiegt('raeuber') >= 3, ort: RAEUBERLAGER },
+    ],
+    belohnung: { erfahrung: 60, muenzen: 15 },
+  },
+  {
+    id: 'wams',
+    titel: 'Ein Wams aus Leder',
+    beschreibung: 'Die Räuber tragen Leder bei sich. Vier Fetzen und zwei Schnüre ergeben ein Wams, das Schläge abfängt.',
+    schritte: [
+      { text: (s) => `Sammle Lederfetzen (${bis(s.anzahl('lederfetzen') + 4 * s.hergestellt('lederwams'), 4)}/4)`, fertig: (s) => s.anzahl('lederfetzen') >= 4 || s.hergestellt('lederwams') > 0 },
+      { text: 'Näh dir ein Lederwams (Menü, Herstellen; braucht Handwerk Stufe 2)', fertig: (s) => s.hergestellt('lederwams') > 0 },
+    ],
+    belohnung: { erfahrung: 40 },
   },
   {
     id: 'pilze',

@@ -17,13 +17,13 @@
 // Was s alles kann:
 //   s.gelaufen, s.nahe(x, z, radius), s.nacht, s.stunde, s.stufe, s.werte.saettigung/wasser/waerme/leben
 //   s.hat('id', n), s.anzahl('id'), s.gib('id', n), s.nimm('id', n), s.gibMuenzen(n), s.gibErfahrung(n)
-//   s.hergestellt('id'), s.stelleHer('rezept')
+//   s.hergestellt('id'), s.stelleHer('rezept'), s.besiegt('raeuber')
 //   s.erledigt('ereignis'), s.weiss('merker'), s.merke('merker'), s.sage('Text')
 //   s.esse(n), s.trinke(n), s.waerme(n), s.winke(), s.einsiedlerDa
 //   s.starteAufgabe('id'), s.aufgabeAktiv('id'), s.aufgabeErledigt('id'), s.schrittVon('id')
 //
 // Reihenfolge zählt: Treffen mehrere zu, kommt das obere zuerst.
-import { ALTER_BAUM, LAGER, TEICH } from '../welt/orte.js';
+import { ALTER_BAUM, LAGER, RAEUBERLAGER, TEICH } from '../welt/orte.js';
 
 const beimLager = (s, r = 6) => s.nahe(LAGER.x, LAGER.z, r);
 const amFeuerDesAlten = (s) => s.erledigt('einsiedler-gruss') && beimLager(s, 7);
@@ -96,6 +96,24 @@ const GESCHICHTE = [
         folge: (s) => { if (s.stelleHer('speer')) s.sage('Nach einer Weile hältst du einen groben Speer in der Hand.'); },
       },
       { taste: 'Q', text: 'Später', spaeter: true },
+    ],
+  },
+  {
+    id: 'raeuberlager-sehen',
+    wann: (s) => s.nahe(RAEUBERLAGER.x, RAEUBERLAGER.z, 34),
+    text: 'Zwischen den Bäumen siehst du ein verwahrlostes Lager: schmutzige Zelte, ein qualmendes Feuer, '
+      + 'Männer mit Keulen. Einer zeigt grinsend in deine Richtung.',
+    optionen: [
+      { taste: 'E', text: 'Dann kommt doch', folge: (s) => { s.starteAufgabe('raeuber'); s.sage('Schlag zu mit der Maus, mit X oder dem Knopf „Schlagen“.'); } },
+      { taste: 'Q', text: 'Lieber zurück', folge: (s) => { s.starteAufgabe('raeuber'); s.sage('Die Räuber lachen dir hinterher.'); } },
+    ],
+  },
+  {
+    id: 'erster-lederfetzen',
+    wann: (s) => s.hat('lederfetzen') && !s.aufgabeAktiv('wams') && !s.aufgabeErledigt('wams'),
+    text: 'Das Leder der Räuber ist fleckig, aber zäh. Mit ein paar Fetzen mehr könntest du dir ein Wams nähen, das Schläge abfängt.',
+    optionen: [
+      { taste: 'E', text: 'Gute Idee', folge: (s) => s.starteAufgabe('wams') },
     ],
   },
   {
@@ -220,10 +238,22 @@ const GESCHICHTE = [
     wann: (s) => s.aufgabeAktiv('schatzsuche') && s.schrittVon('schatzsuche') === 2 && beimLager(s, 7),
     bleibt: (s) => beimLager(s, 10),
     text: '„Du bist stärker geworden. Gut.“ Der Alte zeichnet mit einem Stock eine Karte in den Staub. '
-      + '„Geh nach Osten, über die Hügel, bis du Rauch über Dächern siehst. Das ist Erlenbach. Dort lebt Gerold, der Kartenleser. '
-      + 'Zeig ihm dein Pergament. Und pass auf dich auf: Auf der Straße treiben sich Räuber herum.“',
+      + '„Folg der Straße nach Osten, bis du Rauch über Dächern siehst. Das ist Erlenbach. Dort lebt Gerold, der Kartenleser.“ '
+      + 'Er zögert. „Aber an der Straße hausen Räuber. Ihr Hauptmann prahlt mit einem Stück Pergament voller Zeichen, '
+      + 'das er einem Händler abgenommen hat. Zeichen wie deine.“',
     optionen: [
-      { taste: 'E', text: 'Danke, Alter', folge: (s) => { s.merke('weg-nach-erlenbach'); s.gibErfahrung(20); } },
+      { taste: 'E', text: 'Dann hole ich es mir', folge: (s) => { s.merke('weg-nach-erlenbach'); s.gibErfahrung(20); s.starteAufgabe('raeuber'); } },
+    ],
+  },
+  {
+    id: 'einsiedler-kartenteil',
+    wann: (s) => s.hat('kartenteil_1') && beimLager(s, 7) && s.erledigt('einsiedler-gruss'),
+    bleibt: (s) => beimLager(s, 10),
+    text: 'Du legst das Stück des Hauptmanns neben dein Pergament. Die Linien laufen ineinander über, ein Fluss, ein Berg, '
+      + 'ein Kreuz. Der Alte pfeift leise. „Eine Karte. Sieben Teile, sagt man, und am Ende liegt der Schatz der Alten Könige. '
+      + 'Geh nach Erlenbach. Gerold kann lesen, was ich nur ahne.“',
+    optionen: [
+      { taste: 'E', text: 'Ich gehe nach Erlenbach', folge: (s) => { s.merke('kartenteil-gezeigt'); s.gibErfahrung(50); } },
     ],
   },
   {

@@ -23,6 +23,9 @@ export function erzeugeSteuerung({ kamera, flaeche }) {
   };
   let figur = null;
   const tasten = new Set();
+  // Beim Zuschlagen: kurz langsamer, und die Figur dreht sich zum Gegner
+  let bremsUhr = 0;
+  const drehung = { winkel: 0, uhr: 0 };
   // Laufstick auf Handy und Tablet (src/ui/beruehrung.js): Richtung von -1 bis 1, ganz ausgelenkt = rennen
   const stick = { vor: 0, seit: 0, rennt: false };
   let ziehen = false;
@@ -99,6 +102,7 @@ export function erzeugeSteuerung({ kamera, flaeche }) {
     // im Wasser langsamer
     const imWasser = Math.hypot(z.ort.x - TEICH.x, z.ort.z - TEICH.z) < TEICH.radius * 1.6 && z.ort.y < wsp - 0.15;
     let sollTempo = bewegung.lengthSq() ? (rennt ? RENNEN : GEHEN) : 0;
+    if (bremsUhr > 0) { bremsUhr -= dt; sollTempo = Math.min(sollTempo, GEHEN * 0.5); }
     if (z.erschoepft) sollTempo *= 0.75;
     if (imWasser) sollTempo *= 0.45;
     z.tempo = THREE.MathUtils.damp(z.tempo, sollTempo, sollTempo > z.tempo ? 4 : 7, dt);
@@ -129,7 +133,12 @@ export function erzeugeSteuerung({ kamera, flaeche }) {
       // Die Figur dreht sich weich in Laufrichtung
       const fig = figur.objekt;
       fig.position.copy(z.ort);
-      if (bewegung.lengthSq()) {
+      if (drehung.uhr > 0) {
+        drehung.uhr -= dt;
+        let d = drehung.winkel - fig.rotation.y;
+        d = Math.atan2(Math.sin(d), Math.cos(d));
+        fig.rotation.y += d * Math.min(1, dt * 16);
+      } else if (bewegung.lengthSq()) {
         const soll = Math.atan2(bewegung.x, bewegung.z);
         let d = soll - fig.rotation.y;
         d = Math.atan2(Math.sin(d), Math.cos(d));
@@ -167,5 +176,9 @@ export function erzeugeSteuerung({ kamera, flaeche }) {
     }
   }
 
-  return { zustand: z, schritt, tasten, setzeFigur, setzeOrt, umsehen, setzeStick };
+  return {
+    zustand: z, schritt, tasten, setzeFigur, setzeOrt, umsehen, setzeStick,
+    bremse: (sekunden) => { bremsUhr = Math.max(bremsUhr, sekunden); },
+    dreheZu: (winkel, sekunden) => { drehung.winkel = winkel; drehung.uhr = sekunden; },
+  };
 }

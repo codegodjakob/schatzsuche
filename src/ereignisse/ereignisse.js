@@ -29,6 +29,7 @@ export function erzeugeEreignisse({ steuerung, oberflaeche, welt }) {
     gibMuenzen: (n) => { welt.inventar.gibMuenzen(n); oberflaeche.gewinn(`+${n} Kupfer`, 'muenzen'); },
     gibErfahrung: (n) => { oberflaeche.gewinn(`+${welt.fortschritt.gibErfahrung(n)} Erfahrung`, 'erfahrung'); },
     hergestellt: (id) => welt.fortschritt.hergestellt(id),
+    besiegt: (art) => welt.fortschritt.besiegt(art),
     stelleHer: (rezeptId) => welt.herstellen.stelleHer(welt.herstellen.rezept(rezeptId)),
     erledigt: (id) => erledigt.has(id),
     weiss: (m) => merker.has(m),
