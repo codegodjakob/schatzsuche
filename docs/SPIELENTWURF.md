@@ -303,13 +303,33 @@ Etappe ein Stück besser.
 
 | Etappe | Inhalt |
 |---|---|
-| **M1 Fundament** (die Grundversion) | 1. RPG-Kern: Werte, Stufen, Statuspunkte, großes Inventar, Sammeln, Rezeptbuch, Aufgabenbuch, Münzen. 2. Kampf: Waffen, Räuber, der Räuberhauptmann als erster Boss, Beute. 3. Dorf Erlenbach: Händler, Fischer mit Angelrute, Angeln, Jobs. 4. Charakter-Editor: Gesicht, Haut, Haare, Bart, Körper; Haare und Bart wachsen; Muskeln wachsen; erste Kleidung sichtbar |
+| **M1 Fundament** (die Grundversion) | 1. RPG-Kern: Werte, Stufen, Statuspunkte, großes Inventar, Sammeln, Rezeptbuch, Aufgabenbuch, Münzen (**fertig**, siehe unten). 2. Kampf: Waffen, Räuber, der Räuberhauptmann als erster Boss, Beute. 3. Dorf Erlenbach: Händler, Fischer mit Angelrute, Angeln, Jobs. 4. Charakter-Editor: Gesicht, Haut, Haare, Bart, Körper; Haare und Bart wachsen; Muskeln wachsen; erste Kleidung sichtbar |
 | **M2 Leben im Dorf** | Weitere Berufe (Bergbau, Schmieden, Kochen, Gerben), Beziehungen, Tagesabläufe, Haus mieten, Truhe, Pferd |
 | **M3 Abenteuer** | Neue Gebiete, Tiere, Höhlen, Bogen, weitere Bosse, Kartenteile 1 bis 3 |
 | **M4 Aufstieg** | Klassen und Fähigkeitsbäume vollständig, Ränge in Militär, Rat und Gilden, Burgstadt Rabenfels |
 | **M5 Statthalter** | Die Siedler-Ebene für ein Dorf |
 | **M6 Burg und Reich** | Burgherr, mehrere Orte, der Weg zur Krone, Ende der Schatzsuche |
 | **M7 KI und Roblox** | Welt-Varianten per KI, Roblox-Fassung (#12), Mehrspieler |
+
+### Was in M1, Stufe 1 gebaut ist
+
+- **Sammeln** mit „Benutzen“ (E oder der große Knopf): rund 70 Äste, 55 Steine, 40 Steinpilze,
+  450 Blumen (weiß = Kamille, gelb = Johanniskraut, blau = Flachs), fünf Brombeersträucher und jeder
+  Baum (Ast abbrechen; mit der Steinaxt Holz hacken). Alles wächst nach ein bis zwei Spieltagen nach.
+  Ein goldener Ring zeigt, was „Benutzen“ gerade nehmen würde.
+- **Inventar** mit 48 Plätzen, Stapeln und Münzen; Essen und Wegwerfen im Menü.
+- **Herstellen**: zehn Rezepte (Schnur, Speer, Steinmesser, Steinaxt, Holzkeule, Lagerfeuer, Fackel,
+  gebratene Pilze, Kamillentee, Heilsalbe), manche nur an einem Feuer oder ab einer Berufsstufe.
+- **Fortschritt**: Erfahrung und Stufen, drei Statuspunkte je Stufe für fünf Werte, die wirklich
+  etwas bewirken, und fünf Berufe mit eigenen Stufen (Lehrling, Geselle, Meister).
+- **Aufgaben**: die Hauptgeschichte (das Pergament der Alten Könige) und sechs Nebenaufgaben; die
+  verfolgte Aufgabe steht am Bildschirmrand, mit Pfeil und Entfernung zum Ziel.
+- **Spielstand**: speichert sich von selbst; beim nächsten Öffnen „Weiterspielen“.
+- **Tod**: Was man bei sich trägt, ist fort (außer dem Pergament); Stufen, Werte und Berufe bleiben.
+  Ob das zu hart ist, steht unten bei den offenen Fragen.
+
+Alle Inhalte stehen als Listen in `src/inhalte/`. Neue Materialien, Rezepte und Aufgaben sind neue
+Einträge dort; dieselben Listen kann später eine KI für Welt-Varianten füllen.
 
 ## Offene Fragen für Jakob und Vincenz
 

@@ -10,7 +10,8 @@ const HUNGER = 100 / (40 * 60);
 const DURST = 100 / (25 * 60);
 const AUSKUEHLEN = 100 / (6 * 60);
 
-export function erzeugeUeberleben({ beiTod, beiWarnung }) {
+// zehrFaktor / heilFaktor: wie schnell Hunger, Durst und Kälte zehren und das Leben heilt (Ausdauer)
+export function erzeugeUeberleben({ beiTod, beiWarnung, zehrFaktor = () => 1, heilFaktor = () => 1 }) {
   const w = { ...START_WERTE };
   const warnungen = new Set();
   let waermequellen = [];
@@ -27,18 +28,18 @@ export function erzeugeUeberleben({ beiTod, beiWarnung }) {
 
   function schritt(dt, { ort, tempo }) {
     if (tot) return;
-    const anstrengung = tempo > 3 ? 1.8 : tempo > 0.5 ? 1.15 : 1;
+    const anstrengung = (tempo > 3 ? 1.8 : tempo > 0.5 ? 1.15 : 1) * zehrFaktor();
     w.saettigung = Math.max(0, w.saettigung - HUNGER * anstrengung * dt);
     w.wasser = Math.max(0, w.wasser - DURST * anstrengung * dt);
     const feuer = amFeuer(ort);
     const nacht = 1 - zeit.hell;
     if (feuer) w.waerme = Math.min(100, w.waerme + 4 * dt);
-    else if (nacht > 0.4) w.waerme = Math.max(0, w.waerme - AUSKUEHLEN * nacht * (tempo > 0.5 ? 0.7 : 1) * dt);
+    else if (nacht > 0.4) w.waerme = Math.max(0, w.waerme - AUSKUEHLEN * nacht * (tempo > 0.5 ? 0.7 : 1) * zehrFaktor() * dt);
     else w.waerme = Math.min(100, w.waerme + 0.6 * dt);
 
     const leer = (w.saettigung <= 0) + (w.wasser <= 0) + (w.waerme <= 0);
     if (leer) w.leben = Math.max(0, w.leben - 0.55 * leer * dt);
-    else if (w.saettigung > 30 && w.wasser > 30 && w.waerme > 30) w.leben = Math.min(100, w.leben + 0.25 * dt);
+    else if (w.saettigung > 30 && w.wasser > 30 && w.waerme > 30) w.leben = Math.min(100, w.leben + 0.25 * heilFaktor() * dt);
 
     warne('hunger', 'Dein Magen knurrt. Du solltest etwas essen.', w.saettigung < 25);
     warne('durst', 'Deine Kehle ist trocken. Du brauchst Wasser.', w.wasser < 25);
@@ -60,6 +61,9 @@ export function erzeugeUeberleben({ beiTod, beiWarnung }) {
     esse: (n) => { w.saettigung = Math.min(100, w.saettigung + n); },
     trinke: (n) => { w.wasser = Math.min(100, w.wasser + n); },
     waerme: (n) => { w.waerme = Math.min(100, w.waerme + n); },
+    heile: (n) => { w.leben = Math.min(100, w.leben + n); },
+    // Aus dem Spielstand
+    setze(werte) { for (const k of Object.keys(w)) if (Number.isFinite(werte?.[k])) w[k] = Math.min(100, Math.max(1, werte[k])); },
     setzeWaermequellen: (liste) => { waermequellen = liste; },
     amFeuer,
     neuBeginn() {

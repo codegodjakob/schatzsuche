@@ -36,13 +36,16 @@ sich leicht erweitern, nach Roblox übertragen und später per KI variieren lass
 
 | Ordner / Datei | Inhalt |
 |---|---|
-| `src/welt/` | Gelände (`gelaende.js`), Himmel und Tageszeit, Gras (wächst mit dem Spieler mit), Wald (`baeume.js`), Felsen/Blumen/Beeren (`natur.js`), Wasser, Feuer, Fundstücke, Zusammenstöße. `orte.js` = feste Orte |
-| `src/spieler/` | Figur (lädt GLB, überblendet Bewegungen) und Steuerung (Laufen, Kamera) |
+| `src/welt/` | Gelände (`gelaende.js`), Himmel und Tageszeit, Gras (wächst mit dem Spieler mit), Wald (`baeume.js`), Felsen/Blumen/Beeren (`natur.js`), Wasser, Feuer, Zusammenstöße. `sammeln.js` = alles, was man aufheben oder abbauen kann (wächst nach), `markierung.js` = der Ring darunter. `orte.js` = feste Orte |
+| `src/inhalte/` | **Inhalte als Listen**: Gegenstände, Rezepte, Berufe und Werte, Aufgaben, Sammelstellen. Neues Material, neues Rezept, neue Aufgabe = ein neuer Eintrag hier |
+| `src/spieler/` | Figur (lädt GLB, überblendet Bewegungen), Steuerung (Laufen, Kamera), Inventar, Fortschritt (Stufen, Werte, Berufe), Herstellen, Benutzen (E) |
 | `src/figuren/` | Andere Figuren, z. B. der Einsiedler |
 | `src/ueberleben/werte.js` | Sättigung, Wasser, Wärme, Leben, Tod |
 | `src/ereignisse/liste.js` | **Alle Ereignisse und Entscheidungen.** Hier wächst die Geschichte |
 | `src/ereignisse/ereignisse.js` | Die Mechanik dahinter (nur ändern, wenn sie etwas Neues können muss) |
-| `src/ui/` | Startbildschirm, Ereignis-Tafel, Inventar, Nachrichten, Anzeigen; `beruehrung.js` = Fingersteuerung für Handy und Tablet |
+| `src/ereignisse/aufgaben.js` | Führt die Aufgaben aus `src/inhalte/aufgaben.js`: starten, Schritte abhaken, belohnen |
+| `src/ui/` | Startbildschirm, Ereignis-Tafel, Nachrichten, Anzeigen; `menue.js` = Inventar, Herstellen, Figur, Aufgaben; `beruehrung.js` = Fingersteuerung für Handy und Tablet |
+| `src/spielstand.js` | Speichern und Laden im Browser (localStorage); das Skript in `index.html` liest ihn für „Weiterspielen“ |
 | `src/modelle.js` | Lädt 3D-Modelle (auch in der Vorschau, wo sie als Text vorliegen) |
 | `src/qualitaet.js`, `src/nachbearbeitung.js` | Grafikstufen (hoch/mittel/niedrig) und Bild-Nachbearbeitung |
 | `werkzeuge/figuren/` | Python-Werkzeug, das die Figuren baut (MakeHuman + Bewegungen) |

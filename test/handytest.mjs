@@ -1,6 +1,7 @@
 // Handytest: Startet das Spiel wie auf einem Handy (Touchscreen, schmaler Bildschirm) und bedient
 // es nur mit dem Finger: Figur wählen, Ereignis antippen, mit dem Stick laufen und rennen,
-// wischend umsehen, Knöpfe drücken. Bildschirmfotos landen in test-ergebnisse/.
+// wischend umsehen, mit „Benutzen“ etwas aufheben, das Menü öffnen. Bildschirmfotos landen in
+// test-ergebnisse/.
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 import { starteServer } from '../scripts/server.mjs';
@@ -76,13 +77,38 @@ try {
   await seite.tap('[data-taste="KeyV"]');
   pruefe(await spiel(() => window.spiel.steuerung.zustand.ichSicht), 'Knopf „Blick“ wechselt in die Ich-Sicht');
   await seite.tap('[data-taste="KeyV"]');
-  await seite.tap('[data-taste="KeyI"]');
-  pruefe(await spiel(() => !document.getElementById('inventar').hidden), 'Knopf „Inventar“ öffnet das Inventar');
-  await seite.tap('[data-taste="KeyI"]');
-  await seite.tap('[data-taste="KeyF"]');
-  pruefe(await spiel(() => [...document.querySelectorAll('.nachricht')].some((n) => n.textContent.includes('Feuer'))), 'Knopf „Feuer“ antwortet');
+
+  // „Benutzen“: zu einem Ast gehen, der Knopf zeigt, was geht, Antippen hebt ihn auf
+  const ast = await spiel(() => { const a = window.spiel.sammeln.findeArt('ast', { x: 18, z: 38 }); return { x: a.x, z: a.z, id: a.id }; });
+  await spiel((a) => window.spiel.teleport(a.x + 0.5, a.z), ast);
+  let beschriftet = false;
+  for (let i = 0; i < 20 && !beschriftet; i++) {
+    if (await spiel(() => window.spiel.ereignisse.aktuell)) await seite.tap('#ereignis-optionen .option:last-child');
+    beschriftet = await warte(() => document.getElementById('knopf-benutzen').textContent === 'Ast aufheben', null, 10).then(() => true, () => false);
+  }
+  pruefe(beschriftet, 'Knopf „Benutzen“ zeigt „Ast aufheben“');
   await bilder(1);
-  await seite.screenshot({ path: foto('handy-3-knoepfe'), timeout: 300000 });
+  await seite.screenshot({ path: foto('handy-3-benutzen'), timeout: 300000 });
+  let genommen = false;
+  for (let i = 0; i < 6 && !genommen; i++) {
+    if (await spiel(() => window.spiel.ereignisse.aktuell)) await seite.tap('#ereignis-optionen .option:last-child');
+    await seite.tap('#knopf-benutzen');
+    genommen = await warte((id) => !window.spiel.sammeln.istDa(window.spiel.sammeln.stelle(id)), ast.id, 15).then(() => true, () => false);
+  }
+  pruefe(genommen && await spiel(() => window.spiel.inventar.hat('ast')), 'Antippen von „Benutzen“ hebt den Ast auf');
+
+  // Menü: öffnen, Reiter wechseln, schließen
+  await seite.tap('[data-taste="KeyI"]');
+  pruefe(await spiel(() => !document.getElementById('menue').hidden), 'Knopf „Menü“ öffnet das Menü');
+  await seite.tap('[data-reiter="herstellen"]');
+  pruefe(await spiel(() => document.querySelector('[data-reiter="herstellen"]').getAttribute('aria-selected') === 'true' && !!document.querySelector('.rezept')), 'Reiter „Herstellen“ zeigt das Rezeptbuch');
+  await seite.screenshot({ path: foto('handy-4-menue'), timeout: 300000 });
+  const menuePasst = await spiel(() => document.documentElement.scrollWidth <= innerWidth);
+  pruefe(menuePasst, 'Das Menü passt auf den Bildschirm');
+  await seite.tap('#menue-zu');
+  pruefe(await spiel(() => document.getElementById('menue').hidden && window.spiel.steuerung.zustand.aktiv), 'Kreuz schließt das Menü, das Spiel läuft weiter');
+  await bilder(1);
+  await seite.screenshot({ path: foto('handy-5-knoepfe'), timeout: 300000 });
   const passt = await spiel(() => document.documentElement.scrollWidth <= innerWidth);
   pruefe(passt, 'Nichts ragt über den Bildschirmrand');
 } catch (e) {

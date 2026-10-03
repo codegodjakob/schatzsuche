@@ -20,10 +20,18 @@ Claude veröffentlicht nach jeder Änderung eine Vorschau als Link. Der steht im
 | `Leertaste` | springen |
 | Maus | umsehen (einmal ins Bild klicken) |
 | `V` | Blick über die Schulter oder aus den eigenen Augen |
-| `E`, `Q`, `R` | Entscheidungen in Ereignissen |
-| `I` | Inventar |
+| `E` | benutzen: aufheben, pflücken, Holz hacken, trinken (ein goldener Ring zeigt, was gemeint ist) |
+| `E`, `Q`, `R` | Entscheidungen, solange eine Erzähltafel offen ist |
+| `I` | Inventar: 48 Plätze, Essen, Wegwerfen |
+| `K` | Herstellen: das Rezeptbuch |
+| `C` | Figur: Stufe, Werte (Punkte verteilen), Berufe, Einstellungen |
+| `J` | Aufgaben: was zu tun ist, welche Aufgabe am Bildschirmrand steht |
+| `Esc` | Menü schließen |
 | `F` | Feuer machen (wenn man es gelernt hat) |
 | `G` | Grafikqualität: hoch, mittel, niedrig |
+| `H` | Tastenhilfe aus- und einblenden |
+
+Das Spiel speichert sich von selbst. Beim nächsten Öffnen steht oben „Weiterspielen“.
 
 Auf Handy und Tablet erscheint eine Fingersteuerung:
 
@@ -31,7 +39,9 @@ Auf Handy und Tablet erscheint eine Fingersteuerung:
 |---|---|
 | Daumen links aufsetzen und ziehen | laufen, ganz ausgelenkt rennen |
 | Rechts wischen | umsehen |
-| Knöpfe unten rechts | springen, Blickwinkel, Feuer, Inventar, Grafik |
+| Großer Knopf unten rechts | benutzen; er zeigt an, was gerade geht („Ast aufheben“) |
+| Knöpfe darüber | springen, Blickwinkel, Menü |
+| Menü | Inventar, Herstellen, Figur (auch die Grafik), Aufgaben |
 | Ereignis antippen | Entscheidung treffen |
 
 ## Wie wir zusammenarbeiten
@@ -51,4 +61,5 @@ Neu dabei? → [EINSTIEG.md](EINSTIEG.md). Kurzfassung — die Einzelheiten steh
 | Realistische Grafik: Figuren aus MakeHuman, echte Bewegungen, Wald, Gras, Himmel, Tag und Nacht | Jakob | fertig |
 | Überleben: Hunger, Durst, Kälte, Tod | Jakob | fertig |
 | Erste Begegnung: der Einsiedler am Lagerfeuer, Feuer machen | Jakob | fertig |
-| Weitere Aufgaben | – | siehe Issues |
+| Rollenspiel-Kern: Stufen, Werte, Berufe, Inventar, Sammeln, Herstellen, Aufgaben, Münzen, Spielstand | Jakob | fertig (Etappe M1, Stufe 1) |
+| Kampf, Dorf Erlenbach, Charakter-Editor | – | nächste Stufen, siehe [docs/SPIELENTWURF.md](docs/SPIELENTWURF.md) |
