@@ -19,6 +19,7 @@ export async function starteSpiel({ handy = false, schritt = 0.15 } = {}) {
   // Im unsichtbaren Test-Browser gibt es keine Grafikkarte: niedrigste Qualität
   await seite.addInitScript((s) => {
     window.SCHATZSUCHE_QUALITAET = 'niedrig';
+    window.SCHATZSUCHE_OHNE_BEGEGNUNGEN = true; // zufällige Begegnungen würden Prüfungen stören; erzwinge() geht trotzdem
     if (s) window.SCHATZSUCHE_SCHRITT = s;
   }, schritt);
   // Schriften kommen aus dem Internet; die Prüfung braucht sie nicht

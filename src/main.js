@@ -536,7 +536,7 @@ welt.sturm = () => {
 };
 const begegnungen = erzeugeBegegnungen({
   ereignisse,
-  darf: () => spielLaeuft && !pausiert && !schlaeft && steuerung.zustand.aktiv && !ereignisse.aktuell && !gegner.imKampf().length && !bauen.plan && !angeln.aktiv,
+  darf: () => !window.SCHATZSUCHE_OHNE_BEGEGNUNGEN && spielLaeuft && !pausiert && !schlaeft && steuerung.zustand.aktiv && !ereignisse.aktuell && !gegner.imKampf().length && !bauen.plan && !angeln.aktiv,
   lage: () => {
     const o = steuerung.zustand.ort;
     return {
