@@ -20,6 +20,10 @@ werden. Das Werkzeug `werkzeuge/figuren/` kann dann andere BVH-Dateien verwenden
 | Haut-Texturen, Haare, Bart, Lendenschurz, Brustband, Kutte, Lederwams, Kittel der Räuber, Kleider von Gerold, Marta und Jost | selbst erzeugt mit `werkzeuge/figuren/` | wie das Projekt |
 | Waffen in der Hand (Speer, Messer, Axt, Keulen, Angelrute), Schwimmer, Zelte des Räuberlagers | selbst erzeugt im Code | wie das Projekt |
 | Erlenbach: Fachwerkhäuser, Putz- und Strohtexturen, Brunnen, Marktstand mit gestreifter Markise, Steg | selbst erzeugt im Code (`src/welt/dorf.js`) | wie das Projekt |
+| Hrodgard: Langhäuser, Halle, Grubenhaus, Speicher, Palisade, Tor, Thing-Platz, Stammespfahl, Flechtzaun (Formen) | selbst erzeugt im Code (`src/welt/hrodgard.js`) | wie das Projekt |
+| Texturen für Reetdach (reed_roof_04), Wände aus gespaltenen Stämmen (wood_trunk_wall), Kiefernrinde der Palisade (pine_bark), `assets/bauten/` | [Poly Haven](https://polyhaven.com), geladen mit `werkzeuge/polyhaven.mjs` | CC0 |
+| Fässer (wooden_barrels_01), Eimer (wooden_bucket_01), Kiste (wooden_crate_01), Korb (wicker_basket_01), Spinnrad (spinning_wheel_01), Schemel (wooden_stool_01), Axt (wooden_axe), Baumstumpf (tree_stump_01), `assets/requisiten/` | [Poly Haven](https://polyhaven.com), geladen mit `werkzeuge/polyhaven.mjs` | CC0 |
+| Hrodgar und Sigrun (Figuren) | selbst erzeugt mit `werkzeuge/figuren/` (Grundlage MakeHuman, CC0) | wie das Projekt |
 
 ## Pflanzen, Boden, Felsen
 

@@ -185,6 +185,38 @@ FIGUREN = {
             ('winken', 'ganz', D2 / 'dataset-2_wave-right-hand_normal_007.bvh'),
         ],
     ),
+    # Hrodgard: Hrodgar, Häuptling des Eberstamms – groß, kräftig, langes rotblondes Haar und langer Bart
+    'hrodgar': dict(
+        makro=dict(gender=1.0, age=0.55, muscle=0.9, weight=0.6, height=0.8, proportions=0.8,
+                   rassen={'caucasian': 1.0, 'african': 0.0, 'asian': 0.0}),
+        haut=dict(hautfarbe=(0.74, 0.55, 0.45), haarfarbe=(0.55, 0.32, 0.16), bart=0.95, alter=0.45, schmutz=0.35),
+        haare=dict(art='lang', laenge=(0.16, 0.26), anzahl=2200, breite=0.024, bart=True,
+                   bart_laenge=(0.14, 0.22), bart_anzahl=2000),
+        kleidung='kutte',
+        kutte=dict(saum=0.42, weite=0.14, farbe=(0.22, 0.27, 0.16), saat=97, guertel=(0.32, 0.2, 0.1, 1)),
+        textur=1024,
+        bewegungen=[
+            ('stehen', 'stehen', D2 / 'dataset-2_wave-right-hand_normal_004.bvh'),
+            ('gehen', 'zyklus', D1 / 'dataset-1_walk_normal_001.bvh'),
+            ('winken', 'ganz', D2 / 'dataset-2_wave-right-hand_normal_005.bvh'),
+        ],
+    ),
+    # Hrodgard: Sigrun, die Weberin – schlank, helle lange Haare, blaugraues Wollkleid
+    'sigrun': dict(
+        makro=dict(gender=0.0, age=0.4, muscle=0.5, weight=0.45, height=0.6, proportions=0.75,
+                   cupsize=0.5, firmness=0.6, rassen={'caucasian': 1.0, 'african': 0.0, 'asian': 0.0}),
+        haut=dict(hautfarbe=(0.82, 0.64, 0.55), haarfarbe=(0.78, 0.64, 0.42), bart=0, alter=0.3, weiblich=True,
+                  lippen=(0.72, 0.42, 0.42), schmutz=0.1),
+        haare=dict(art='lang', laenge=(0.22, 0.3), anzahl=2600, breite=0.024),
+        kleidung='kutte',
+        kutte=dict(farbe=(0.3, 0.36, 0.44), saat=101, guertel=(0.55, 0.36, 0.16, 1)),
+        textur=1024,
+        bewegungen=[
+            ('stehen', 'stehen', D2 / 'dataset-2_wave-right-hand_normal_006.bvh'),
+            ('gehen', 'zyklus', D1 / 'dataset-1_walk_feminine_001.bvh'),
+            ('winken', 'ganz', D2 / 'dataset-2_wave-right-hand_normal_007.bvh'),
+        ],
+    ),
     # Erlenbach: Jost, der Fischer, wettergegerbt, im kurzen graublauen Kittel
     'jost': dict(
         makro=dict(gender=1.0, age=0.58, muscle=0.62, weight=0.55, height=0.55, proportions=0.75,

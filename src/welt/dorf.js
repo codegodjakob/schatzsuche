@@ -133,7 +133,7 @@ function spielart(h) {
 }
 
 // Ein Quader von a nach b (Ecken), optional gedreht, als Geometrie in Weltlage
-function quader(sx, sy, sz, x, y, z, dreh = null) {
+export function quader(sx, sy, sz, x, y, z, dreh = null) {
   const g = new THREE.BoxGeometry(sx, sy, sz);
   if (dreh) g.applyMatrix4(new THREE.Matrix4().makeRotationFromEuler(dreh));
   g.translate(x, y, z);
@@ -265,7 +265,7 @@ function haus({ breite, tiefe, schornstein, scheune }, toepfe, art) {
 }
 
 // Rauch aus einem Kamin: Schwaden steigen langsam auf, werden größer und verwehen mit dem Wind
-function kaminRauch(ort, versatz) {
+export function kaminRauch(ort, versatz) {
   const gruppe = new THREE.Group();
   gruppe.position.copy(ort);
   const mat = new THREE.SpriteMaterial({ map: rauchBild(), depthWrite: false, transparent: true, color: 0x9a9a9a });
@@ -355,7 +355,7 @@ function versetze(toepfe, bau, x, z, drehung, hoehe) {
 }
 
 // Kreise als Hindernisse, die eine rechteckige Grundfläche abdecken
-function rechteckHindernis(x, z, breite, tiefe, drehung) {
+export function rechteckHindernis(x, z, breite, tiefe, drehung) {
   const c = Math.cos(drehung), s = Math.sin(drehung);
   for (let i = -breite / 2 + 0.7; i <= breite / 2 - 0.7 + 0.01; i += 1.1) {
     for (let j = -tiefe / 2 + 0.7; j <= tiefe / 2 - 0.7 + 0.01; j += 1.1) {

@@ -1,5 +1,5 @@
 // Die lebendige Welt: Begegnungen unterwegs (Karawane, Wegelagerer, Brida, Sturm), Kleidung gegen Kälte,
-// Jagd mit Pfeil und Bogen, Feen im Moor, die Karte.
+// Jagd mit Pfeil und Bogen, Feen im Moor, die Karte, Hrodgard.
 import { starteSpiel } from './helfer.mjs';
 
 const { seite, url, pruefe, warte, spiel, taste, foto, ereignis, tafelnWeg, abbruch, ende } = await starteSpiel();
@@ -12,6 +12,31 @@ async function erzwinge(id) {
     await seite.waitForTimeout(500);
   }
   throw new Error(`Begegnung ${id} ließ sich nicht zeigen`);
+}
+
+// Zu einem Dorfbewohner gehen, ihn ansehen und ansprechen (E)
+async function sprich(art, name, abstand = 1.8) {
+  await warte((a) => window.spiel.doerfler?.leute.some((x) => x.art === a), art, 600);
+  for (let versuch = 0; versuch < 6; versuch++) {
+    await tafelnWeg();
+    await spiel(([a, d]) => {
+      const p = window.spiel.doerfler.leute.find((x) => x.art === a).objekt.position;
+      window.spiel.teleport(p.x + d, p.z);
+      window.spiel.blick(Math.PI / 2, -0.1); // nach Westen, zu ihm hin
+    }, [art, abstand]);
+    const bereit = await warte((t) => {
+      const z = window.spiel.steuerung.zustand;
+      return !window.spiel.ereignisse.aktuell && window.spiel.benutzen.bereit && window.spiel.benutzen.vorschlag(z.ort, z.blickSeite)?.text === t;
+    }, `Mit ${name} sprechen`, 60).then(() => true, () => false);
+    if (!bereit) continue;
+    await taste('KeyE');
+    if (await warte((a) => window.spiel.ereignisse.aktuell === `gespraech-${a}`, art, 20).then(() => true, () => false)) return;
+  }
+  throw new Error(`Gespräch mit ${name} kam nicht zustande`);
+}
+async function antworte(code) {
+  await taste(code);
+  await warte(() => !window.spiel.ereignisse.aktuell?.startsWith('gespraech-'), null, 30);
 }
 
 try {
@@ -118,6 +143,21 @@ try {
   await seite.waitForTimeout(1500);
   await foto('welt-5-karte');
   await taste('KeyM');
+
+  // Hrodgard: Häuptling Hrodgar will drei Felle; wer sie bringt, wird Freund des Ebers
+  await spiel(() => window.spiel.teleport(-176, 115));
+  await ereignis('hrodgard-ankunft', 'KeyE');
+  await sprich('hrodgar', 'Hrodgar');
+  await antworte('KeyR');
+  pruefe(await spiel(() => window.spiel.aufgaben.istAktiv('auftrag_felle')), 'Hrodgar gibt Arbeit: „Felle für den Winter“');
+  await spiel(() => window.spiel.inventar.gib('fell', Math.max(0, 3 - window.spiel.inventar.anzahl('fell'))));
+  await sprich('hrodgar', 'Hrodgar');
+  await antworte('KeyT');
+  pruefe(await spiel(() => window.spiel.inventar.hat('eberzahn') && window.spiel.inventar.anzahl('fell') === 0), 'Drei Felle abgegeben: Freund des Ebers, Eberzahn-Amulett');
+  await spiel(() => { window.spiel.teleport(-200, 117); window.spiel.blick(Math.PI / 2, -0.08); });
+  await warte(() => window.spiel.doerfler.leute.some((x) => x.art === 'sigrun'), null, 300);
+  await seite.waitForTimeout(3000);
+  await foto('welt-6-hrodgard');
 } catch (e) {
   await abbruch(e, 'welt-fehler');
 }

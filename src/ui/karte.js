@@ -3,7 +3,7 @@
 // Orte mit ihren Namen. Taste M oder ein Tipp auf die Karte macht sie groß.
 import { hoeheBei, maskeBei, waldDichte, wasserspiegel, wegLinien, WELT_GROESSE } from '../welt/gelaende.js';
 import {
-  DORF, GRAUFURT, LAGER, MOOR, MOORSEE, RAEUBERLAGER, SCHILFSEE, TEICH, WALDSEE, WEIHER,
+  DORF, GRAUFURT, HRODGARD, LAGER, MOOR, MOORSEE, RAEUBERLAGER, SCHILFSEE, TEICH, THING, WALDSEE, WEIHER,
 } from '../welt/orte.js';
 
 const BILD = 384; // Kantenlänge des gezeichneten Landes in Pixeln
@@ -14,6 +14,8 @@ const SICHT = 75; // so weit um sich herum erkundet man (Meter)
 const ORTE = [
   { name: 'Erlenbach', ...DORF, art: 'dorf' },
   { name: 'Graufurt', ...GRAUFURT, art: 'dorf' },
+  { name: 'Hrodgard', ...HRODGARD, art: 'dorf' },
+  { name: 'Thing-Platz', x: THING.x, z: THING.z + 6, art: 'gebiet' },
   { name: 'Lichtung des Alten', ...LAGER, art: 'lager' },
   { name: 'Räuberlager', ...RAEUBERLAGER, art: 'gefahr' },
   { name: 'Das Moor', x: MOOR.x - 8, z: MOOR.z + 36, art: 'gebiet' },

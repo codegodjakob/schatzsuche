@@ -27,7 +27,7 @@
 // (Benutzen in seiner Nähe).
 //
 // Reihenfolge zählt: Treffen mehrere zu, kommt das obere zuerst.
-import { ALTER_BAUM, DORF, GRAUFURT, LAGER, MOOR, RAEUBERLAGER, TEICH } from '../welt/orte.js';
+import { ALTER_BAUM, DORF, GRAUFURT, HRODGARD, LAGER, MOOR, RAEUBERLAGER, TEICH } from '../welt/orte.js';
 import { BEGEGNUNGEN } from './begegnungen.js';
 
 const beimLager = (s, r = 6) => s.nahe(LAGER.x, LAGER.z, r);
@@ -329,9 +329,71 @@ const DORF_EREIGNISSE = [
       + 'Aus der Schmiede klingt der Hammer, vor dem Gasthaus „Zum Krummen Ochsen“ dampft ein Kessel. Im Norden ragen die Graufels-Berge auf.',
     optionen: [{ taste: 'E', text: 'Ins Dorf gehen' }],
   },
+  {
+    id: 'hrodgard-ankunft',
+    wann: (s) => s.nahe(HRODGARD.x, HRODGARD.z, HRODGARD.radius + 8),
+    text: 'Eine Palisade aus zugespitzten Stämmen, über dem Tor bleicht ein Eberschädel. Dahinter liegen Langhäuser, '
+      + 'deren Reetdächer fast bis zum Boden reichen, auf den Giebeln gekreuzte Pferdeköpfe. Rauch steigt durch die Dächer. '
+      + 'Das ist Hrodgard, das Dorf des Eberstamms.',
+    optionen: [{ taste: 'E', text: 'Durch das Tor gehen' }],
+  },
 ];
 
 const GESPRAECHE = [
+  {
+    id: 'gespraech-hrodgar',
+    wiederholbar: true, sperre: 0,
+    wann: () => false,
+    text: (s) => (s.weiss('freund-eber')
+      ? 'Hrodgar schlägt dir auf die Schulter. „Freund des Ebers! An meinem Feuer ist immer Platz für dich.“'
+      : s.weiss('hrodgar-kennt')
+        ? 'Hrodgar mustert dich unter buschigen Brauen. „Du schon wieder. Sprich.“'
+        : 'Ein hünenhafter Mann mit rotblondem Bart tritt aus der Halle, die Hand am Gürtel. „Ich bin Hrodgar, Sohn des Hrodulf, '
+          + 'Häuptling des Eberstamms. Fremde kommen selten durch unser Tor. Was willst du in Hrodgard?“'),
+    beimZeigen: (s) => s.merke('hrodgar-kennt'),
+    optionen: [
+      {
+        taste: 'E', text: 'Wer seid ihr?', bedingung: (s) => !s.weiss('stamm-eber'),
+        folge: (s) => {
+          s.merke('stamm-eber'); s.gibErfahrung(10);
+          s.sage('„Wir sind die Söhne und Töchter des Ebers. Unsere Väter haben diesen Wald gerodet. Im Norden hausen die Raben, '
+            + 'ein Stamm von Dieben; seit drei Wintern liegen wir in Fehde mit ihnen. Und am Vollmond halten wir Thing, dort bei den Steinen.“');
+        },
+      },
+      { taste: 'R', text: 'Gibt es Arbeit?', bedingung: (s) => !s.aufgabeAktiv('auftrag_felle') && !s.weiss('freund-eber'), folge: (s) => s.starteAufgabe('auftrag_felle') },
+      {
+        taste: 'T', text: '3 Felle übergeben', braucht: 'fell', menge: 3, bedingung: (s) => s.aufgabeAktiv('auftrag_felle'),
+        folge: (s) => {
+          s.nimm('fell', 3); s.merke('abgegeben-felle'); s.merke('freund-eber'); s.gib('eberzahn');
+          s.sage('Hrodgar hebt die Felle hoch, dass alle es sehen. „Gute Jagd! Von heute an bist du ein Freund des Ebers.“ Er hängt dir einen Eberzahn an einer Lederschnur um.');
+        },
+      },
+      { taste: 'F', text: 'Handeln', folge: (s) => s.handel('hrodgar') },
+      { taste: 'Q', text: 'Lebe wohl' },
+    ],
+  },
+  {
+    id: 'gespraech-sigrun',
+    wiederholbar: true, sperre: 0,
+    wann: () => false,
+    text: (s) => (s.weiss('sigrun-kennt')
+      ? 'Sigrun lässt das Spinnrad auslaufen. „Na? Frierst du wieder?“'
+      : 'Eine Frau mit langen hellen Zöpfen sitzt am Spinnrad, der Faden läuft durch ihre Finger. „Ich bin Sigrun. '
+        + 'Ich webe für den ganzen Stamm. Du siehst aus, als bräuchtest du etwas Ordentliches zum Anziehen.“'),
+    beimZeigen: (s) => s.merke('sigrun-kennt'),
+    optionen: [
+      { taste: 'E', text: 'Kleidung ansehen', folge: (s) => s.handel('sigrun') },
+      {
+        taste: 'R', text: 'Was erzählt man sich?', bedingung: (s) => !s.weiss('sigrun-geruecht'),
+        folge: (s) => {
+          s.merke('sigrun-geruecht');
+          s.sage('„Im Osten, hinter den Hügeln, beginnt das Grasland. Dort reiten Männer, die auf ihren Pferden schlafen, sagt man. '
+            + 'Und im Moor tanzen nachts die Feen. Wer ihnen etwas zuleide tut, findet nie wieder heim.“');
+        },
+      },
+      { taste: 'Q', text: 'Danke, Sigrun' },
+    ],
+  },
   {
     id: 'gespraech-bertram',
     wiederholbar: true, sperre: 0,

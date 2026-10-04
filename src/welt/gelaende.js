@@ -3,7 +3,7 @@
 // Gras, Erde (Pfad, Waldboden), Fels (steil), Ufer.
 import * as THREE from 'three';
 import { ImprovedNoise } from 'three/addons/math/ImprovedNoise.js';
-import { BACH, DORF, MOOR, GEWAESSER, GRAUFURT, HAEUSER, HAEUSER_GRAUFURT, LAGER, PFAD, RAEUBERLAGER, START, STEG, STRASSE, STRASSE_NORD } from './orte.js';
+import { BACH, DORF, HRODGARD, MOOR, PLATZ_HRODGARD, WESTERSTRASSE, GEWAESSER, GRAUFURT, HAEUSER, HAEUSER_GRAUFURT, LAGER, PFAD, RAEUBERLAGER, START, STEG, STRASSE, STRASSE_NORD } from './orte.js';
 
 export const WELT_GROESSE = 900;
 export const RASTER = 512;
@@ -43,7 +43,7 @@ function graufurtWeg(ziel, bis) {
 const GRAUFURT_WEGE = HAEUSER_GRAUFURT.map((h) => graufurtWeg(h, h.tiefe / 2 - 0.2));
 
 // Pfad zum Einsiedler, Straße nach Osten und die Wege im Dorf als dichte Punktfolgen (Catmull-Rom geglättet)
-const wege = [[PFAD, 160], [STRASSE, 140], [STRASSE_NORD, 140], ...DORFWEGE.map((w) => [w, 30]), ...GRAUFURT_WEGE.map((w) => [w, 30])].map(([stuetzen, anzahl]) => {
+const wege = [[PFAD, 160], [STRASSE, 140], [STRASSE_NORD, 140], [WESTERSTRASSE, 170], ...DORFWEGE.map((w) => [w, 30]), ...GRAUFURT_WEGE.map((w) => [w, 30])].map(([stuetzen, anzahl]) => {
   const punkte = new THREE.CatmullRomCurve3(stuetzen.map(([x, z]) => new THREE.Vector3(x, 0, z))).getSpacedPoints(anzahl);
   return { punkte, box: new THREE.Box3().setFromPoints(punkte).expandByScalar(12) };
 });
@@ -72,6 +72,7 @@ export function waldDichte(x, z) {
   if (Math.abs(x - 55) < 40 && Math.abs(z + 58) < 40) w *= weich(3, 7, bachAbstand(x, z));
   w *= weich(DORF.radius * 0.9, DORF.radius * 1.3, Math.hypot(x - DORF.x, z - DORF.z));
   w *= weich(GRAUFURT.radius * 0.9, GRAUFURT.radius * 1.4, Math.hypot(x - GRAUFURT.x, z - GRAUFURT.z));
+  w *= weich(HRODGARD.radius * 1.05, HRODGARD.radius * 1.5, Math.hypot(x - HRODGARD.x, z - HRODGARD.z)); // Lichtung um die Palisade
   for (const h of HAEUSER_GRAUFURT) w *= weich(h.breite * 0.75, h.breite * 0.75 + 4, Math.hypot(x - h.x, z - h.z));
   // kein Baum in oder dicht an einem Haus am Dorfrand
   for (const h of HAEUSER) w *= weich(h.breite * 0.75, h.breite * 0.75 + 4, Math.hypot(x - h.x, z - h.z));
@@ -88,6 +89,7 @@ export function bachAbstand(x, z) {
 export const bachLinie = () => bachPunkte;
 const MULDE = -0.2; // so hoch liegt das Land rund um Becken-Seen und den Bach
 
+let hrodgardHoehe = null; // wird gleich unten einmal bestimmt
 function hoeheRoh(x, z) {
   const d = Math.hypot(x, z);
   let h = fbm(x * 0.012, z * 0.012, 4) * 2.2;
@@ -112,8 +114,16 @@ function hoeheRoh(x, z) {
   const dl = Math.hypot(x - LAGER.x, z - LAGER.z);
   const lagerHoehe = fbm(LAGER.x * 0.012, LAGER.z * 0.012, 4) * 2.2;
   h += (lagerHoehe - h) * (1 - weich(LAGER.radius, LAGER.radius * 2, dl)) * 0.8;
+  // Hrodgard steht auf einer ebenen Fläche, die weich ins Land übergeht
+  if (hrodgardHoehe !== null) {
+    const dh = Math.hypot(x - HRODGARD.x, z - HRODGARD.z);
+    h += (hrodgardHoehe - h) * (1 - weich(HRODGARD.radius + 2, HRODGARD.radius * 2.1, dh));
+  }
   return h;
 }
+
+// Die Dorffläche liegt auf der mittleren Höhe des Ortes (ein wenig gemittelt, damit sie nicht in einer Senke sitzt)
+hrodgardHoehe = [[0, 0], [12, 0], [-12, 0], [0, 12], [0, -12]].reduce((n, [a, b]) => n + hoeheRoh(HRODGARD.x + a, HRODGARD.z + b), 0) / 5;
 
 // --- Raster der Höhen ---
 export const hoehen = new Float32Array(RASTER * RASTER);
@@ -173,7 +183,8 @@ export const masken = new Uint8Array(RASTER * RASTER * 4);
       const lager = Math.max(1 - weich(LAGER.radius * 0.35, LAGER.radius * 0.8, Math.hypot(x - LAGER.x, z - LAGER.z)),
         1 - weich(RAEUBERLAGER.radius * 0.3, RAEUBERLAGER.radius * 0.75, Math.hypot(x - RAEUBERLAGER.x, z - RAEUBERLAGER.z)),
         1 - weich(7, 12, Math.hypot(x - DORF.x, z - DORF.z)), // Dorfplatz
-        1 - weich(6, 10, Math.hypot(x - GRAUFURT.x, z - GRAUFURT.z)));
+        1 - weich(6, 10, Math.hypot(x - GRAUFURT.x, z - GRAUFURT.z)),
+        1 - weich(5, 10, Math.hypot(x - PLATZ_HRODGARD.x, z - PLATZ_HRODGARD.z)));
       const wald = waldDichte(x, z) * 0.85;
       const flecken = weich(0.66, 0.82, fbm(x * 0.05 + 9, z * 0.05, 3) * 0.5 + 0.5) * 0.3;
       const erde = Math.min(1, Math.max(pfad, lager * 0.9, wald, flecken) * (1 - fels));

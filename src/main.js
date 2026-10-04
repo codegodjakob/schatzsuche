@@ -19,11 +19,12 @@ import { erzeugeMarkierung } from './welt/markierung.js';
 import { AUFWACHSEN, AUSTREIBEN, erzeugeFaellen } from './welt/faellen.js';
 import { erzeugeRaeuberlager } from './welt/raeuberlager.js';
 import { erzeugeDorf, erzeugeGraufurt } from './welt/dorf.js';
+import { erzeugeHrodgard } from './welt/hrodgard.js';
 import { inDieHand } from './welt/waffen.js';
 import { entferneHindernis, hindernis, kreisFrei } from './welt/kollision.js';
 import { wind, windSchritt } from './welt/wind.js';
 import { SEKUNDEN_JE_STUNDE, tageszeitSchritt, uhrzeitText, zeit } from './welt/tageszeit.js';
-import { DOERFLER_GRAUFURT, DORF, GRAUFURT, LAGER, RAEUBERLAGER, START } from './welt/orte.js';
+import { DOERFLER_GRAUFURT, DOERFLER_HRODGARD, DORF, GRAUFURT, HRODGARD, LAGER, PLATZ_HRODGARD, RAEUBERLAGER, START } from './welt/orte.js';
 import { BAUWERKE } from './inhalte/rezepte.js';
 import { ladeFigur } from './spieler/figur.js';
 import { erzeugeSteuerung } from './spieler/steuerung.js';
@@ -145,10 +146,15 @@ const dorf = erzeugeDorf();
 szene.add(dorf.objekt);
 const graufurt = erzeugeGraufurt();
 szene.add(graufurt.objekt);
+const hrodgard = erzeugeHrodgard();
+szene.add(hrodgard.objekt);
+const herdfeuer = erzeugeFeuer(PLATZ_HRODGARD.x, PLATZ_HRODGARD.z, { felsMaterial: natur.felsMaterial, rindenMaterial: baeume.rinde });
+szene.add(herdfeuer.objekt);
 const feuerstellen = [
   { feuer: lagerfeuer, ort: lagerfeuer.ort, brennt: () => true },
   { feuer: raeuberfeuer, ort: raeuberfeuer.ort, brennt: () => true },
   graufurt.esse,
+  { feuer: herdfeuer, ort: herdfeuer.ort, brennt: () => true },
 ];
 const feuerlichter = erzeugeFeuerlichter(3);
 szene.add(feuerlichter.objekt);
@@ -182,7 +188,7 @@ let doerfler = null;
 const dorfLeute = [];
 const geladeneDoerfer = new Set();
 function doerflerPruefen(ort) {
-  for (const [name, mitte, liste] of [['erlenbach', DORF, undefined], ['graufurt', GRAUFURT, DOERFLER_GRAUFURT]]) {
+  for (const [name, mitte, liste] of [['erlenbach', DORF, undefined], ['graufurt', GRAUFURT, DOERFLER_GRAUFURT], ['hrodgard', HRODGARD, DOERFLER_HRODGARD]]) {
     if (geladeneDoerfer.has(name) || Math.hypot(ort.x - mitte.x, ort.z - mitte.z) > 160) continue;
     geladeneDoerfer.add(name);
     erzeugeDoerfler(liste, mitte).then((d) => {
@@ -779,7 +785,7 @@ function tippsPruefen() {
 Object.defineProperty(window.spiel, 'aussehen', { get: () => aussehen });
 Object.assign(window.spiel, {
   editor,
-  steuerung, ereignisse, ueberleben, inventar, fortschritt, herstellen, aufgaben, sammeln, benutzen, menue, faellen, baeume, bauen, natur, unterholz, begegnungen, tiere, feen, karte, schiesse, gegner, kampf,
+  steuerung, ereignisse, ueberleben, inventar, fortschritt, herstellen, aufgaben, sammeln, benutzen, menue, faellen, baeume, bauen, natur, unterholz, begegnungen, tiere, feen, karte, hrodgard, schiesse, gegner, kampf,
   handel, angeln, dorf, wasserspiegel: wasserspiegel(),
   speichere: () => speichereJetzt(),
   fackelBrennt: () => fackelAn,
@@ -1158,6 +1164,7 @@ renderer.setAnimationLoop(() => {
   for (const f of feuerstellen) if (f.brennt()) f.feuer.aktualisiere(dt, wind.richtung.value, zeit.hell);
   dorf.aktualisiere(dt, wind.richtung.value, zeit.hell);
   graufurt.aktualisiere(dt, wind.richtung.value, zeit.hell);
+  hrodgard.aktualisiere(dt, wind.richtung.value, zeit.hell, steuerung.zustand.ort);
   fackelSchritt(dt);
   bauen.schritt(dt, steuerung.zustand.ort, steuerung.zustand.blickSeite + Math.PI); // dorthin, wohin man schaut
   bauen.schrittFackeln();

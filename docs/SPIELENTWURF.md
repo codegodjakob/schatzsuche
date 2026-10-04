@@ -519,6 +519,16 @@ Pergament; wo man hingeht, zeichnet sich das Land ein (Wiesen, Wald, Felsen, Was
 Orte stehen mit Namen darauf. Taste M oder Tippen macht sie groß. Was man erkundet hat, bleibt im Spielstand.
 Wird die Welt größer, wächst die Karte mit: Ferne Reiche erscheinen erst, wenn man dort war.
 
+**Hrodgard (gebaut)**: das erste germanische Dorf, der **Eberstamm**, auf einer Waldlichtung im Westen. Die
+Westerstraße führt vom Lager des Einsiedlers hin. Hinter einer Palisade aus zugespitzten Stämmen (Tor nach Osten,
+Eberschädel über dem Tor) stehen die große Halle des Häuptlings und zwei Langhäuser: Wände aus gespaltenen Stämmen,
+Reetdächer fast bis zum Boden, gekreuzte Pferdeköpfe auf den Giebeln, Rauch steigt durchs Dach. Dazu ein Grubenhaus,
+ein Speicher auf Pfählen, ein Pferch mit Flechtzaun, der Thing-Platz aus aufrechten Steinen, ein Stammespfahl und
+ein Herdfeuer auf dem Platz. Fässer, Eimer, Körbe, Kisten, ein Spinnrad und eine Axt im Hackklotz sind fertige
+Modelle von Poly Haven. **Hrodgar**, der Häuptling, erzählt von der Fehde mit dem Rabenstamm, handelt mit Waffen und
+will drei Felle; wer sie bringt, wird Freund des Ebers und bekommt ein Eberzahn-Amulett. **Sigrun**, die Weberin,
+verkauft Kleidung und erzählt vom Reitervolk im Osten.
+
 **Nächste Schritte**: Die Welt wird in Reiche aufgeteilt, die man erst lädt, wenn man hinreist (wie die Dorfbewohner).
 Zuerst ein germanisches Langhaus-Dorf, dann die Steppe mit dem Reitervolk und dem eigenen Pferd.
 

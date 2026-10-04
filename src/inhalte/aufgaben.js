@@ -148,6 +148,17 @@ export const AUFGABEN = [
     zuruecksetzen: (s) => s.vergiss('abgegeben-fische'),
   },
   {
+    id: 'auftrag_felle',
+    titel: 'Felle für den Winter',
+    geber: 'Hrodgar',
+    beschreibung: '„Der Winter wird hart. Bring mir drei Felle, Fremder, dann bist du ein Freund des Ebers.“',
+    schritte: [
+      { text: (s) => `Erlege Tiere und nimm ihr Fell (${bis(s.anzahl('fell'), 3)}/3)`, fertig: (s) => s.anzahl('fell') >= 3 || s.weiss('abgegeben-felle') },
+      { text: 'Bring sie Hrodgar in Hrodgard', fertig: (s) => s.weiss('abgegeben-felle') },
+    ],
+    belohnung: { erfahrung: 60, muenzen: 15 },
+  },
+  {
     id: 'auftrag_steine',
     titel: 'Steine für die Esse',
     geber: 'Bertram',

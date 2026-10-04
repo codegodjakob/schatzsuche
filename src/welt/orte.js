@@ -51,6 +51,27 @@ export const DOERFLER_GRAUFURT = {
   bertram: { x: -1.5, z: -204.5, reichweite: 3 }, // Schmied, an seiner Esse
   ida: { x: -30, z: -209.5 }, // Wirtin, vor dem Gasthaus
 };
+// Hrodgard: das Dorf des Eberstamms, ein germanisches Dorf auf einer Waldlichtung im Westen. Langhäuser mit
+// tief heruntergezogenen Reetdächern, eine große Halle des Häuptlings, ein Grubenhaus, ein Speicher auf Pfählen,
+// ein Thing-Platz aus Steinen, alles hinter einer Palisade mit Tor nach Osten. Die Westerstraße führt vom
+// Lager des Einsiedlers hin.
+export const HRODGARD = { x: -215, z: 115, radius: 33, palisade: 31 };
+export const PLATZ_HRODGARD = { x: -205, z: 115 }; // der Platz mit dem Herdfeuer
+// laenge: entlang des Firsts; die Tür zeigt zum Platz
+export const LANGHAEUSER = [
+  { name: 'halle', x: -228, z: 115, laenge: 24, breite: 9 },
+  { name: 'nordhaus', x: -206, z: 96, laenge: 17, breite: 7 },
+  { name: 'suedhaus', x: -206, z: 134, laenge: 16, breite: 7 },
+];
+export const GRUBENHAUS = { x: -193, z: 102 };
+export const SPEICHER = { x: -193, z: 131 };
+export const THING = { x: -224, z: 138, radius: 3.4 };
+export const WESTERSTRASSE = [[-60, 90], [-84, 98], [-112, 104], [-140, 110], [-165, 114], [-182, 115], [-196, 115]];
+export const DOERFLER_HRODGARD = {
+  hrodgar: { x: -222, z: 115, reichweite: 3.5 }, // vor seiner Halle
+  sigrun: { x: -205, z: 102.5 }, // an ihrem Spinnrad vor dem Nordhaus
+};
+
 export const LAGER = { x: -58, z: 86, radius: 9 }; // Lichtung des Einsiedlers am Waldrand
 export const BEERENSTRAEUCHER = [
   { x: 24, z: 44 }, { x: 28, z: 47 }, { x: -36, z: 38 }, { x: -40, z: 41 }, { x: 52, z: 6 },

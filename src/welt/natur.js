@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { ladeModell } from '../modelle.js';
 import { STUFEN } from '../qualitaet.js';
 import { hoeheBei, maskeBei, neigungBei, pfadAbstand, wasserspiegel, WELT_GROESSE } from './gelaende.js';
-import { DORF, GRAUFURT, LAGER, RAEUBERLAGER, START } from './orte.js';
+import { DORF, GRAUFURT, HRODGARD, LAGER, RAEUBERLAGER, START } from './orte.js';
 import { zufall } from './zufall.js';
 import { ImprovedNoise } from 'three/addons/math/ImprovedNoise.js';
 
@@ -104,6 +104,7 @@ export function felsMaterial() {
 
 const imOrt = (x, z) => Math.hypot(x - DORF.x, z - DORF.z) < DORF.radius + 6
   || Math.hypot(x - GRAUFURT.x, z - GRAUFURT.z) < GRAUFURT.radius + 6
+  || Math.hypot(x - HRODGARD.x, z - HRODGARD.z) < HRODGARD.radius + 4
   || Math.hypot(x - LAGER.x, z - LAGER.z) < LAGER.radius + 2
   || Math.hypot(x - RAEUBERLAGER.x, z - RAEUBERLAGER.z) < RAEUBERLAGER.radius + 2
   || pfadAbstand(x, z) < 2.5;
