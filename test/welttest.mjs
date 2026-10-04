@@ -158,6 +158,7 @@ try {
   await warte(() => window.spiel.doerfler.leute.some((x) => x.art === 'sigrun'), null, 300);
   await seite.waitForTimeout(3000);
   await foto('welt-6-hrodgard');
+  pruefe(await spiel(() => document.querySelectorAll('.feind-balken').length === 0), 'Keine Lebensbalken von verschwundenen Wegelagerern mehr');
 } catch (e) {
   await abbruch(e, 'welt-fehler');
 }

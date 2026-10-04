@@ -60,6 +60,12 @@ export function erzeugeKampfanzeige(kamera) {
       el.style.transform = `translate(${p.x}px, ${p.y}px)`;
       el.firstChild.style.width = `${Math.max(0, g.leben / g.def.leben) * 100}%`;
     }
+    // Balken von Gegnern, die es nicht mehr gibt (Wegelagerer, die fort sind), entfernen
+    for (const [id, el] of balken) {
+      if (gegner.some((g) => g.id === id)) continue;
+      el.remove();
+      balken.delete(id);
+    }
     boss.hidden = !bossZeigen;
     if (bossZeigen) {
       document.getElementById('boss-name').textContent = bossZeigen.def.name;
