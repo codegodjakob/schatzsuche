@@ -136,8 +136,13 @@ try {
   // Abwarten, bis er aufgeschlagen ist und daliegt (ohne Grafikkarte dauert das Fallen eine Weile)
   await warte((nr) => window.spiel.faellen.liegender(nr)?.liegt, baum.nr, 240);
   await foto('dorf-baum-gefaellt');
-  // Zum liegenden Stamm gehen (er fiel vom Spieler weg)
-  await spiel((nr) => { const l = window.spiel.faellen.liegender(nr); window.spiel.teleport(l.x, l.z); }, baum.nr);
+  // Zum liegenden Stamm gehen (er fiel vom Spieler weg), falls man ihn nicht schon von hier aus erreicht
+  await spiel((nr) => {
+    const z = window.spiel.steuerung.zustand;
+    if (['Abhacken', 'Zerteilen'].includes(window.spiel.benutzen.vorschlag(z.ort, z.blickSeite)?.kurz)) return;
+    const l = window.spiel.faellen.liegender(nr);
+    window.spiel.teleport(l.x, l.z);
+  }, baum.nr);
   for (let i = 0; i < 10; i++) {
     await tafelnWeg();
     const v = await warte(() => { const z = window.spiel.steuerung.zustand; const v = window.spiel.benutzen.vorschlag(z.ort, z.blickSeite); return window.spiel.benutzen.bereit && v && ['Abhacken', 'Zerteilen'].includes(v.kurz) ? v.kurz : false; }, null, 30).then((h) => h.jsonValue(), () => null);
