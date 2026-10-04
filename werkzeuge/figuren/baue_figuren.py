@@ -18,6 +18,7 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).parent))
 import bewegung  # noqa: E402
+import formen  # noqa: E402
 import haare  # noqa: E402
 import haut  # noqa: E402
 import kleidung  # noqa: E402
@@ -29,6 +30,12 @@ D1 = mh.QUELLEN / 'bandai' / 'dataset' / 'Bandai-Namco-Research-Motiondataset-1'
 D2 = mh.QUELLEN / 'bandai' / 'dataset' / 'Bandai-Namco-Research-Motiondataset-2' / 'data'
 
 AUSGABE = Path(__file__).resolve().parents[2] / 'assets' / 'figuren'
+
+# Einzelne Schläge aus längeren Aufnahmen (Einzelbilder, 30 je Sekunde): kurz ausholen, zuschlagen,
+# zurückkehren. Im Spiel trifft der Schlag im schnellsten Moment (bei 18 von 30, 12 von 20, 15 von 36).
+HIEB = ('hieb', 'ganz', D1 / 'dataset-1_slash_normal_001.bvh', 189, 219)
+SCHLAG = ('schlag', 'ganz', D1 / 'dataset-1_punch_normal_002.bvh', 139, 159)
+TRITT = ('tritt', 'ganz', D1 / 'dataset-1_kick_normal_001.bvh', 177, 213)
 HAUT_STAND = (Path(__file__).parent / 'haut.py').read_text()
 
 FIGUREN = {
@@ -36,13 +43,18 @@ FIGUREN = {
         makro=dict(gender=1.0, age=0.5, muscle=0.62, weight=0.42, height=0.45, proportions=0.85,
                    rassen={'caucasian': 0.8, 'african': 0.1, 'asian': 0.1}),
         haut=dict(hautfarbe=(0.70, 0.53, 0.43), haarfarbe=(0.16, 0.11, 0.08), bart=0.8, alter=0.1, schmutz=0.6),
-        haare=dict(art='kurz', laenge=(0.03, 0.06), anzahl=1900, breite=0.012),
+        # Lang gebaut: Im Spiel bestimmt ein Formziel, wie lang Haare und Bart gerade sind (sie wachsen nach)
+        haare=dict(art='lang', laenge=(0.30, 0.40), anzahl=1900, breite=0.013, steife=0.65, bart=True,
+                   bart_laenge=(0.12, 0.17), bart_anzahl=1300),
+        # Längen der Formziele in Metern; die letzte Haarlänge ist die Grenze zwischen kurzem und langem Haarnetz
+        editor=dict(haare=(0.006, 0.04, 0.12), bart=(0.003, 0.02, 0.06)),
         bewegungen=[
             ('stehen', 'stehen', D2 / 'dataset-2_wave-right-hand_normal_001.bvh'),
             ('gehen', 'zyklus', D1 / 'dataset-1_walk_normal_001.bvh'),
             ('rennen', 'zyklus', D1 / 'dataset-1_run_masculinity_001.bvh'),
             ('sprinten', 'zyklus', D1 / 'dataset-1_dash_masculinity_001.bvh'),
             ('erschoepft', 'zyklus', D1 / 'dataset-1_walk_tired_001.bvh'),
+            HIEB, SCHLAG,
         ],
     ),
     'sie': dict(
@@ -50,13 +62,15 @@ FIGUREN = {
                    cupsize=0.5, firmness=0.6, rassen={'caucasian': 0.8, 'african': 0.1, 'asian': 0.1}),
         haut=dict(hautfarbe=(0.77, 0.59, 0.49), haarfarbe=(0.30, 0.19, 0.11), bart=0, alter=0.05, weiblich=True,
                   lippen=(0.70, 0.42, 0.42), schmutz=0.5),
-        haare=dict(art='lang', laenge=(0.26, 0.40), anzahl=2300, breite=0.016),
+        haare=dict(art='lang', laenge=(0.30, 0.42), anzahl=2300, breite=0.016, steife=0.65),
+        editor=dict(haare=(0.006, 0.04, 0.12)),
         bewegungen=[
             ('stehen', 'stehen', D2 / 'dataset-2_wave-right-hand_normal_002.bvh'),
             ('gehen', 'zyklus', D1 / 'dataset-1_walk_feminine_002.bvh'),
             ('rennen', 'zyklus', D1 / 'dataset-1_run_feminine_001.bvh'),
             ('sprinten', 'zyklus', D1 / 'dataset-1_dash_feminine_001.bvh'),
             ('erschoepft', 'zyklus', D1 / 'dataset-1_walk_tired_002.bvh'),
+            HIEB, SCHLAG,
         ],
     ),
     'einsiedler': dict(
@@ -71,6 +85,87 @@ FIGUREN = {
             ('stehen', 'stehen', D2 / 'dataset-2_wave-right-hand_normal_003.bvh'),
             ('gehen', 'zyklus', D1 / 'dataset-1_walk_old_001.bvh'),
             ('winken', 'ganz', D2 / 'dataset-2_wave-right-hand_elderly_001.bvh'),
+        ],
+    ),
+    # Räuber: jung, kräftig, sonnenverbrannt und schmutzig, im kurzen Kittel; Gang wie ein Halbstarker
+    'raeuber': dict(
+        makro=dict(gender=1.0, age=0.42, muscle=0.72, weight=0.5, height=0.5, proportions=0.7,
+                   rassen={'caucasian': 0.7, 'african': 0.15, 'asian': 0.15}),
+        haut=dict(hautfarbe=(0.64, 0.47, 0.36), haarfarbe=(0.09, 0.07, 0.05), bart=0.75, alter=0.2, schmutz=0.85),
+        haare=dict(art='kurz', laenge=(0.03, 0.07), anzahl=1500, breite=0.012),
+        kleidung='kutte',
+        kutte=dict(saum=0.5, weite=0.16, farbe=(0.21, 0.20, 0.16), saat=23, guertel=(0.16, 0.11, 0.07, 1)),
+        textur=1024,
+        bewegungen=[
+            ('stehen', 'stehen', D2 / 'dataset-2_wave-right-hand_normal_004.bvh'),
+            ('gehen', 'zyklus', D1 / 'dataset-1_walk_chimpira_001.bvh'),
+            ('rennen', 'zyklus', D1 / 'dataset-1_run_chimpira_001.bvh'),
+            HIEB, SCHLAG,
+        ],
+    ),
+    # Der Räuberhauptmann: groß, schwer, kahl mit rotem Bart, im dunkelroten Kittel; Gang wie ein Riese
+    'hauptmann': dict(
+        makro=dict(gender=1.0, age=0.62, muscle=0.9, weight=0.68, height=0.95, proportions=0.9,
+                   rassen={'caucasian': 0.85, 'african': 0.05, 'asian': 0.1}),
+        haut=dict(hautfarbe=(0.62, 0.45, 0.35), haarfarbe=(0.36, 0.13, 0.06), bart=1.0, alter=0.5, glatze=True,
+                  schmutz=0.7),
+        haare=dict(art='kurz', glatze=True, laenge=(0.02, 0.05), anzahl=900, breite=0.010, bart=True,
+                   bart_laenge=(0.07, 0.17), bart_anzahl=1400),
+        kleidung='kutte',
+        kutte=dict(saum=0.6, weite=0.22, farbe=(0.33, 0.10, 0.08), saat=31, guertel=(0.10, 0.07, 0.05, 1)),
+        textur=1024,
+        bewegungen=[
+            ('stehen', 'stehen', D2 / 'dataset-2_wave-right-hand_normal_005.bvh'),
+            ('gehen', 'zyklus', D1 / 'dataset-1_walk_giant_001.bvh'),
+            ('rennen', 'zyklus', D1 / 'dataset-1_run_giant_001.bvh'),
+            HIEB, TRITT,
+        ],
+    ),
+    # Erlenbach: Gerold, der alte Kartenleser, in einer langen blauen Kutte
+    'gerold': dict(
+        makro=dict(gender=1.0, age=0.85, muscle=0.35, weight=0.45, height=0.45, proportions=0.6,
+                   rassen={'caucasian': 0.85, 'african': 0.05, 'asian': 0.1}),
+        haut=dict(hautfarbe=(0.72, 0.56, 0.46), haarfarbe=(0.78, 0.77, 0.74), bart=0.9, alter=0.9, schmutz=0.1),
+        haare=dict(art='kurz', laenge=(0.04, 0.09), anzahl=1300, breite=0.011, bart=True,
+                   bart_laenge=(0.10, 0.24), bart_anzahl=1300),
+        kleidung='kutte',
+        kutte=dict(farbe=(0.20, 0.24, 0.38), saat=41, guertel=(0.55, 0.45, 0.25, 1)),
+        textur=1024,
+        bewegungen=[
+            ('stehen', 'stehen', D2 / 'dataset-2_wave-right-hand_elderly_002.bvh'),
+            ('gehen', 'zyklus', D1 / 'dataset-1_walk_old_001.bvh'),
+            ('winken', 'ganz', D2 / 'dataset-2_wave-right-hand_elderly_003.bvh'),
+        ],
+    ),
+    # Erlenbach: Marta, die Händlerin, im langen grünen Kleid
+    'marta': dict(
+        makro=dict(gender=0.0, age=0.52, muscle=0.45, weight=0.55, height=0.45, proportions=0.8,
+                   cupsize=0.55, firmness=0.5, rassen={'caucasian': 0.75, 'african': 0.1, 'asian': 0.15}),
+        haut=dict(hautfarbe=(0.76, 0.58, 0.47), haarfarbe=(0.32, 0.17, 0.09), bart=0, alter=0.3, weiblich=True,
+                  lippen=(0.66, 0.38, 0.38), schmutz=0.15),
+        haare=dict(art='lang', laenge=(0.20, 0.32), anzahl=1800, breite=0.016),
+        kleidung='kutte',
+        kutte=dict(farbe=(0.22, 0.32, 0.20), saat=53, guertel=(0.42, 0.30, 0.16, 1)),
+        textur=1024,
+        bewegungen=[
+            ('stehen', 'stehen', D2 / 'dataset-2_wave-right-hand_normal_006.bvh'),
+            ('gehen', 'zyklus', D1 / 'dataset-1_walk_feminine_001.bvh'),
+            ('winken', 'ganz', D2 / 'dataset-2_wave-right-hand_normal_007.bvh'),
+        ],
+    ),
+    # Erlenbach: Jost, der Fischer, wettergegerbt, im kurzen graublauen Kittel
+    'jost': dict(
+        makro=dict(gender=1.0, age=0.58, muscle=0.62, weight=0.55, height=0.55, proportions=0.75,
+                   rassen={'caucasian': 0.8, 'african': 0.1, 'asian': 0.1}),
+        haut=dict(hautfarbe=(0.66, 0.48, 0.37), haarfarbe=(0.36, 0.31, 0.26), bart=0.85, alter=0.55, schmutz=0.4),
+        haare=dict(art='kurz', laenge=(0.03, 0.06), anzahl=1500, breite=0.012),
+        kleidung='kutte',
+        kutte=dict(saum=0.5, weite=0.16, farbe=(0.30, 0.33, 0.37), saat=67, guertel=(0.25, 0.18, 0.10, 1)),
+        textur=1024,
+        bewegungen=[
+            ('stehen', 'stehen', D2 / 'dataset-2_wave-right-hand_normal_008.bvh'),
+            ('gehen', 'zyklus', D1 / 'dataset-1_walk_normal_001.bvh'),
+            ('winken', 'ganz', D2 / 'dataset-2_wave-right-hand_normal_009.bvh'),
         ],
     ),
 }
@@ -119,6 +214,18 @@ def baue(name, einstellung):
         gelenke=gelenke_roh[ort], gewichte=gewichte_roh[ort], index=tri,
     )
 
+    # Charakter-Editor (nur Spielerfiguren): Formziele für Gesicht und Körper
+    editor = einstellung.get('editor')
+    koerper_idx = np.unique(flaechen)
+    formziele, koerper_ziele = {}, []
+    if editor:
+        t_f = time.time()
+        formziele = formen.berechne(k, einstellung['makro'])
+        haut_teil['ziele'] = {n: d[ort] for n, d in formziele.items()}
+        koerper_ziele = list(formziele)
+        print(f'  {len(formziele)} Formziele in {time.time() - t_f:.1f} s')
+    haut_d = {n: d[koerper_idx] for n, d in formziele.items()}
+
     glb = Glb()
     t1 = time.time()
     schluessel = hashlib.sha1(repr((einstellung['makro'], einstellung['haut'], HAUT_STAND)).encode()).hexdigest()[:12]
@@ -128,23 +235,26 @@ def baue(name, einstellung):
         farbe, normal, orm = z['farbe'], z['normal'], z['orm']
     else:
         farbe, normal, orm = haut.male_haut(k, skelett, haut_teil['pos'], haut_teil['normal'], haut_teil['uv'], tri,
-                                           einstellung['haut'], groesse=2048)
+                                           einstellung['haut'], groesse=einstellung.get('textur', 2048))
         zwischen.parent.mkdir(exist_ok=True)
         np.savez(zwischen, farbe=farbe, normal=normal, orm=orm)
-    klein = lambda a: np.asarray(Image.fromarray(a).resize((1024, 1024), Image.LANCZOS))
+    klein = lambda a: np.asarray(Image.fromarray(a).resize((einstellung.get('textur', 2048) // 2,) * 2, Image.LANCZOS))
     haut_teil['material'] = glb.material(
         'haut', farb_textur=glb.bild(jpg(farbe, 90), 'image/jpeg'),
         normal_textur=glb.bild(jpg(normal, 92), 'image/jpeg'), normal_staerke=1.0,
         orm_textur=glb.bild(jpg(klein(orm), 90), 'image/jpeg'), rauheit=1.0)
     print(f'  Haut gemalt in {time.time() - t1:.1f} s')
     Image.fromarray(farbe).resize((1024, 1024)).save(Path(__file__).parent / 'ausgabe-pruefung' / f'{name}_haut.jpg')
-    teile = [haut_teil]
+    teile = [haut_teil]  # Haut und Augen (ein Netz)
+    haar_teile, lang_teile, bart_teile, kleid_teile, wams_teile = [], [], [], [], []
 
     # --- Augen ---
     augen = mh.lade_mhclo(mh.MH / 'eyes' / 'high-poly' / 'high-poly.mhclo')
     av, avt, af, afuv, _ = mh.lade_obj(augen['obj'])
     aug_roh = mh.passe_an(augen, k)
     aug_m = k.in_meter(aug_roh)
+    # Die Augen hängen an Bezugspunkten im Gesicht und folgen so jedem Formziel (z. B. größere Augen)
+    aug_ziele = {n: k2.in_meter(mh.passe_an(augen, k2)) - aug_m for n, k2 in formen.angepasst(k, formziele)}
     an = netz.normalen(aug_m, netz.dreiecke(af))
     kopf = knochen_index['head']
     augen_bild = np.array(Image.open(mh.MH / 'eyes' / 'materials' / 'brown_eye.png').convert('RGB'))
@@ -163,35 +273,78 @@ def baue(name, einstellung):
         teile.append(dict(
             pos=aug_m[aort], normal=an[aort], uv=np.column_stack([avt[auvi, 0], 1 - avt[auvi, 1]]),
             gelenke=np.tile([kopf, 0, 0, 0], (len(aort), 1)), gewichte=np.tile([1.0, 0, 0, 0], (len(aort), 1)),
-            index=atri, material=mat,
+            index=atri, material=mat, ziele={n: d[aort] for n, d in aug_ziele.items()},
         ))
 
     # --- Haare ---
     stil = einstellung.get('haare')
     if stil:
-        haarfarbe = einstellung['haut']['haarfarbe']
+        # Spielerfiguren: helle Haare, die das Spiel nach Wunsch einfärbt
+        haarfarbe = (0.86, 0.82, 0.76) if editor else einstellung['haut']['haarfarbe']
         haar_mat = glb.material('haare', farb_textur=glb.bild(png(haare.haar_textur(haarfarbe))), rauheit=0.55,
                                 alpha='MASK', alpha_grenze=0.35, doppelseitig=True)
         kopf_y = skelett[knochen_index['head']]['kopf'][1]
-        for hname, hp, ht, huv, hn in haare.frisur(k, alle_punkte_m, normalen_roh, roh_tri, stil):
-            t = haut.glatt(kopf_y - 0.02, kopf_y - 0.16, hp[:, 1])
+
+        def gewichte(hp, nur_kopf):
+            # Lange Haare liegen unten auf Nacken und Rücken und bewegen sich mit ihnen; kurze nur mit dem Kopf
+            t = 0 * hp[:, 1] if nur_kopf else haut.glatt(kopf_y - 0.02, kopf_y - 0.16, hp[:, 1])
             voll = np.zeros((len(hp), len(skelett)))
             voll[:, knochen_index['head']] = 1 - t
             voll[:, knochen_index['neck_01']] = t * 0.3
             voll[:, knochen_index['spine_03']] = t * 0.7
-            g, w = netz.beste_vier(voll)
-            ht = netz.wicklung_angleichen(hp, ht, hn)
-            teile.append(dict(pos=hp, normal=hn, uv=huv, gelenke=g, gewichte=w, index=ht, material=haar_mat))
-            print(f'  {hname}: {len(ht)} Dreiecke')
+            return netz.beste_vier(voll)
+
+        def teil(hp, ht, huv, hn, nur_kopf=False, ziele=None):
+            g, w = gewichte(hp, nur_kopf)
+            return dict(pos=hp, normal=hn, uv=huv, gelenke=g, gewichte=w, index=netz.wicklung_angleichen(hp, ht, hn),
+                        material=haar_mat, ziele=ziele)
+
+        gebaut = {}  # mittlere Länge der Strähnen, wie sie gebaut sind
+        for hname, ketten, breite, mitte, s in haare.straehnen_von(k, alle_punkte_m, normalen_roh, roh_tri, stil):
+            gebaut[hname] = round(float(np.linalg.norm(np.diff(ketten, axis=1), axis=2).sum(axis=1).mean()), 3)
+            if not editor:
+                teile.append(teil(*haare.karten(ketten, breite, mitte, s)))
+                continue
+            # Charakter-Editor: Haare und Bart in mehreren Längen (Formziele); ganz kurze Strähnen werden auch schmal
+            folgt = formen.FUER_HAARE if hname == 'haare' else formen.FUER_BART
+            voll_breit = 0.04 if hname == 'haare' else 0.03
+
+            def karten(laenge, punkte):
+                return haare.karten(formen.kuerzen(ketten, laenge, punkte), breite * np.clip(laenge / voll_breit, 0.15, 1),
+                                    mitte, s)
+
+            def mit_zielen(hp, laengen, punkte, namen):
+                ziele = formen.uebertrage(hp, alle_punkte_m[koerper_idx], {n: haut_d[n] for n in folgt})
+                for n, l in zip(namen, laengen):
+                    ziele[n] = karten(l, punkte)[0] - hp
+                return ziele
+
+            if hname == 'haare':
+                # Zwei Netze: kurz (bis zur mittleren Länge, ganz am Kopf) und lang (liegt auf Nacken und Rücken).
+                # Bei der mittleren Länge sehen beide gleich aus; das Spiel blendet je nach Länge eins davon ein.
+                *kurz, mitte_l = editor['haare']
+                hp, ht, huv, hn = karten(mitte_l, 7)
+                haar_teile.append(teil(hp, ht, huv, hn, True, mit_zielen(hp, kurz, 7, [f'haar_{i + 1}' for i in range(len(kurz))])))
+                hp, ht, huv, hn = haare.karten(ketten, breite, mitte, s)
+                lang_teile.append(teil(hp, ht, huv, hn, False, mit_zielen(hp, [mitte_l], ketten.shape[1], [f'haar_{len(kurz) + 1}'])))
+            else:
+                # Der Bart hängt am Kinn und bewegt sich ganz mit dem Kopf
+                stufen = editor['bart']
+                hp, ht, huv, hn = haare.karten(ketten, breite, mitte, s)
+                bart_teile.append(teil(hp, ht, huv, hn, True, mit_zielen(hp, stufen, ketten.shape[1], [f'bart_{i + 1}' for i in range(len(stufen))])))
+            print(f'  {hname}: {len(ketten)} Strähnen')
 
     # --- Kleidung ---
-    koerper_idx = np.unique(flaechen)
     kp, kn_ = alle_punkte_m[koerper_idx], normalen_roh[koerper_idx]
+    kleid_ziele = (lambda punkte: formen.uebertrage(punkte, kp, {n: haut_d[n] for n in formen.FUER_KLEIDUNG})) \
+        if editor else (lambda punkte: None)
     kg, kw = gelenke_roh[koerper_idx], gewichte_roh[koerper_idx]
     if einstellung.get('kleidung') == 'kutte':
         stuecke = []
-        kidx, kpunkte, ktri, kuv = kleidung.kutte(k, normalen_roh, skelett, koerper_flaechen=flaechen)
-        wf, wn, wo = kleidung.wolle_textur()
+        schnitt = einstellung.get('kutte', {})
+        kidx, kpunkte, ktri, kuv = kleidung.kutte(k, normalen_roh, skelett, koerper_flaechen=flaechen,
+                                                  saum=schnitt.get('saum'), weite=schnitt.get('weite', 0.35))
+        wf, wn, wo = kleidung.wolle_textur(grund=schnitt.get('farbe', (0.42, 0.37, 0.30)), saat=schnitt.get('saat', 11))
         wolle = glb.material('wolle', farb_textur=glb.bild(jpg(wf, 88), 'image/jpeg'),
                              normal_textur=glb.bild(jpg(wn, 90), 'image/jpeg'),
                              orm_textur=glb.bild(jpg(wo, 90), 'image/jpeg'), rauheit=1.0, doppelseitig=True)
@@ -201,7 +354,7 @@ def baue(name, einstellung):
         sp, st, suv = kleidung.strick(kleidung.huellring(kpunkte, guertel_y, abstand=0.004, bruecke_grad=25,
                                                            dicke=0.02, nur_rumpf=0.35))
         g, w = netz.uebertrage_gewichte(sp, kp, kg, kw)
-        strick_mat = glb.material('strick', farbe=(0.30, 0.24, 0.16, 1), rauheit=0.95)
+        strick_mat = glb.material('strick', farbe=schnitt.get('guertel', (0.30, 0.24, 0.16, 1)), rauheit=0.95)
         teile.append(dict(pos=sp, normal=netz.normalen(sp, st), uv=suv, gelenke=g, gewichte=w, index=st,
                           material=strick_mat))
     else:
@@ -227,17 +380,37 @@ def baue(name, einstellung):
             pendel = np.zeros_like(voll)
             pendel[:, knochen_index[sname]] = 1
             g, w = netz.beste_vier(voll * (1 - unten) + pendel * unten)
-        teile.append(dict(pos=sp, normal=netz.normalen(sp, st), uv=suv, gelenke=g, gewichte=w, index=st, material=leder))
+        (kleid_teile if editor else teile).append(dict(pos=sp, normal=netz.normalen(sp, st), uv=suv, gelenke=g,
+                                                       gewichte=w, index=st, material=leder, ziele=kleid_ziele(sp)))
+    if editor:
+        # Lederwams: ein eigenes Netz, das das Spiel zeigt, sobald man eins trägt (Rumpf bis über die Hüfte, ohne Ärmel)
+        # Armlöcher und Halsausschnitt folgen dem Körper: kein Stoff, wo Arme, Hals oder Kopf die Haut bewegen
+        def anteil_an(namen):
+            ids = [knochen_index[n] for n in namen if n in knochen_index]
+            a = np.zeros(len(gelenke_roh))
+            for spalte in range(4):
+                a += np.isin(gelenke_roh[:, spalte], ids) * gewichte_roh[:, spalte]
+            return a
+        hals = anteil_an(('neck_01', 'head')) > 0.35
+        arme = anteil_an(('upperarm_l', 'upperarm_r', 'lowerarm_l', 'lowerarm_r')) > 0.6
+        widx, wp, wtri, wuv = kleidung.kutte(k, normalen_roh, skelett, aermel_bis=0.3, koerper_flaechen=flaechen,
+                                             saum=0.1, weite=0.05, ohne=np.nonzero(hals | arme)[0])
+        wf, wn, wo = kleidung.leder_textur(512, grund=(0.30, 0.20, 0.12), saat=5, fransen=False)
+        wams_leder = glb.material('leder', farb_textur=glb.bild(jpg(wf[..., :3] if wf.shape[-1] == 4 else wf, 88), 'image/jpeg'),
+                                  normal_textur=glb.bild(jpg(wn, 90), 'image/jpeg'),
+                                  orm_textur=glb.bild(jpg(wo, 90), 'image/jpeg'), rauheit=1.0, doppelseitig=True)
+        wams_teile.append(dict(pos=wp, normal=netz.normalen(wp, wtri), uv=wuv, gelenke=gelenke_roh[widx],
+                               gewichte=gewichte_roh[widx], index=wtri, material=wams_leder, ziele=kleid_ziele(wp)))
 
     # --- Bewegungen ---
     bewegungen = []
-    for bname, art, quelle in einstellung.get('bewegungen', []):
+    for bname, art, quelle, *bereich in einstellung.get('bewegungen', []):
         if art == 'stehen':
             bewegungen.append(bewegung.stehen_aus(bewegung.Quelle(quelle), skelett))
         elif art == 'zyklus':
             bewegungen.append(bewegung.zyklus_bewegung(quelle, skelett, bname))
-        else:
-            bewegungen.append(bewegung.ganze_bewegung(quelle, skelett, bname))
+        else:  # 'ganz' oder ein Abschnitt (von, bis) in Einzelbildern, z. B. ein einzelner Hieb
+            bewegungen.append(bewegung.ganze_bewegung(quelle, skelett, bname, *bereich))
     finger = bewegungen[0]['finger'] if bewegungen else {}
 
     # --- Skelett-Knoten (Grundhaltung: erste Stellung des Stehens, Finger locker gekrümmt) ---
@@ -263,7 +436,22 @@ def baue(name, einstellung):
     # glTF erwartet Spalten-Reihenfolge
     ibm_acc = glb.accessor(np.transpose(ibm, (0, 2, 1)).reshape(len(skelett), 16))
     glb.gltf['skins'].append({'joints': knoten, 'inverseBindMatrices': ibm_acc, 'skeleton': knoten[0]})
-    netz_knoten = glb.knoten(name=f'{name}-koerper', mesh=glb.netz(name, teile), skin=0)
+    if editor:
+        # Eigene Netze für Körper, Haare, Bart und Kleidung, jedes mit den Formzielen, die es betrifft
+        # (spart Speicher auf der Grafikkarte: ein Formziel kostet dort Platz für jeden Punkt des Netzes)
+        n_haar, n_bart = len(editor['haare']), len(editor.get('bart', ()))
+        netze = [
+            ('koerper', teile, koerper_ziele),
+            ('haare', haar_teile, [f'haar_{i + 1}' for i in range(n_haar - 1)] + formen.FUER_HAARE),
+            ('haare_lang', lang_teile, [f'haar_{n_haar}'] + formen.FUER_HAARE),
+            ('bart', bart_teile, [f'bart_{i + 1}' for i in range(n_bart)] + formen.FUER_BART),
+            ('kleidung', kleid_teile, formen.FUER_KLEIDUNG),
+            ('wams', wams_teile, formen.FUER_KLEIDUNG),
+        ]
+        netz_knoten = [glb.knoten(name=f'{name}-{teil}', mesh=glb.netz(f'{name}-{teil}', liste, ziele), skin=0)
+                       for teil, liste, ziele in netze if liste]
+    else:
+        netz_knoten = [glb.knoten(name=f'{name}-koerper', mesh=glb.netz(name, teile), skin=0)]
     for bw in bewegungen:
         zeiten = glb.accessor(bw['zeiten'].astype(np.float32), minmax=True)
         kanaele, abtaster = [], []
@@ -274,7 +462,17 @@ def baue(name, einstellung):
         kanaele.append({'sampler': len(abtaster) - 1, 'target': {'node': knoten[knochen_index['pelvis']], 'path': 'translation'}})
         glb.gltf['animations'].append({'name': bw['name'], 'samplers': abtaster, 'channels': kanaele})
     tempo = {bw['name']: round(bw['tempo'], 3) for bw in bewegungen}
-    wurzel = glb.knoten(name=name, children=[knoten[0], netz_knoten], extras={'tempo': tempo})
+    extras = {'tempo': tempo}
+    if editor and stil:
+        # Für das Spiel: bei welchen Längen die Formziele liegen und wie lang Haare und Bart gebaut sind
+        extras['editor'] = {
+            # aufgemalte Haarfarbe (Brauen, Haaransatz); das Spiel färbt sie über die Maske im ORM-Bild um
+            'haarfarbe': [float(x) for x in einstellung['haut']['haarfarbe']],
+            'haarbild': list(haarfarbe),  # Farbe des Strähnenbilds (hell, wird im Spiel eingefärbt)
+            'haare': [*editor['haare'], gebaut['haare']],
+            **({'bart': [*editor['bart'], gebaut['bart']]} if editor.get('bart') else {}),
+        }
+    wurzel = glb.knoten(name=name, children=[knoten[0], *netz_knoten], extras=extras)
     glb.gltf['scenes'][0]['nodes'] = [wurzel]
 
     AUSGABE.mkdir(parents=True, exist_ok=True)

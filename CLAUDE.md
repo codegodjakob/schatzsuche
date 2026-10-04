@@ -4,8 +4,11 @@ Ein Spiel, das Jakob (`codegodjakob`) und Vincenz (`vincenztellier`) gemeinsam b
 arbeiten über Claude Code im Browser. Beide sind nicht technisch: Erkläre in klarem Deutsch,
 ohne Fachbegriffe, die nicht sofort miterklärt werden.
 
-Worum es im Spiel geht, steht in `docs/SPIELIDEE.md`. Die Idee entsteht beim Bauen. Wird
-etwas entschieden, trage es dort ein. Ziel bei der Grafik: **so realistisch wie möglich**.
+Worum es im Spiel geht, steht in `docs/SPIELIDEE.md` (Idee und Entscheidungen) und
+`docs/SPIELENTWURF.md` (alle Systeme und Etappen). Die Idee entsteht beim Bauen. Wird etwas
+entschieden, trage es dort ein. Ziel bei der Grafik: **so realistisch wie möglich**.
+Inhalte (Gegenstände, Rezepte, Aufgaben, Berufe) stehen als Listen in `src/inhalte/`, damit sie
+sich leicht erweitern, nach Roblox übertragen und später per KI variieren lassen.
 
 ## Arbeitsweise (gilt für jede Claude-Sitzung in diesem Projekt)
 
@@ -33,13 +36,17 @@ etwas entschieden, trage es dort ein. Ziel bei der Grafik: **so realistisch wie 
 
 | Ordner / Datei | Inhalt |
 |---|---|
-| `src/welt/` | Gelände (`gelaende.js`), Himmel und Tageszeit, Gras (wächst mit dem Spieler mit), Wald (`baeume.js`), Felsen/Blumen/Beeren (`natur.js`), Wasser, Feuer, Fundstücke, Zusammenstöße. `orte.js` = feste Orte |
-| `src/spieler/` | Figur (lädt GLB, überblendet Bewegungen) und Steuerung (Laufen, Kamera) |
-| `src/figuren/` | Andere Figuren, z. B. der Einsiedler |
+| `src/welt/` | Gelände (`gelaende.js`), Himmel und Tageszeit, Gras (wächst mit dem Spieler mit), Wald (`baeume.js`), Felsen/Blumen/Beeren (`natur.js`), Wasser, Feuer, Zusammenstöße. `sammeln.js` = alles, was man aufheben oder abbauen kann (wächst nach), `markierung.js` = der Ring darunter, `raeuberlager.js` = Zelte und Stämme, `dorf.js` = Erlenbach (Häuser, Brunnen, Marktstand, Steg), `waffen.js` = Waffen und Angelrute in der Hand. `orte.js` = feste Orte (auch Straße, Räuberlager, Dorf, Weiher, wo die Dörfler stehen). `kollision.js` = Hindernisse und begehbare Flächen (der Steg) |
+| `src/inhalte/` | **Inhalte als Listen**: Gegenstände, Rezepte, Berufe und Werte, Aufgaben (auch wiederholbare Jobs), Sammelstellen, Gegner (mit Beute und Besatzung des Räuberlagers), Händler (Waren, Preisregeln). Neues Material, neues Rezept, neue Aufgabe, neuer Gegner, neue Ware = ein neuer Eintrag hier |
+| `src/kampf/` | `gegner.js` = Verhalten der Gegner (warten, jagen, ausholen, getroffen, heimkehren, tot, wiederkommen); `kampf.js` = Zuschlagen des Spielers |
+| `src/spieler/` | Figur (lädt GLB, überblendet Bewegungen), Steuerung (Laufen, Kamera), Inventar, Fortschritt (Stufen, Werte, Berufe), Herstellen, Benutzen (E; Gespräche und Angeln kommen als Zusatz herein), Handel (Preise, Kaufen, Verkaufen), Angeln (Auswerfen, Schwimmer, Biss), Aussehen (`aussehen.js`: Formziele, Farben, Wachsen) |
+| `src/figuren/` | Andere Figuren: der Einsiedler, die Leute von Erlenbach (`doerfler.js`, laden erst in der Nähe des Dorfs) |
 | `src/ueberleben/werte.js` | Sättigung, Wasser, Wärme, Leben, Tod |
-| `src/ereignisse/liste.js` | **Alle Ereignisse und Entscheidungen.** Hier wächst die Geschichte |
+| `src/ereignisse/liste.js` | **Alle Ereignisse und Entscheidungen.** Hier wächst die Geschichte. Gespräche (`gespraech-…`) erscheinen nicht von selbst, sondern wenn man jemanden anspricht |
 | `src/ereignisse/ereignisse.js` | Die Mechanik dahinter (nur ändern, wenn sie etwas Neues können muss) |
-| `src/ui/` | Startbildschirm, Ereignis-Tafel, Inventar, Nachrichten, Anzeigen; `beruehrung.js` = Fingersteuerung für Handy und Tablet |
+| `src/ereignisse/aufgaben.js` | Führt die Aufgaben aus `src/inhalte/aufgaben.js`: starten, Schritte abhaken, belohnen |
+| `src/ui/` | Startbildschirm, Ereignis-Tafel, Nachrichten, Anzeigen; `menue.js` = Inventar, Herstellen, Figur, Aufgaben, Handel; `editor.js` = Charakter-Editor; `kampfanzeige.js` = Lebensbalken, Schadenszahlen, Boss-Balken; `beruehrung.js` = Fingersteuerung für Handy und Tablet |
+| `src/spielstand.js` | Speichern und Laden im Browser (localStorage); das Skript in `index.html` liest ihn für „Weiterspielen“ |
 | `src/modelle.js` | Lädt 3D-Modelle (auch in der Vorschau, wo sie als Text vorliegen) |
 | `src/qualitaet.js`, `src/nachbearbeitung.js` | Grafikstufen (hoch/mittel/niedrig) und Bild-Nachbearbeitung |
 | `werkzeuge/figuren/` | Python-Werkzeug, das die Figuren baut (MakeHuman + Bewegungen) |
@@ -53,14 +60,17 @@ Einträge in Listen. Neue Systeme (Bauen, Tiere) bekommen eine eigene Datei.
 
 ```
 npm install        # einmal pro Sitzung (passiert automatisch beim Sitzungsstart)
-npm test           # spielt das Spiel unsichtbar durch, am Rechner und auf einem nachgebauten Handy
+npm test           # spielt das Spiel unsichtbar durch: Rauchtest, Dorftest, Handytest
 npm start          # Spiel lokal starten
 node werkzeuge/foto_spiel.mjs hoch "name:x:z:blickSeite:blickHoehe:stunde"   # Fotos zur Grafikprüfung
 ```
 
 `npm test` legt Bildschirmfotos in `test-ergebnisse/` ab (Grafik „niedrig“, weil der Test-Browser
-keine Grafikkarte hat). Der Handytest (`test/handytest.mjs`) bedient das Spiel nur mit dem Finger:
-Stick, Wischen, Knöpfe, Ereignisse antippen. Schau sie dir an, bevor du sagst, dass etwas fertig ist. Vor jedem Pull
+keine Grafikkarte hat). Der Rauchtest (`test/rauchtest.mjs`) spielt die Geschichte bis zum
+Räuberhauptmann, der Dorftest (`test/dorftest.mjs`) Erlenbach mit Handel, Angeln und Jobs. Der
+Handytest (`test/handytest.mjs`) bedient das Spiel nur mit dem Finger: Stick, Wischen, Knöpfe,
+Ereignisse antippen. Gemeinsame Hilfen (Browser starten, warten, Tafeln beantworten) stehen in
+`test/helfer.mjs`. Einzelne Prüfung: `node test/dorftest.mjs`. Schau sie dir an, bevor du sagst, dass etwas fertig ist. Vor jedem Pull
 Request muss `npm test` grün sein. `foto_spiel.mjs` macht Fotos in jeder Stufe, ist aber ohne
 Grafikkarte langsam (ein Bild in „hoch“ dauert zwischen einer und sechs Minuten).
 
@@ -69,12 +79,15 @@ Grafikkarte langsam (ein Bild in „hoch“ dauert zwischen einer und sechs Minu
 ```
 werkzeuge/figuren/hole_quellen.sh                       # Rohdaten holen (MakeHuman, Bewegungen)
 python3 -m venv /tmp/venv && /tmp/venv/bin/pip install -r werkzeuge/figuren/requirements.txt
-/tmp/venv/bin/python werkzeuge/figuren/baue_figuren.py  # baut assets/figuren/er|sie|einsiedler.glb
+/tmp/venv/bin/python werkzeuge/figuren/baue_figuren.py  # baut alle: er, sie, einsiedler, raeuber, hauptmann, gerold, marta, jost (oder nur die genannten)
 node werkzeuge/figuren/foto.mjs er:vorne sie:seite:gehen:0.3   # Prüfbilder in werkzeuge/figuren/ausgabe-pruefung/
 ```
 
 Aussehen, Körperform, Haare, Kleidung und Bewegungen jeder Figur stehen oben in `baue_figuren.py`
-(`FIGUREN`).
+(`FIGUREN`). Die Spielerfiguren (`editor=…`) bekommen zusätzlich Formziele für den Charakter-Editor
+(`formen.py`: welche MakeHuman-Formen, welche Haar- und Bartlängen) und ein ausblendbares Lederwams.
+Die Daten sind gepackt (KHR_mesh_quantization); three.js entpackt sie selbst. Formziele ausprobieren:
+`node werkzeuge/figuren/foto.mjs "er:vorne::0:kopf:nase_gross=1+haar_2=1+-er-haare_lang"`.
 
 ## Vorschau veröffentlichen
 

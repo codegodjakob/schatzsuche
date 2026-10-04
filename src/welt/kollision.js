@@ -29,6 +29,23 @@ export function entferneHindernis(h) {
   beweglich.delete(h);
 }
 
+// Begehbare Flächen über dem Gelände, z. B. der Steg am Weiher: Rechtecke mit eigener Höhe.
+// Sie beginnen am Ort (x, z) und reichen „laenge“ Meter in Richtung „drehung“.
+const flaechen = [];
+export function laufflaeche(x, z, drehung, breite, laenge, hoehe) {
+  flaechen.push({ x, z, sin: Math.sin(drehung), cos: Math.cos(drehung), breite, laenge, hoehe });
+}
+
+// Höhe der begehbaren Fläche an dieser Stelle, oder null, wenn dort keine ist
+export function flaecheBei(x, z) {
+  for (const f of flaechen) {
+    const dx = x - f.x, dz = z - f.z;
+    const quer = dx * f.cos - dz * f.sin, laengs = dx * f.sin + dz * f.cos;
+    if (Math.abs(quer) <= f.breite / 2 && laengs >= 0 && laengs <= f.laenge) return f.hoehe;
+  }
+  return null;
+}
+
 // Schiebt einen Kreis (Spieler) aus allen Hindernissen heraus
 export function schiebeHinaus(ort, radius = 0.32) {
   const ix = Math.floor(ort.x / ZELLE), iz = Math.floor(ort.z / ZELLE);

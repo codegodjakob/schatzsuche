@@ -10,6 +10,10 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 const q = new URLSearchParams(location.search);
 const figur = q.get('figur') ?? 'er', bewegung = q.get('bewegung'), zeit = Number(q.get('zeit') ?? 0);
 const blick = q.get('blick') ?? 'vorne', nah = q.get('nah') ?? '';
+// Formziele (Charakter-Editor): ?formen=nase_gross=1+haar_1=1; ein Eintrag mit Minus blendet ein Netz aus (-er-haare_lang)
+const eintraege = (q.get('formen') ?? '').split('+').filter(Boolean);
+const aus = eintraege.filter((f) => f.startsWith('-')).map((f) => f.slice(1));
+const formen = Object.fromEntries(eintraege.filter((f) => !f.startsWith('-')).map((f) => { const [n, w] = f.split('='); return [n, Number(w ?? 1)]; }));
 const flaeche = document.getElementById('c');
 const r = new THREE.WebGLRenderer({ canvas: flaeche, antialias: true });
 r.setSize(innerWidth, innerHeight, false);
@@ -30,7 +34,17 @@ function zielen(mitte, abstand) {
 }
 zielen(new THREE.Vector3(0, 0.95, 0), 1);
 new GLTFLoader().load(`../../assets/figuren/${figur}.glb`, (g) => {
-  g.scene.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
+  g.scene.traverse((o) => {
+    if (aus.includes(o.name)) o.visible = false;
+    if (!o.isMesh) return;
+    // Haut: Der B-Kanal des ORM-Bilds ist die Haarfarben-Maske, kein Metall (wie im Spiel, src/spieler/figur.js)
+    if (o.material.name === 'haut') { o.material.metalnessMap = null; o.material.metalness = 0; }
+    o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false;
+    for (const [n, w] of Object.entries(formen)) if (o.morphTargetDictionary?.[n] !== undefined) o.morphTargetInfluences[o.morphTargetDictionary[n]] = w;
+  });
+  const namen = new Set();
+  g.scene.traverse((o) => { for (const n of Object.keys(o.morphTargetDictionary ?? {})) namen.add(n); });
+  window.formen = [...namen];
   s.add(g.scene);
   if (bewegung) {
     const m = new THREE.AnimationMixer(g.scene);

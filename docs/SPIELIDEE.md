@@ -3,6 +3,7 @@
 > Lebendes Dokument. Die Idee entsteht beim Bauen. Was entschieden ist, steht unter
 > „Entschieden“. Was noch offen ist, steht unter „Offene Fragen“. Neue Einfälle kommen
 > als Issue mit der Vorlage „Idee“ und landen hier, wenn ihr euch einig seid.
+> Das ausgearbeitete Gesamtbild mit allen Systemen und Etappen steht in `docs/SPIELENTWURF.md`.
 
 ## Der Kern in einem Satz
 

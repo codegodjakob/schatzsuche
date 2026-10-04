@@ -1,8 +1,10 @@
 // Felsen (echte Felstextur, Moos auf der Oberseite), Wildblumen und Beeren an den Sträuchern.
+// Blumen und Beeren kann man pflücken (src/welt/sammeln.js); dafür gibt es hier ihre Plätze.
 import * as THREE from 'three';
 import { ladeModell } from '../modelle.js';
-import { hoeheBei, maskeBei, neigungBei, wasserspiegel, WELT_GROESSE } from './gelaende.js';
-import { START } from './orte.js';
+import { STUFEN } from '../qualitaet.js';
+import { hoeheBei, maskeBei, neigungBei, pfadAbstand, wasserspiegel, WELT_GROESSE } from './gelaende.js';
+import { DORF, LAGER, RAEUBERLAGER, START } from './orte.js';
 import { zufall } from './zufall.js';
 import { ImprovedNoise } from 'three/addons/math/ImprovedNoise.js';
 
@@ -16,8 +18,8 @@ function textur(datei, farbe = true) {
 
 // ---------------------------------------------------------------- Felsen
 
-function felsForm(saat) {
-  const geo = new THREE.IcosahedronGeometry(1, 4);
+export function felsForm(saat, feinheit = 4) {
+  const geo = new THREE.IcosahedronGeometry(1, feinheit);
   const rauschen = new ImprovedNoise();
   const p = geo.attributes.position;
   const v = new THREE.Vector3();
@@ -37,7 +39,7 @@ function felsForm(saat) {
   return geo;
 }
 
-function felsMaterial() {
+export function felsMaterial() {
   const mat = new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0 });
   const farbe = textur('fels_farbe.jpg'), normal = textur('fels_normal.jpg', false), orm = textur('fels_orm.jpg', false);
   mat.onBeforeCompile = (shader) => {
@@ -100,6 +102,11 @@ function felsMaterial() {
   return mat;
 }
 
+const imOrt = (x, z) => Math.hypot(x - DORF.x, z - DORF.z) < DORF.radius + 6
+  || Math.hypot(x - LAGER.x, z - LAGER.z) < LAGER.radius + 2
+  || Math.hypot(x - RAEUBERLAGER.x, z - RAEUBERLAGER.z) < RAEUBERLAGER.radius + 2
+  || pfadAbstand(x, z) < 2.5;
+
 function erzeugeFelsen(z, qualitaet) {
   const formen = [felsForm(1), felsForm(2), felsForm(3), felsForm(4)];
   const mat = felsMaterial();
@@ -117,8 +124,10 @@ function erzeugeFelsen(z, qualitaet) {
     if (z() > chance) continue;
     const y = hoeheBei(x, zz);
     if (y < wsp + 0.1) continue;
-    const gross = z() ** 3;
-    plaetze[n % formen.length].push({ x, y, z: zz, s: 0.25 + gross * 2.6, dreh: z() * 6.28, kipp: (z() - 0.5) * 0.4 });
+    const gross = z() ** 3, dreh = z() * 6.28, kipp = (z() - 0.5) * 0.4;
+    // Nicht ins Dorf, nicht in die Lager, nicht auf Wege (erst nach dem Würfeln, damit alle anderen Felsen bleiben, wo sie sind)
+    if (imOrt(x, zz)) continue;
+    plaetze[n % formen.length].push({ x, y, z: zz, s: 0.25 + gross * 2.6, dreh, kipp });
     n++;
   }
   // ein paar große Findlinge am Rand der Wiese
@@ -148,30 +157,50 @@ function erzeugeFelsen(z, qualitaet) {
 
 // ---------------------------------------------------------------- Wildblumen
 
-async function erzeugeBlumen(z, qualitaet) {
+// Welche Blume welches Kraut ist: weiß die Kamille, gelb das Johanniskraut, blau der Flachs
+const BLUMEN = [
+  { datei: 'flower_white.glb', art: 'kamille' },
+  { datei: 'flower_yellow.glb', art: 'johanniskraut' },
+  { datei: 'flower_blue.glb', art: 'flachs' },
+];
+// Die Plätze hängen nicht von der Grafikstufe ab: Es wird immer gleich oft gewürfelt, gezeichnet
+// werden nur die ersten. Pflücken lassen sich die Blumen, die auf jeder Stufe zu sehen sind.
+const BLUMEN_VERSUCHE = 2000;
+const blumenAnzahl = (qualitaet) => Math.min(BLUMEN_VERSUCHE, Math.round(1800 * qualitaet.gras + 200));
+
+async function erzeugeBlumen(qualitaet) {
+  const z = zufall(4244);
   const gruppe = new THREE.Group();
-  const dateien = ['flower_white.glb', 'flower_yellow.glb', 'flower_blue.glb'];
-  const modelle = await Promise.all(dateien.map((d) => ladeModell(new URL(`../../assets/natur/${d}`, import.meta.url).href)));
+  const modelle = await Promise.all(BLUMEN.map((b) => ladeModell(new URL(`../../assets/natur/${b.datei}`, import.meta.url).href)));
   const wsp = wasserspiegel();
-  const anzahl = Math.round(1800 * qualitaet.gras + 200);
+  const anzahl = blumenAnzahl(qualitaet);
+  const pflueckbar = blumenAnzahl(STUFEN.niedrig);
   // Blumen wachsen in Grüppchen
   const gruppen = Array.from({ length: 70 }, () => {
     const w = z() * 6.28, r = 6 + Math.sqrt(z()) * 70;
     return { x: START.x + Math.cos(w) * r, z: START.z + Math.sin(w) * r, art: Math.floor(z() * 3) };
   });
   const plaetze = [[], [], []];
-  for (let i = 0; i < anzahl; i++) {
+  for (let i = 0; i < BLUMEN_VERSUCHE; i++) {
     const g = gruppen[i % gruppen.length];
     const x = g.x + (z() - 0.5) * 7, zz = g.z + (z() - 0.5) * 7;
-    if (maskeBei(x, zz).gras < 0.6) continue;
+    const s = 0.8 + z() * 0.5, dreh = z() * 6.28, misch = z(), andere = z();
+    if (i >= anzahl || maskeBei(x, zz).gras < 0.6) continue;
     const y = hoeheBei(x, zz);
     if (y < wsp + 0.2) continue;
-    plaetze[z() < 0.8 ? g.art : Math.floor(z() * 3)].push({ x, y, z: zz, s: 0.8 + z() * 0.5, dreh: z() * 6.28 });
+    plaetze[misch < 0.8 ? g.art : Math.floor(andere * 3)].push({ x, y, z: zz, s, dreh, nummer: i, pflueckbar: i < pflueckbar });
   }
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3();
-  modelle.forEach((modell, i) => {
+  const arten = modelle.map((modell, i) => {
     const box = new THREE.Box3().setFromObject(modell.scene);
     const massstab = 0.38 / (box.max.y - box.min.y);
+    const matrizen = plaetze[i].map((b) => {
+      q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), b.dreh);
+      s.setScalar(massstab * b.s);
+      p.set(b.x, b.y - 0.02, b.z);
+      return new THREE.Matrix4().compose(p, q, s);
+    });
+    const netze = [];
     modell.scene.updateMatrixWorld(true);
     modell.scene.traverse((o) => {
       if (!o.isMesh) return;
@@ -179,19 +208,21 @@ async function erzeugeBlumen(z, qualitaet) {
       const mats = Array.isArray(o.material) ? o.material : [o.material];
       mats.forEach((mat) => { mat.side = THREE.DoubleSide; });
       const mesh = new THREE.InstancedMesh(geo, o.material, plaetze[i].length);
-      plaetze[i].forEach((b, k) => {
-        q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), b.dreh);
-        s.setScalar(massstab * b.s);
-        p.set(b.x, b.y - 0.02, b.z);
-        m.compose(p, q, s);
-        mesh.setMatrixAt(k, m);
-      });
+      matrizen.forEach((matrix, k) => mesh.setMatrixAt(k, matrix));
       mesh.castShadow = false;
       mesh.receiveShadow = true;
       gruppe.add(mesh);
+      netze.push(mesh);
     });
+    const zeige = (k, sichtbar) => {
+      for (const mesh of netze) {
+        mesh.setMatrixAt(k, sichtbar ? matrizen[k] : m.makeScale(0, 0, 0));
+        mesh.instanceMatrix.needsUpdate = true;
+      }
+    };
+    return { art: BLUMEN[i].art, plaetze: plaetze[i], zeige };
   });
-  return gruppe;
+  return { objekt: gruppe, arten };
 }
 
 // ---------------------------------------------------------------- Beeren
@@ -242,10 +273,12 @@ export async function erzeugeNatur(qualitaet, beerenBusch) {
   gruppe.add(felsen);
   const beeren = erzeugeBeeren(beerenBusch);
   gruppe.add(beeren.objekt);
+  let blumen = null;
   try {
-    gruppe.add(await erzeugeBlumen(z, qualitaet));
+    blumen = await erzeugeBlumen(qualitaet);
+    gruppe.add(blumen.objekt);
   } catch (e) {
     console.warn('Blumen konnten nicht geladen werden', e);
   }
-  return { objekt: gruppe, beeren, hindernisse: felsen.userData.hindernisse, felsMaterial: felsen.userData.material };
+  return { objekt: gruppe, beeren, blumen, hindernisse: felsen.userData.hindernisse, felsMaterial: felsen.userData.material };
 }

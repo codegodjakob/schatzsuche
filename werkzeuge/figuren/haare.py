@@ -145,8 +145,10 @@ def haar_textur(farbe, breite=512, hoehe=1024, spalten=8, saat=0):
     return (np.clip(bild, 0, 1) * 255 + 0.5).astype(np.uint8)
 
 
-def frisur(k, punkte, normalen, dreiecke, stil, saat=0):
-    """stil: dict(art='kurz'|'lang'|'kranz', laenge=(min,max), anzahl, breite, farbe, bart=bool)"""
+def straehnen_von(k, punkte, normalen, dreiecke, stil, saat=0):
+    """Die Strähnen einer Frisur als Punktketten, noch ohne Karten.
+    stil: dict(art='kurz'|'lang'|'kranz', laenge=(min,max), anzahl, breite, farbe, bart=bool)
+    Gibt eine Liste von (name, ketten, breite je Strähne, mitte, saat für die Karten)."""
     auge_l, auge_r, augen_mitte, kopf_mitte = kopf_bezug(k)
     teile = []
     oberkoerper = punkte[:, 1] > augen_mitte[1] - 0.75
@@ -173,12 +175,12 @@ def frisur(k, punkte, normalen, dreiecke, stil, saat=0):
         glatze = stil.get('glatze', False)
         ketten = straehnen(w, nrm, laengen, kamm, kp, kn, glieder=glieder,
                            schwere=1.6 if lang else (1.0 if glatze else 0.15),
-                           steife=0.85 if not glatze else 0.7, saat=saat, schritte=160 if lang else 110,
+                           steife=stil.get('steife', 0.85 if not glatze else 0.7), saat=saat, schritte=160 if lang else 110,
                            volumen=0.008 if lang else 0.006,
                            kamm_kraft=0.0005 if lang else (0.0004 if glatze else 0.0012),
                            gesicht=gesicht)
         breite = stil['breite'] * (0.7 + 0.6 * zufall.random(len(w)))
-        teile.append(('haare',) + karten(ketten, breite, kopf_mitte, saat))
+        teile.append(('haare', ketten, breite, kopf_mitte, saat))
 
     if stil.get('bart'):
         # Bart: Wurzeln an Kinn, Kiefer, Oberlippe
@@ -199,6 +201,11 @@ def frisur(k, punkte, normalen, dreiecke, stil, saat=0):
         ketten = straehnen(w, nrm, laengen, kamm, kp, kn, glieder=7, schwere=0.9, steife=0.8, saat=saat + 8,
                            volumen=0.01)
         mitte_bart = augen_mitte + np.array([0, -0.06, -0.04])
-        teile.append(('bart',) + karten(ketten, stil['breite'] * 0.8 * (0.7 + 0.6 * zufall.random(len(w))),
-                                        mitte_bart, saat + 9))
+        teile.append(('bart', ketten, stil['breite'] * 0.8 * (0.7 + 0.6 * zufall.random(len(w))), mitte_bart, saat + 9))
     return teile
+
+
+def frisur(k, punkte, normalen, dreiecke, stil, saat=0):
+    """Fertige Haar- und Bartkarten: Liste von (name, punkte, dreiecke, uv, normalen)."""
+    return [(name,) + karten(ketten, breite, mitte, s)
+            for name, ketten, breite, mitte, s in straehnen_von(k, punkte, normalen, dreiecke, stil, saat)]

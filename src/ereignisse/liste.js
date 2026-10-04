@@ -1,29 +1,36 @@
-// Alle Ereignisse der Welt. Hier wächst das Spiel.
+// Alle Ereignisse der Welt: was erzählt wird, und wer einem Aufgaben gibt. Hier wächst das Spiel.
+// Gegenstände, Rezepte und Aufgaben selbst stehen in src/inhalte/.
 //
 // Ein Ereignis hat:
 //   id          – eindeutiger Name, kleingeschrieben
 //   wann(s)     – ab wann es auftaucht
-//   text        – was der Spieler liest
+//   text        – was der Spieler liest (oder text(s), wenn es von der Lage abhängt)
 //   optionen    – Entscheidungen, jede mit Taste, Text und optional:
 //                 folge(s)      – was passiert
-//                 braucht/menge – ein Ding (und wie viele), ohne das die Option nicht geht
+//                 braucht/menge – ein Gegenstand (id) und wie viele, ohne die die Option nicht geht
 //                 bedingung(s)  – sonstige Voraussetzung
 //                 spaeter       – true: das Ereignis kommt nach einer Weile wieder
-//   wiederholbar – true: kommt immer wieder (nach „sperre“ Sekunden), z. B. Trinken
+//   wiederholbar – true: kommt immer wieder (nach „sperre“ Sekunden)
 //   bleibt(s)    – solange wahr, bleibt die Tafel offen; geht man weg, verschwindet sie
 //   beimZeigen(s)– passiert, sobald das Ereignis erscheint (z. B. der Einsiedler winkt)
 //
 // Was s alles kann:
-//   s.gelaufen, s.nahe(x, z, radius), s.hat('Ding', n), s.anzahl('Ding'), s.erledigt('id'),
-//   s.weiss('merker'), s.merke('merker'), s.gib('Ding', n), s.nimm('Ding', n), s.sage('Text'),
-//   s.werte.saettigung/wasser/waerme/leben, s.esse(n), s.trinke(n), s.waerme(n), s.nacht, s.stunde,
-//   s.liegt('fund-id'), s.hebeAuf('fund-id'), s.beerenDa(i), s.pfluecke(i), s.winke()
+//   s.gelaufen, s.nahe(x, z, radius), s.nacht, s.stunde, s.stufe, s.werte.saettigung/wasser/waerme/leben
+//   s.hat('id', n), s.anzahl('id'), s.gib('id', n), s.nimm('id', n), s.gibMuenzen(n), s.gibErfahrung(n)
+//   s.hergestellt('id'), s.stelleHer('rezept'), s.besiegt('raeuber')
+//   s.erledigt('ereignis'), s.weiss('merker'), s.merke('merker'), s.sage('Text')
+//   s.esse(n), s.trinke(n), s.waerme(n), s.winke(), s.einsiedlerDa
+//   s.starteAufgabe('id'), s.aufgabeAktiv('id'), s.aufgabeErledigt('id'), s.schrittVon('id')
+//   s.vergiss('merker'), s.fische(), s.gibFischeAb(n), s.handel('marta')
+//
+// Gespräche (gespraech-…) erscheinen nicht von selbst, sondern wenn man jemanden anspricht
+// (Benutzen in seiner Nähe).
 //
 // Reihenfolge zählt: Treffen mehrere zu, kommt das obere zuerst.
-import { ALTER_BAUM, BEERENSTRAEUCHER, LAGER, TEICH } from '../welt/orte.js';
-import { FUNDE } from '../welt/fundstuecke.js';
+import { ALTER_BAUM, DORF, LAGER, RAEUBERLAGER, TEICH } from '../welt/orte.js';
 
 const beimLager = (s, r = 6) => s.nahe(LAGER.x, LAGER.z, r);
+const amFeuerDesAlten = (s) => s.erledigt('einsiedler-gruss') && beimLager(s, 7);
 
 const GESCHICHTE = [
   {
@@ -31,9 +38,17 @@ const GESCHICHTE = [
     wann: () => true,
     text: 'Du wachst im hohen Gras auf. Die Sonne steht schon über den Hügeln. '
       + 'Außer einem Lendenschurz trägst du nichts, und du weißt nicht, wie du hierhergekommen bist. '
-      + 'Dein Mund ist trocken, dein Magen leer.',
+      + 'Im Bund steckt ein zerrissenes Pergament voller seltsamer Zeichen. Dein Mund ist trocken, dein Magen leer.',
     optionen: [
-      { taste: 'E', text: 'Aufstehen', folge: (s) => s.sage('Sieh dich um. Irgendwo muss es Wasser geben, und vielleicht Menschen.') },
+      {
+        taste: 'E', text: 'Aufstehen',
+        folge: (s) => {
+          s.gib('pergament');
+          s.starteAufgabe('schatzsuche');
+          s.starteAufgabe('durst');
+          s.sage('Sieh dich um. Irgendwo muss es Wasser geben, und vielleicht Menschen.');
+        },
+      },
     ],
   },
   {
@@ -49,7 +64,7 @@ const GESCHICHTE = [
     wann: (s) => s.gelaufen > 20,
     text: 'Zwischen den Halmen glänzt etwas Scharfkantiges: ein Feuerstein, so groß wie deine Faust.',
     optionen: [
-      { taste: 'E', text: 'Aufheben', folge: (s) => s.gib('Feuerstein') },
+      { taste: 'E', text: 'Aufheben', folge: (s) => s.gib('feuerstein') },
       { taste: 'Q', text: 'Liegen lassen', spaeter: true },
     ],
   },
@@ -58,46 +73,63 @@ const GESCHICHTE = [
     wann: (s) => s.nahe(TEICH.x, TEICH.z, TEICH.radius + 5),
     text: 'Ein kleiner Teich. Das Wasser ist klar und kalt. Im Schlamm am Ufer sind Spuren von Tieren.',
     optionen: [
-      { taste: 'E', text: 'Trinken', folge: (s) => { s.trinke(60); s.sage('Du trinkst gierig. Das Wasser schmeckt nach Erde und Stein.'); } },
+      {
+        taste: 'E', text: 'Trinken',
+        folge: (s) => { s.trinke(60); s.merke('getrunken'); s.sage('Du trinkst gierig. Am Ufer kannst du jederzeit wieder trinken.'); },
+      },
       { taste: 'Q', text: 'Weitergehen' },
     ],
   },
   {
-    id: 'trinken',
-    wiederholbar: true,
-    sperre: 20,
-    wann: (s) => s.erledigt('teich') && s.nahe(TEICH.x, TEICH.z, TEICH.radius + 4) && s.werte.wasser < 85,
-    bleibt: (s) => s.nahe(TEICH.x, TEICH.z, TEICH.radius + 7),
-    text: 'Das Wasser des Teichs glitzert. Du hast Durst.',
+    id: 'alter-baum',
+    wann: (s) => s.nahe(ALTER_BAUM.x, ALTER_BAUM.z, 9),
+    text: 'Eine riesige, uralte Eiche. In ihrem Schatten liegen trockene Äste. '
+      + 'Geh nah heran und tippe auf „Benutzen“ (oder drück E), dann hebst du sie auf.',
     optionen: [
-      { taste: 'E', text: 'Trinken', folge: (s) => { s.trinke(60); s.sage('Das kalte Wasser tut gut.'); } },
-      { taste: 'Q', text: 'Nicht jetzt', spaeter: true },
-    ],
-  },
-  {
-    id: 'ast',
-    wann: (s) => s.nahe(ALTER_BAUM.x, ALTER_BAUM.z, 8),
-    bleibt: (s) => s.nahe(ALTER_BAUM.x, ALTER_BAUM.z, 11),
-    text: 'Unter dem alten Baum liegt ein gerader, abgebrochener Ast, fast so lang wie du.',
-    optionen: [
-      { taste: 'E', text: 'Mitnehmen', folge: (s) => s.gib('Ast') },
-      { taste: 'Q', text: 'Liegen lassen', spaeter: true },
+      { taste: 'E', text: 'Verstanden' },
     ],
   },
   {
     id: 'speer',
-    wann: (s) => s.hat('Feuerstein') && s.hat('Ast') && (!s.weiss('aufgabe-aeste') || s.anzahl('Ast') > 3),
-    text: 'Mit der scharfen Kante des Feuersteins könntest du einen Ast anspitzen. Es wäre dein erstes Werkzeug.',
+    wann: (s) => s.hat('feuerstein') && s.hat('ast') && !s.hergestellt('speer') && (!s.aufgabeAktiv('feuer') || s.anzahl('ast') > 3),
+    text: 'Mit der scharfen Kante des Feuersteins könntest du einen Ast anspitzen. Es wäre dein erstes Werkzeug. '
+      + 'Was du sonst noch bauen kannst, steht im Menü unter „Herstellen“.',
     optionen: [
       {
-        taste: 'E', text: 'Speer schnitzen', braucht: 'Ast',
-        folge: (s) => { s.nimm('Ast'); s.gib('Einfacher Speer'); s.sage('Nach einer Weile hältst du einen groben Speer in der Hand.'); },
+        taste: 'E', text: 'Speer schnitzen', braucht: 'ast',
+        folge: (s) => { if (s.stelleHer('speer')) s.sage('Nach einer Weile hältst du einen groben Speer in der Hand.'); },
       },
       { taste: 'Q', text: 'Später', spaeter: true },
     ],
   },
+  {
+    id: 'raeuberlager-sehen',
+    wann: (s) => s.nahe(RAEUBERLAGER.x, RAEUBERLAGER.z, 34),
+    text: 'Zwischen den Bäumen siehst du ein verwahrlostes Lager: schmutzige Zelte, ein qualmendes Feuer, '
+      + 'Männer mit Keulen. Einer zeigt grinsend in deine Richtung.',
+    optionen: [
+      { taste: 'E', text: 'Dann kommt doch', folge: (s) => { s.starteAufgabe('raeuber'); s.sage('Schlag zu mit der Maus, mit X oder dem Knopf „Schlagen“.'); } },
+      { taste: 'Q', text: 'Lieber zurück', folge: (s) => { s.starteAufgabe('raeuber'); s.sage('Die Räuber lachen dir hinterher.'); } },
+    ],
+  },
+  {
+    id: 'erster-lederfetzen',
+    wann: (s) => s.hat('lederfetzen') && !s.aufgabeAktiv('wams') && !s.aufgabeErledigt('wams'),
+    text: 'Das Leder der Räuber ist fleckig, aber zäh. Mit ein paar Fetzen mehr könntest du dir ein Wams nähen, das Schläge abfängt.',
+    optionen: [
+      { taste: 'E', text: 'Gute Idee', folge: (s) => s.starteAufgabe('wams') },
+    ],
+  },
+  {
+    id: 'pilz-fund',
+    wann: (s) => s.hat('steinpilz') && !s.aufgabeAktiv('pilze') && !s.aufgabeErledigt('pilze'),
+    text: 'Ein Steinpilz, fest und duftend. Roh ist er zäh, aber über einem Feuer gebraten wäre er ein Festessen.',
+    optionen: [
+      { taste: 'E', text: 'Gute Idee', folge: (s) => s.starteAufgabe('pilze') },
+    ],
+  },
 
-  // --- Der Einsiedler (Issue #2) ---
+  // --- Der Einsiedler ---
   {
     id: 'einsiedler-sehen',
     wann: (s) => s.einsiedlerDa && beimLager(s, 26),
@@ -121,38 +153,111 @@ const GESCHICHTE = [
       },
       { taste: 'Q', text: 'Misstrauisch bleiben', folge: (s) => s.sage('„Wie du willst. Das Feuer brennt auch für Misstrauische.“') },
       {
-        taste: 'R', text: 'Ihn mit dem Speer bedrohen', braucht: 'Einfacher Speer',
+        taste: 'R', text: 'Ihn mit dem Speer bedrohen', braucht: 'speer',
         folge: (s) => { s.merke('einsiedler-bedroht'); s.sage('Er sieht dich ruhig an. „Damit fängst du nicht einmal einen Fisch.“ Du senkst den Speer.'); },
       },
     ],
   },
   {
+    id: 'einsiedler-pergament',
+    wann: (s) => amFeuerDesAlten(s) && s.hat('pergament') && !s.weiss('pergament-erkannt'),
+    bleibt: (s) => beimLager(s, 10),
+    text: 'Du zeigst dem Alten das Pergament. Er wird still und fährt mit dem Finger die Linien nach. '
+      + '„Das ist die Schrift der Alten Könige“, murmelt er. „Es heißt, sie hätten ihren Schatz in sieben Teilen versteckt, '
+      + 'über das ganze Land verstreut. Wer alle findet …“ Er sieht dich lange an. '
+      + '„Werd erst einmal stärker. Hier draußen überlebst du sonst keinen Winter. Dann reden wir weiter.“',
+    optionen: [
+      { taste: 'E', text: 'Das Pergament einstecken', folge: (s) => { s.merke('pergament-erkannt'); s.gibErfahrung(25); } },
+    ],
+  },
+  {
     id: 'einsiedler-aufgabe',
-    wann: (s) => s.erledigt('einsiedler-gruss') && beimLager(s, 7),
+    wann: (s) => amFeuerDesAlten(s),
     bleibt: (s) => beimLager(s, 10),
     text: '„Die Nächte hier draußen sind kalt“, sagt der Alte. „Ohne Feuer erfrierst du. '
       + 'Bring mir drei trockene Äste, dann zeige ich dir, wie man eins macht.“',
     optionen: [
-      { taste: 'E', text: 'Ich bringe sie', folge: (s) => { s.merke('aufgabe-aeste'); s.sage('Trockene Äste liegen am Waldrand und am Pfad.'); } },
+      { taste: 'E', text: 'Ich bringe sie', folge: (s) => { s.merke('aufgabe-aeste'); s.starteAufgabe('feuer'); } },
       { taste: 'Q', text: 'Später', spaeter: true },
     ],
   },
   {
     id: 'einsiedler-feuer-lernen',
-    wann: (s) => s.weiss('aufgabe-aeste') && beimLager(s, 7) && s.hat('Ast', 3),
+    wann: (s) => s.aufgabeAktiv('feuer') && beimLager(s, 7) && s.hat('ast', 3),
     bleibt: (s) => beimLager(s, 10),
     text: '„Gut. Schau genau hin.“ Er schlägt seinen Feuerstein gegen einen Stein, die Funken fallen in ein Nest aus trockenem Gras. '
       + 'Er bläst vorsichtig, bis eine kleine Flamme aufzüngelt.',
     optionen: [
       {
-        taste: 'E', text: 'Zusehen und lernen', braucht: 'Ast', menge: 3,
+        taste: 'E', text: 'Zusehen und lernen', braucht: 'ast', menge: 3,
         folge: (s) => {
-          s.nimm('Ast', 3);
+          s.nimm('ast', 3);
           s.merke('kann-feuer');
-          s.sage('Du kannst jetzt Feuer machen: Taste F (mit drei Ästen und einem Feuerstein).');
-          if (!s.hat('Feuerstein')) { s.gib('Feuerstein'); s.sage('„Nimm den hier, ich habe noch einen.“'); }
+          s.sage('Du kannst jetzt Feuer machen: im Menü unter „Herstellen“ oder mit F. Du brauchst drei Äste und einen Feuerstein.');
+          if (!s.hat('feuerstein')) { s.gib('feuerstein'); s.sage('„Nimm den hier, ich habe noch einen.“'); }
         },
       },
+    ],
+  },
+  {
+    id: 'einsiedler-werkzeug',
+    wann: (s) => s.aufgabeErledigt('feuer') && beimLager(s, 8),
+    bleibt: (s) => beimLager(s, 11),
+    text: '„Feuer allein macht nicht satt. Du brauchst Werkzeug.“ Er zeigt dir sein Messer aus Stein. '
+      + '„Dreh eine Schnur aus den Fasern der blauen Blumen und bind einen scharfen Stein an einen Ast. '
+      + 'Und wenn du schon unterwegs bist: Mein Knie macht mir zu schaffen. Johanniskraut hilft, die gelben Blumen auf der Wiese.“',
+    optionen: [
+      { taste: 'E', text: 'Ich kümmere mich darum', folge: (s) => { s.starteAufgabe('werkzeug'); s.starteAufgabe('kraeuter'); } },
+      { taste: 'Q', text: 'Später', spaeter: true },
+    ],
+  },
+  {
+    id: 'einsiedler-kraeuter',
+    wann: (s) => s.aufgabeAktiv('kraeuter') && beimLager(s, 7) && s.hat('johanniskraut', 3),
+    bleibt: (s) => beimLager(s, 10),
+    text: '„Johanniskraut! Du hast ein gutes Auge.“ Er zerreibt die Blüten zwischen den Fingern und streicht sie auf sein Knie. '
+      + '„Ah, das tut gut. Hier, für deine Mühe.“',
+    optionen: [
+      {
+        taste: 'E', text: 'Gern geschehen', braucht: 'johanniskraut', menge: 3,
+        folge: (s) => { s.nimm('johanniskraut', 3); s.merke('kraeuter-gebracht'); },
+      },
+    ],
+  },
+  {
+    id: 'einsiedler-holz',
+    wann: (s) => s.aufgabeAktiv('holz') && beimLager(s, 7) && s.hat('holzscheit', 5),
+    bleibt: (s) => beimLager(s, 10),
+    text: '„So viel Holz!“ Der Alte stapelt die Scheite neben dem Feuer. '
+      + '„Damit komme ich durch den halben Winter. Aus dir wird noch ein richtiger Waldläufer.“',
+    optionen: [
+      {
+        taste: 'E', text: 'Gern', braucht: 'holzscheit', menge: 5,
+        folge: (s) => { s.nimm('holzscheit', 5); s.merke('holz-gebracht'); },
+      },
+    ],
+  },
+  {
+    id: 'einsiedler-erlenbach',
+    wann: (s) => s.aufgabeAktiv('schatzsuche') && s.schrittVon('schatzsuche') === 2 && beimLager(s, 7),
+    bleibt: (s) => beimLager(s, 10),
+    text: '„Du bist stärker geworden. Gut.“ Der Alte zeichnet mit einem Stock eine Karte in den Staub. '
+      + '„Folg der Straße nach Osten, bis du Rauch über Dächern siehst. Das ist Erlenbach. Dort lebt Gerold, der Kartenleser.“ '
+      + 'Er zögert. „Aber an der Straße hausen Räuber. Ihr Hauptmann prahlt mit einem Stück Pergament voller Zeichen, '
+      + 'das er einem Händler abgenommen hat. Zeichen wie deine.“',
+    optionen: [
+      { taste: 'E', text: 'Dann hole ich es mir', folge: (s) => { s.merke('weg-nach-erlenbach'); s.gibErfahrung(20); s.starteAufgabe('raeuber'); } },
+    ],
+  },
+  {
+    id: 'einsiedler-kartenteil',
+    wann: (s) => s.hat('kartenteil_1') && beimLager(s, 7) && s.erledigt('einsiedler-gruss'),
+    bleibt: (s) => beimLager(s, 10),
+    text: 'Du legst das Stück des Hauptmanns neben dein Pergament. Die Linien laufen ineinander über, ein Fluss, ein Berg, '
+      + 'ein Kreuz. Der Alte pfeift leise. „Eine Karte. Sieben Teile, sagt man, und am Ende liegt der Schatz der Alten Könige. '
+      + 'Geh nach Erlenbach. Gerold kann lesen, was ich nur ahne.“',
+    optionen: [
+      { taste: 'E', text: 'Ich gehe nach Erlenbach', folge: (s) => { s.merke('kartenteil-gezeigt'); s.gibErfahrung(50); } },
     ],
   },
   {
@@ -168,36 +273,77 @@ const GESCHICHTE = [
   },
 ];
 
-// Ein Ereignis je Fundstück (Äste usw.)
-function fundEreignisse() {
-  return FUNDE.map((f) => ({
-    id: f.id,
-    wann: (s) => s.liegt(f.id) && s.nahe(f.x, f.z, 2.2),
-    bleibt: (s) => s.nahe(f.x, f.z, 4),
-    text: f.ding === 'Ast' ? 'Ein trockener Ast liegt im Gras. Gutes Feuerholz.' : `Hier liegt: ${f.ding}.`,
+// --- Erlenbach ---
+const DORF_EREIGNISSE = [
+  {
+    id: 'dorf-ankunft',
+    wann: (s) => s.nahe(DORF.x, DORF.z, 34),
+    text: 'Erlenbach: ein paar Fachwerkhäuser mit Strohdächern um einen Brunnen, Rauch steigt aus den Kaminen. '
+      + 'Auf dem Markt ruft eine Händlerin ihre Waren aus, am Weiher sitzt ein Fischer auf seinem Steg.',
     optionen: [
-      { taste: 'E', text: 'Aufheben', folge: (s) => { s.hebeAuf(f.id); s.gib(f.ding); } },
-      { taste: 'Q', text: 'Liegen lassen', spaeter: true },
+      { taste: 'E', text: 'Ins Dorf gehen', folge: (s) => s.sage('Sprich die Leute an: geh nah heran und tippe auf „Benutzen“ (E).') },
     ],
-  }));
-}
+  },
+];
 
-// Ein Ereignis je Beerenstrauch (wiederholbar, die Beeren wachsen nach)
-function beerenEreignisse() {
-  return BEERENSTRAEUCHER.map((b, i) => ({
-    id: `beeren-${i}`,
-    wiederholbar: true,
-    sperre: 8,
-    wann: (s) => s.beerenDa(i) && s.nahe(b.x, b.z, 2.6),
-    bleibt: (s) => s.nahe(b.x, b.z, 4.5),
-    text: 'Ein Strauch voller dunkler Brombeeren. Sie sind reif und süß.',
+const GESPRAECHE = [
+  {
+    id: 'gespraech-gerold',
+    wiederholbar: true, sperre: 0,
+    wann: () => false,
+    text: (s) => (s.weiss('gerold-gelesen')
+      ? '„Der Norden, mein Freund. Die Graufels-Berge. Aber geh nicht ohne gutes Werkzeug und ohne Vorräte, dort oben ist es kalt.“'
+      : s.hat('kartenteil_1')
+        ? 'Ein alter Mann mit weißem Bart blinzelt dich an. „Man sagt, du hättest etwas, das ich lesen soll? Zeig her.“'
+        : 'Ein alter Mann mit weißem Bart blinzelt dich an. „Gerold, Kartenleser. Wenn du Karten hast, die keiner versteht, bist du bei mir richtig.“'),
     optionen: [
-      { taste: 'E', text: 'Pflücken und essen', folge: (s) => { s.pfluecke(i); s.esse(22); s.sage('Die Beeren sind süß und saftig.'); } },
-      { taste: 'Q', text: 'Weitergehen', spaeter: true },
+      {
+        taste: 'E', text: 'Ihm Pergament und Kartenteil zeigen',
+        bedingung: (s) => s.hat('kartenteil_1') && !s.weiss('gerold-gelesen'),
+        folge: (s) => {
+          s.merke('gerold-gelesen');
+          s.gibErfahrung(60);
+          s.sage('Gerold hält beide Stücke ins Licht. „Die Schrift der Alten Könige. Das hier ist der Weiher, das die Straße, '
+            + 'und diese Zacken … die Graufels-Berge im Norden. Dort, in einer Höhle, liegt das nächste Stück. Sieben sind es insgesamt.“');
+        },
+      },
+      { taste: 'Q', text: 'Auf Wiedersehen' },
     ],
-  }));
-}
+  },
+  {
+    id: 'gespraech-marta',
+    wiederholbar: true, sperre: 0,
+    wann: () => false,
+    text: '„Willkommen auf dem Markt von Erlenbach! Brot, Schnur, Salben, eine Angelrute? Und was du nicht mehr brauchst, kaufe ich dir ab.“',
+    optionen: [
+      { taste: 'E', text: 'Handeln', folge: (s) => s.handel('marta') },
+      { taste: 'R', text: 'Gibt es Arbeit?', bedingung: (s) => !s.aufgabeAktiv('auftrag_holz'), folge: (s) => s.starteAufgabe('auftrag_holz') },
+      {
+        taste: 'T', text: '8 Holzscheite abgeben', braucht: 'holzscheit', menge: 8, bedingung: (s) => s.aufgabeAktiv('auftrag_holz'),
+        folge: (s) => { s.nimm('holzscheit', 8); s.merke('abgegeben-holz'); s.sage('„Damit backe ich eine Woche lang. Hier, dein Lohn.“'); },
+      },
+      { taste: 'Q', text: 'Tschüss' },
+    ],
+  },
+  {
+    id: 'gespraech-jost',
+    wiederholbar: true, sperre: 0,
+    wann: () => false,
+    text: (s) => (s.hat('angelrute')
+      ? '„Na, beißen sie? Wirf die Angel aus und warte, bis der Schwimmer zuckt. Dann sofort ziehen!“'
+      : '„Ohne Angel kein Fisch, so einfach ist das. Ich verkauf dir eine, wenn du magst. Fische kaufe ich dir besser ab als jeder andere.“'),
+    optionen: [
+      { taste: 'E', text: 'Handeln', folge: (s) => s.handel('jost') },
+      { taste: 'R', text: 'Gibt es Arbeit?', bedingung: (s) => !s.aufgabeAktiv('auftrag_fische'), folge: (s) => s.starteAufgabe('auftrag_fische') },
+      {
+        taste: 'T', text: '5 Fische abgeben', bedingung: (s) => s.aufgabeAktiv('auftrag_fische') && s.fische() >= 5,
+        folge: (s) => { s.gibFischeAb(5); s.merke('abgegeben-fische'); s.sage('„Prächtige Fische! Hier, wie versprochen.“'); },
+      },
+      { taste: 'Q', text: 'Tschüss' },
+    ],
+  },
+];
 
 export function alleEreignisse() {
-  return [...GESCHICHTE, ...beerenEreignisse(), ...fundEreignisse()];
+  return [...GESCHICHTE, ...DORF_EREIGNISSE, ...GESPRAECHE];
 }

@@ -5,9 +5,10 @@ import { zeit } from '../welt/tageszeit.js';
 
 const WIEDERKEHR = 30; // Sekunden, bis ein „Später“-Ereignis wiederkommt
 
+// welt: { ueberleben, inventar, fortschritt, herstellen, aufgaben, einsiedler } – aufgaben und
+// einsiedler kommen erst später dazu, darum wird immer frisch nachgeschlagen.
 export function erzeugeEreignisse({ steuerung, oberflaeche, welt }) {
   const EREIGNISSE = alleEreignisse();
-  const inventar = new Map();
   const erledigt = new Set();
   const merker = new Set();
   const sperre = new Map(); // id -> Zeitpunkt, ab dem es wieder darf
@@ -19,33 +20,52 @@ export function erzeugeEreignisse({ steuerung, oberflaeche, welt }) {
     get werte() { return welt.ueberleben.werte; },
     get stunde() { return zeit.stunde; },
     get nacht() { return zeit.hell < 0.3; },
+    get stufe() { return welt.fortschritt.stufe; },
     nahe: (x, z, r) => Math.hypot(steuerung.zustand.ort.x - x, steuerung.zustand.ort.z - z) < r,
-    hat: (ding, n = 1) => (inventar.get(ding) ?? 0) >= n,
-    anzahl: (ding) => inventar.get(ding) ?? 0,
+    hat: (id, n = 1) => welt.inventar.hat(id, n),
+    anzahl: (id) => welt.inventar.anzahl(id),
+    gib: (id, n = 1) => welt.inventar.gib(id, n),
+    nimm: (id, n = 1) => welt.inventar.nimm(id, n),
+    gibMuenzen: (n) => { welt.inventar.gibMuenzen(n); oberflaeche.gewinn(`+${n} Kupfer`, 'muenzen'); },
+    gibErfahrung: (n) => { oberflaeche.gewinn(`+${welt.fortschritt.gibErfahrung(n)} Erfahrung`, 'erfahrung'); },
+    hergestellt: (id) => welt.fortschritt.hergestellt(id),
+    besiegt: (art) => welt.fortschritt.besiegt(art),
+    stelleHer: (rezeptId) => welt.herstellen.stelleHer(welt.herstellen.rezept(rezeptId)),
     erledigt: (id) => erledigt.has(id),
     weiss: (m) => merker.has(m),
     merke: (m) => merker.add(m),
-    gib: (ding, n = 1) => {
-      inventar.set(ding, (inventar.get(ding) ?? 0) + n);
-      oberflaeche.zeigeInventar(inventar);
-      oberflaeche.nachricht(n > 1 ? `${n} × ${ding} ins Inventar gelegt` : `${ding} ins Inventar gelegt`);
+    vergiss: (m) => merker.delete(m),
+    // Fische zählen und (die billigsten zuerst) abgeben
+    fische: () => welt.inventar.liste().filter((d) => d.fisch).reduce((n, d) => n + d.anzahl, 0),
+    gibFischeAb: (n) => {
+      for (const d of welt.inventar.liste().filter((x) => x.fisch).sort((a, b) => a.wert - b.wert)) {
+        n -= welt.inventar.nimm(d.id, Math.min(n, d.anzahl));
+        if (n <= 0) break;
+      }
     },
-    nimm: (ding, n = 1) => {
-      const rest = (inventar.get(ding) ?? 0) - n;
-      if (rest > 0) inventar.set(ding, rest); else inventar.delete(ding);
-      oberflaeche.zeigeInventar(inventar);
-    },
+    handel: (wer) => welt.handel?.(wer),
     sage: (text) => oberflaeche.nachricht(text),
     esse: (n) => welt.ueberleben.esse(n),
     trinke: (n) => welt.ueberleben.trinke(n),
     waerme: (n) => welt.ueberleben.waerme(n),
-    liegt: (id) => welt.fundstuecke.liegtNoch(id),
-    hebeAuf: (id) => welt.fundstuecke.entferne(id),
-    beerenDa: (i) => !welt.beerenGepflueckt.has(i),
-    pfluecke: (i) => { welt.beerenGepflueckt.set(i, zeit.tag + zeit.stunde / 24 + 1); welt.natur.beeren.pfluecke(i); },
     winke: () => welt.einsiedler?.winke(),
     get einsiedlerDa() { return !!welt.einsiedler; },
+    starteAufgabe: (id) => welt.aufgaben.starte(id),
+    aufgabeAktiv: (id) => welt.aufgaben.istAktiv(id),
+    aufgabeErledigt: (id) => welt.aufgaben.istErledigt(id),
+    schrittVon: (id) => welt.aufgaben.schrittVon(id),
   };
+
+  // Ein Ereignis gezielt zeigen (z. B. ein Gespräch, wenn man jemanden anspricht)
+  function zeige(id) {
+    if (aktuell) return false;
+    const e = EREIGNISSE.find((x) => x.id === id);
+    if (!e) return false;
+    aktuell = e;
+    e.beimZeigen?.(s);
+    oberflaeche.zeigeEreignis({ ...e, text: typeof e.text === 'function' ? e.text(s) : e.text }, (o) => waehle(o), moeglich, sichtbar);
+    return true;
+  }
 
   function schliesse(ereignis, option) {
     aktuell = null;
@@ -67,11 +87,15 @@ export function erzeugeEreignisse({ steuerung, oberflaeche, welt }) {
     if (o.bedingung && !o.bedingung(s)) return false;
     return true;
   }
+  const sichtbar = (o) => !o.bedingung || o.bedingung(s);
 
+  // Eine offene Tafel bekommt ihre Tasten zuerst; „Benutzen“ (auch E) geht dann leer aus
   addEventListener('keydown', (e) => {
     if (!aktuell || e.repeat) return;
     const option = aktuell.optionen.find((o) => `Key${o.taste}` === e.code);
-    if (option) waehle(option);
+    if (!option) return;
+    e.stopImmediatePropagation();
+    waehle(option);
   });
 
   function schritt(dt) {
@@ -90,23 +114,32 @@ export function erzeugeEreignisse({ steuerung, oberflaeche, welt }) {
     if (naechstes) {
       aktuell = naechstes;
       naechstes.beimZeigen?.(s);
-      oberflaeche.zeigeEreignis(naechstes, (o) => waehle(o), moeglich);
+      oberflaeche.zeigeEreignis({ ...naechstes, text: typeof naechstes.text === 'function' ? naechstes.text(s) : naechstes.text }, (o) => waehle(o), moeglich, sichtbar);
     }
   }
 
-  function vergissInventar() {
-    inventar.clear();
-    oberflaeche.zeigeInventar(inventar);
-    if (aktuell) { aktuell = null; oberflaeche.versteckeEreignis(); }
+  // Schließt eine offene Tafel (z. B. beim Tod); sie kommt später wieder
+  function vergiss() {
+    if (!aktuell) return;
+    sperre.set(aktuell.id, uhr + 3);
+    aktuell = null;
+    oberflaeche.versteckeEreignis();
   }
 
   return {
     schritt,
-    inventar,
     s,
-    vergissInventar,
+    zeige,
+    vergiss,
     get aktuell() { return aktuell?.id ?? null; },
     erledigt,
     merker,
+    speichern: () => ({ erledigt: [...erledigt], merker: [...merker] }),
+    laden(daten) {
+      erledigt.clear();
+      merker.clear();
+      for (const id of daten?.erledigt ?? []) erledigt.add(id);
+      for (const m of daten?.merker ?? []) merker.add(m);
+    },
   };
 }

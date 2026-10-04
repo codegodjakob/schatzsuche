@@ -2,8 +2,8 @@
 // über die Schulter (wie GTA) und aus den eigenen Augen (wie The Witcher in Ich-Sicht).
 import * as THREE from 'three';
 import { hoeheBei, wasserspiegel, WELT_GROESSE } from '../welt/gelaende.js';
-import { TEICH } from '../welt/orte.js';
-import { freieSicht, schiebeHinaus } from '../welt/kollision.js';
+import { GEWAESSER } from '../welt/orte.js';
+import { flaecheBei, freieSicht, schiebeHinaus } from '../welt/kollision.js';
 
 const GEHEN = 1.5, RENNEN = 4.6, SPRUNG = 4.2, SCHWERKRAFT = 9.81; // Meter, Sekunden
 
@@ -23,6 +23,9 @@ export function erzeugeSteuerung({ kamera, flaeche }) {
   };
   let figur = null;
   const tasten = new Set();
+  // Beim Zuschlagen: kurz langsamer, und die Figur dreht sich zum Gegner
+  let bremsUhr = 0;
+  const drehung = { winkel: 0, uhr: 0 };
   // Laufstick auf Handy und Tablet (src/ui/beruehrung.js): Richtung von -1 bis 1, ganz ausgelenkt = rennen
   const stick = { vor: 0, seit: 0, rennt: false };
   let ziehen = false;
@@ -80,7 +83,7 @@ export function erzeugeSteuerung({ kamera, flaeche }) {
   }
 
   function setzeOrt(x, zz) {
-    z.ort.set(x, hoeheBei(x, zz), zz);
+    z.ort.set(x, Math.max(hoeheBei(x, zz), flaecheBei(x, zz) ?? -Infinity), zz);
     z.tempo = 0;
   }
 
@@ -97,8 +100,10 @@ export function erzeugeSteuerung({ kamera, flaeche }) {
       bewegung.set(-sinS * vor + cosS * seit, 0, -cosS * vor - sinS * seit).normalize();
     }
     // im Wasser langsamer
-    const imWasser = Math.hypot(z.ort.x - TEICH.x, z.ort.z - TEICH.z) < TEICH.radius * 1.6 && z.ort.y < wsp - 0.15;
+    const amGewaesser = GEWAESSER.some((g) => Math.hypot(z.ort.x - g.x, z.ort.z - g.z) < g.radius * 1.7);
+    const imWasser = amGewaesser && z.ort.y < wsp - 0.15;
     let sollTempo = bewegung.lengthSq() ? (rennt ? RENNEN : GEHEN) : 0;
+    if (bremsUhr > 0) { bremsUhr -= dt; sollTempo = Math.min(sollTempo, GEHEN * 0.5); }
     if (z.erschoepft) sollTempo *= 0.75;
     if (imWasser) sollTempo *= 0.45;
     z.tempo = THREE.MathUtils.damp(z.tempo, sollTempo, sollTempo > z.tempo ? 4 : 7, dt);
@@ -106,8 +111,9 @@ export function erzeugeSteuerung({ kamera, flaeche }) {
     const vorher = z.ort.clone();
     z.ort.addScaledVector(bewegung, z.tempo * dt);
     schiebeHinaus(z.ort);
-    // tiefes Wasser: nicht weiter hinein (Schwimmen gibt es noch nicht)
-    if (wsp - hoeheBei(z.ort.x, z.ort.z) > 1.05 && Math.hypot(z.ort.x - TEICH.x, z.ort.z - TEICH.z) < TEICH.radius * 1.7) {
+    // tiefes Wasser: nicht weiter hinein (Schwimmen gibt es noch nicht), außer auf einem Steg
+    const aufFlaeche = flaecheBei(z.ort.x, z.ort.z) !== null;
+    if (amGewaesser && !aufFlaeche && wsp - hoeheBei(z.ort.x, z.ort.z) > 1.05) {
       z.ort.x = vorher.x;
       z.ort.z = vorher.z;
     }
@@ -116,7 +122,7 @@ export function erzeugeSteuerung({ kamera, flaeche }) {
     z.ort.z = THREE.MathUtils.clamp(z.ort.z, -grenze, grenze);
 
     // Springen und Fallen
-    const boden = hoeheBei(z.ort.x, z.ort.z);
+    const boden = Math.max(hoeheBei(z.ort.x, z.ort.z), flaecheBei(z.ort.x, z.ort.z) ?? -Infinity);
     if (z.aktiv && z.amBoden && tasten.has('Space')) { z.fallTempo = SPRUNG; z.amBoden = false; }
     z.fallTempo -= SCHWERKRAFT * dt;
     z.ort.y += z.fallTempo * dt;
@@ -129,7 +135,12 @@ export function erzeugeSteuerung({ kamera, flaeche }) {
       // Die Figur dreht sich weich in Laufrichtung
       const fig = figur.objekt;
       fig.position.copy(z.ort);
-      if (bewegung.lengthSq()) {
+      if (drehung.uhr > 0) {
+        drehung.uhr -= dt;
+        let d = drehung.winkel - fig.rotation.y;
+        d = Math.atan2(Math.sin(d), Math.cos(d));
+        fig.rotation.y += d * Math.min(1, dt * 16);
+      } else if (bewegung.lengthSq()) {
         const soll = Math.atan2(bewegung.x, bewegung.z);
         let d = soll - fig.rotation.y;
         d = Math.atan2(Math.sin(d), Math.cos(d));
@@ -167,5 +178,9 @@ export function erzeugeSteuerung({ kamera, flaeche }) {
     }
   }
 
-  return { zustand: z, schritt, tasten, setzeFigur, setzeOrt, umsehen, setzeStick };
+  return {
+    zustand: z, schritt, tasten, setzeFigur, setzeOrt, umsehen, setzeStick,
+    bremse: (sekunden) => { bremsUhr = Math.max(bremsUhr, sekunden); },
+    dreheZu: (winkel, sekunden) => { drehung.winkel = winkel; drehung.uhr = sekunden; },
+  };
 }
