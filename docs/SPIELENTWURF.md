@@ -487,6 +487,32 @@ Jagd mit Pfeil und Bogen, 6. mehr mit den Leuten, 7. Graufels-Berge, eine zweite
   fertige hochwertige Modelle (Poly Haven, Sketchfab, Quaternius) und KI-3D (fal.ai) müssen diese Seiten
   in den Einstellungen der Cloud-Umgebung freigegeben werden; bisher sind nur GitHub und npm erreichbar.
 
+### Die Reiche der Welt (Jakobs Wunsch vom 4. Oktober 2026)
+
+Die Welt wird viel größer als das Startgebiet. Vorbild für Stimmung und Figuren ist *Game of Thrones*:
+Häuser und Stämme mit eigenen Wappen, Bündnissen, Fehden und Geheimnissen; niemand ist nur gut oder böse.
+Reisen verbindet die Reiche (Karawanen, Pferd, Karren, Schiff). Jedes Reich hat eigene Bauweise, Kleidung,
+Händler, Handwerk, Begegnungen und Vorhaben.
+
+| Reich | Vorbild | Landschaft | Was man dort findet |
+|---|---|---|---|
+| **Germanische Stämme** (viele, das ist wichtig) | Germanen, Wikinger | Wälder, Flusstäler, Heide | Langhäuser mit Strohdach, Holzpalisaden, Thing-Platz, Hünengräber; jeder Stamm mit eigenem Häuptling, Wappentier und Fehde gegen einen Nachbarn. Erlenbach und Graufurt sind die ersten beiden Dörfer. |
+| **Das Moor** | Sagen von Irrlichtern | Torf, Schilf, dunkle Wasser | Feen (gebaut, siehe unten), später Moorgeister, Moorleichen-Rätsel, Kräuter, die nur hier wachsen. |
+| **Das Reitervolk** | Hunnen, Mongolen | weite Steppe im Osten | Jurten, Pferdeherden, Bogenschützen zu Pferd, Wettrennen; hier bekommt man sein erstes Pferd. |
+| **Das Zeltvolk** | Völker der Prärie | Grasland mit Bisons, Felsbögen | Spitzzelte, Jäger und Fährtenleser, Totems, Tauschhandel; lehrt Jagen und Spurenlesen. |
+| **Das Wüstenreich** | Ägypten und Rom | Wüste, Oase, großer Fluss | Steinstadt mit Säulen, Tempel, Pyramiden, Legionen, Märkte mit Gewürzen; Arena; Bürokratie und Intrigen. |
+| **Graufels-Berge** | Zwergensagen | Gebirge im Norden | Zwergenhallen, Ruinen der Alten Könige, Schmiedekunst. |
+| **Elbenwald** | Tolkien | uralter Wald | Baumhäuser, Elbenbögen, alte Magie. |
+| **Trolle und Fabelwesen** | Sagen | Höhlen, Brücken, Schluchten | Brückentrolle, Greife, Lindwürmer als seltene, gefährliche Begegnungen. |
+
+**Erster Schritt (gebaut)**: das **Moor** rund um den Moorsee (`MOOR` in `src/welt/orte.js`) mit dunklem Torfboden
+und glänzenden Pfützen, und darin die **Feen** (`src/welt/feen.js`): kleine Lichter mit Libellenflügeln, tagsüber
+nur wenige, nachts ein ganzer Schwarm, der neugierig um einen kreist. Tanzt man mit ihnen, schenken sie einem
+Feentau, der heilt. Will man eine fangen, locken sie einen ins kalte Wasser.
+
+**Nächste Schritte**: Die Welt wird in Reiche aufgeteilt, die man erst lädt, wenn man hinreist (wie die Dorfbewohner).
+Zuerst ein germanisches Langhaus-Dorf, dann die Steppe mit dem Reitervolk und dem eigenen Pferd.
+
 ## Offene Fragen für Jakob und Vincenz
 
 - **Mehrspieler**: Auf Roblox spielt man fast immer mit anderen. Soll man später gemeinsam in

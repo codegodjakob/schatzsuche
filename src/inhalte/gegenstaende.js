@@ -79,6 +79,7 @@ export const GEGENSTAENDE = {
   heilsalbe: { name: 'Heilsalbe', bild: '🧴', art: 'nahrung', wert: 12, essen: { leben: 35 }, beschreibung: 'Aus Johanniskraut. Heilt Wunden.' },
 
   // --- Wertvolles und Aufgaben ---
+  feentau: { name: 'Feentau', bild: '💧', art: 'nahrung', wert: 15, essen: { wasser: 20, leben: 40 }, beschreibung: 'Ein Fläschchen, das im Dunkeln schwach grün schimmert. Ein Geschenk der Moorfeen; es heilt Wunden.' },
   ring: { name: 'Alter Silberring', bild: '💍', art: 'wertvoll', wert: 40, stapel: 1, beschreibung: 'Fein graviert, mit einem Zeichen, das wie auf deinem Pergament aussieht. Ein Händler zahlt gut dafür.' },
   brief: { name: 'Versiegelter Brief', bild: '✉️', art: 'aufgabe', wert: 0, stapel: 1, beschreibung: 'Von Brida, der Reisenden, für Gerold in Erlenbach. Das Siegel zeigt eine Krone.' },
   pergament: { name: 'Zerrissenes Pergament', bild: '📜', art: 'aufgabe', wert: 0, stapel: 1, beschreibung: 'Seltsame Zeichen und Linien. Es steckte in deinem Lendenschurz.' },

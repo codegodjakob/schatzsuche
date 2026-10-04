@@ -60,7 +60,7 @@ export function erzeugeUeberleben({ beiTod, beiWarnung, zehrFaktor = () => 1, he
     erschoepft: () => w.saettigung < 15 || w.wasser < 15 || w.waerme < 15 || w.leben < 30,
     esse: (n) => { w.saettigung = Math.min(100, w.saettigung + n); },
     trinke: (n) => { w.wasser = Math.min(100, w.wasser + n); },
-    waerme: (n) => { w.waerme = Math.min(100, w.waerme + n); },
+    waerme: (n) => { w.waerme = Math.max(0, Math.min(100, w.waerme + n)); },
     heile: (n) => { w.leben = Math.min(100, w.leben + n); },
     // Schaden von außen (Schläge); grund steht auf dem Bildschirm: „Du bist …“
     verletze(n, grund = 'gestorben') {

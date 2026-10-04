@@ -1,5 +1,5 @@
 // Die lebendige Welt: Begegnungen unterwegs (Karawane, Wegelagerer, Brida, Sturm), Kleidung gegen Kälte,
-// Jagd mit Pfeil und Bogen.
+// Jagd mit Pfeil und Bogen, Feen im Moor.
 import { starteSpiel } from './helfer.mjs';
 
 const { seite, url, pruefe, warte, spiel, taste, foto, ereignis, tafelnWeg, abbruch, ende } = await starteSpiel();
@@ -85,6 +85,15 @@ try {
   pruefe(erlegt, 'Mit dem Bogen einen Fuchs erlegt');
   pruefe(await spiel(() => window.spiel.inventar.hat('fell') && window.spiel.inventar.hat('fleisch')), 'Beute: Fell und Fleisch');
   await foto('welt-3-jagd');
+
+  // Das Moor bei Nacht: Feen tanzen und schenken Feentau
+  await spiel(() => { window.spiel.zeit.stunde = 23; window.spiel.teleport(-52, -104); });
+  await ereignis('moor', 'KeyE');
+  await warte(() => window.spiel.feen.alle.filter((f) => f.fee.visible).length > 8, null, 60);
+  await ereignis('feen', 'KeyE');
+  pruefe(await spiel(() => window.spiel.inventar.anzahl('feentau') === 2), 'Im Moor mit den Feen getanzt: zwei Fläschchen Feentau');
+  await seite.waitForTimeout(3000);
+  await foto('welt-4-feen');
 } catch (e) {
   await abbruch(e, 'welt-fehler');
 }

@@ -10,6 +10,8 @@ export const WEIHER = { x: 196, z: 72, radius: 9, tiefe: 1.6 };
 export const WALDSEE = { x: -112, z: 18, radius: 15, tiefe: 1.6, becken: true };
 export const SCHILFSEE = { x: 74, z: -82, radius: 13, tiefe: 1.6, becken: true };
 export const MOORSEE = { x: -48, z: -114, radius: 10, tiefe: 1.4, becken: true };
+// Das Moor rund um den Moorsee: dunkler, nasser Torfboden mit Pfützen. Hier leben die Feen (src/welt/feen.js).
+export const MOOR = { x: -52, z: -118, radius: 40 };
 export const GEWAESSER = [TEICH, WEIHER, WALDSEE, SCHILFSEE, MOORSEE];
 // Der Erlbach fließt vom Teich zum Schilfsee (Stützpunkte, wird geglättet)
 export const BACH = [[38, -38], [44, -48], [52, -56], [58, -64], [66, -72], [72, -78]];

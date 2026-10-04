@@ -9,6 +9,7 @@ import { erzeugeGras } from './welt/gras.js';
 import { erzeugeBaeume } from './welt/baeume.js';
 import { erzeugeNatur } from './welt/natur.js';
 import { erzeugeUnterholz } from './welt/unterholz.js';
+import { erzeugeFeen } from './welt/feen.js';
 import { erzeugeTiere } from './welt/tiere.js';
 import { baueForm } from './welt/waffen.js';
 import { erzeugeWasser } from './welt/wasser.js';
@@ -549,6 +550,7 @@ const begegnungen = erzeugeBegegnungen({
 });
 
 // ---------------------------------------------------------------- Tiere
+const feen = erzeugeFeen({ szene });
 const tiere = erzeugeTiere({
   szene,
   beiErlegt: (t) => {
@@ -775,7 +777,7 @@ function tippsPruefen() {
 Object.defineProperty(window.spiel, 'aussehen', { get: () => aussehen });
 Object.assign(window.spiel, {
   editor,
-  steuerung, ereignisse, ueberleben, inventar, fortschritt, herstellen, aufgaben, sammeln, benutzen, menue, faellen, baeume, bauen, natur, unterholz, begegnungen, tiere, schiesse, gegner, kampf,
+  steuerung, ereignisse, ueberleben, inventar, fortschritt, herstellen, aufgaben, sammeln, benutzen, menue, faellen, baeume, bauen, natur, unterholz, begegnungen, tiere, feen, schiesse, gegner, kampf,
   handel, angeln, dorf, wasserspiegel: wasserspiegel(),
   speichere: () => speichereJetzt(),
   fackelBrennt: () => fackelAn,
@@ -1155,6 +1157,7 @@ renderer.setAnimationLoop(() => {
   markierung.schritt(dt);
   faellen.schritt(pausiert ? 0 : dt);
   if (!pausiert) { tiere.schritt(dt, steuerung.zustand.ort); pfeilSchritt(dt); }
+  feen.schritt(pausiert ? 0 : dt, steuerung.zustand.ort);
   if (spielLaeuft && !pausiert) begegnungen.schritt(dt);
   sammeln.aktualisiere(dt, zeit.hell, renderer.getPixelRatio());
   // Augen gewöhnen sich an die Dunkelheit

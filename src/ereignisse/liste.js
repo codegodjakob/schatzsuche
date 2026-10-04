@@ -27,11 +27,46 @@
 // (Benutzen in seiner Nähe).
 //
 // Reihenfolge zählt: Treffen mehrere zu, kommt das obere zuerst.
-import { ALTER_BAUM, DORF, GRAUFURT, LAGER, RAEUBERLAGER, TEICH } from '../welt/orte.js';
+import { ALTER_BAUM, DORF, GRAUFURT, LAGER, MOOR, RAEUBERLAGER, TEICH } from '../welt/orte.js';
 import { BEGEGNUNGEN } from './begegnungen.js';
 
 const beimLager = (s, r = 6) => s.nahe(LAGER.x, LAGER.z, r);
 const amFeuerDesAlten = (s) => s.erledigt('einsiedler-gruss') && beimLager(s, 7);
+
+// Das Moor und seine Feen (src/welt/feen.js)
+const MOOR_EREIGNISSE = [
+  {
+    id: 'moor',
+    wann: (s) => s.nahe(MOOR.x, MOOR.z, MOOR.radius * 0.7),
+    text: 'Der Boden wird weich und federt unter den Füßen. Dunkler Torf, Moospolster, Wasserlachen, in denen sich der Himmel '
+      + 'spiegelt. Zwischen dem Schilf glimmt etwas, ein Licht, das sofort wieder verschwindet. Man erzählt, im Moor wohnen Feen.',
+    optionen: [{ taste: 'E', text: 'Vorsichtig weitergehen', folge: (s) => s.merke('moor-gesehen') }],
+  },
+  {
+    id: 'feen',
+    wann: (s) => s.erledigt('moor') && s.nacht && s.nahe(MOOR.x, MOOR.z, MOOR.radius * 0.8),
+    text: 'Lichter steigen aus dem Schilf, grün, blau und golden, und kreisen um dich. Es sind Feen, kaum größer als deine Hand, '
+      + 'mit Flügeln wie Libellen. Eine schwebt vor deinem Gesicht und kichert. „Ein Großer! Tanzt du mit uns, Großer?“',
+    optionen: [
+      {
+        taste: 'E', text: 'Mit ihnen tanzen',
+        folge: (s) => {
+          s.gib('feentau', 2); s.merke('feenfreund'); s.gibErfahrung(25);
+          s.sage('Ihr dreht euch über Torf und Wasser, bis dir schwindlig ist. Zum Abschied drücken sie dir zwei Fläschchen Feentau in die Hand. '
+            + '„Die Pferdemenschen im Osten haben wir auch einmal tanzen lassen“, flüstert eine. „Sie reiten seitdem nur noch im Kreis.“');
+        },
+      },
+      {
+        taste: 'R', text: 'Eine fangen',
+        folge: (s) => {
+          s.merke('feen-zorn'); s.waerme(-35);
+          s.sage('Deine Hand greift ins Leere. Die Lichter locken dich kichernd tiefer ins Moor, bis du bis zu den Knien im kalten Wasser stehst. Dann sind sie fort.');
+        },
+      },
+      { taste: 'Q', text: 'Lieber weitergehen', spaeter: true },
+    ],
+  },
+];
 
 const GESCHICHTE = [
   {
@@ -420,5 +455,5 @@ const GESPRAECHE = [
 export function alleEreignisse() {
   // Begegnungen kommen nie von selbst über wann(), sondern über src/ereignisse/begegnungen.js
   const begegnungen = BEGEGNUNGEN.map((b) => ({ wann: () => false, wiederholbar: !b.einmal, sperre: 0, ...b }));
-  return [...GESCHICHTE, ...DORF_EREIGNISSE, ...GESPRAECHE, ...begegnungen];
+  return [...GESCHICHTE, ...MOOR_EREIGNISSE, ...DORF_EREIGNISSE, ...GESPRAECHE, ...begegnungen];
 }

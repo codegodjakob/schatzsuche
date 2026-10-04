@@ -3,7 +3,7 @@
 // Gras, Erde (Pfad, Waldboden), Fels (steil), Ufer.
 import * as THREE from 'three';
 import { ImprovedNoise } from 'three/addons/math/ImprovedNoise.js';
-import { BACH, DORF, GEWAESSER, GRAUFURT, HAEUSER, HAEUSER_GRAUFURT, LAGER, PFAD, RAEUBERLAGER, START, STEG, STRASSE, STRASSE_NORD } from './orte.js';
+import { BACH, DORF, MOOR, GEWAESSER, GRAUFURT, HAEUSER, HAEUSER_GRAUFURT, LAGER, PFAD, RAEUBERLAGER, START, STEG, STRASSE, STRASSE_NORD } from './orte.js';
 
 export const WELT_GROESSE = 900;
 export const RASTER = 512;
@@ -307,6 +307,7 @@ export function erzeugeGelaende() {
       uFelsNormal: { value: textur('fels_normal.jpg', false) },
       uWeltGroesse: { value: WELT_GROESSE },
       uWasserspiegel: { value: wasserspiegel() },
+      uMoor: { value: new THREE.Vector3(MOOR.x, MOOR.z, MOOR.radius) },
     });
     shader.vertexShader = 'varying vec3 vWelt;\nvarying vec3 vWeltNormal;\n' + shader.vertexShader.replace(
       '#include <worldpos_vertex>',
@@ -314,7 +315,7 @@ export function erzeugeGelaende() {
       vWelt = (modelMatrix * vec4(transformed, 1.0)).xyz;
       vWeltNormal = normalize(mat3(modelMatrix) * objectNormal);`,
     );
-    shader.fragmentShader = BODEN_GLSL_KOPF + shader.fragmentShader
+    shader.fragmentShader = 'uniform vec3 uMoor;\n' + BODEN_GLSL_KOPF + shader.fragmentShader
       .replace('#include <map_fragment>', /* glsl */ `
         vec2 rasterUv = (vWelt.xz + uWeltGroesse * 0.5) / uWeltGroesse;
         vec4 m = texture2D(uMaske, rasterUv);
@@ -339,6 +340,12 @@ export function erzeugeGelaende() {
         farbe = mix(farbe, erde, erdeW);
         farbe = mix(farbe, schlamm, uferW);
         farbe = mix(farbe, fels, felsW);
+        // Moor: dunkler Torf mit olivgrünem Moos, dazwischen stehendes Wasser (glänzt)
+        float moorW = (1.0 - smoothstep(uMoor.z * 0.55, uMoor.z, distance(vWelt.xz, uMoor.xy) + (gross - 0.5) * 14.0)) * (1.0 - felsW);
+        float pfuetze = moorW * smoothstep(0.62, 0.7, mittel);
+        vec3 torf = mix(vec3(0.11, 0.09, 0.06), vec3(0.26, 0.27, 0.11), smoothstep(0.3, 0.7, gross)) * (0.8 + 0.4 * mittel);
+        farbe = mix(farbe, torf, moorW * 0.85);
+        farbe = mix(farbe, vec3(0.05, 0.05, 0.04), pfuetze);
         // nasser, dunkler Rand am Wasser
         float nass = 1.0 - smoothstep(uWasserspiegel, uWasserspiegel + 0.35, vWelt.y);
         farbe *= 1.0 - 0.35 * nass;
@@ -348,6 +355,7 @@ export function erzeugeGelaende() {
         float roughnessFactor = mix(0.95, 0.88, erdeW);
         roughnessFactor = mix(roughnessFactor, 0.82, felsW);
         roughnessFactor = mix(roughnessFactor, 0.35, nass);
+        roughnessFactor = mix(roughnessFactor, 0.12, pfuetze);
       `)
       .replace('#include <normal_fragment_maps>', /* glsl */ `
         {
