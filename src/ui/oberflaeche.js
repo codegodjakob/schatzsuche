@@ -7,10 +7,12 @@ export function erzeugeOberflaeche() {
   const ereignis = $('ereignis');
   const nachrichten = $('nachrichten');
 
-  function zeigeEreignis(e, waehle, moeglich) {
+  // sichtbar: Optionen, deren Bedingung nicht zutrifft, erscheinen gar nicht (z. B. „Holz abgeben“
+  // ohne Auftrag); moeglich: was erscheint, aber gerade nicht geht, ist ausgegraut
+  function zeigeEreignis(e, waehle, moeglich, sichtbar = () => true) {
     $('ereignis-text').textContent = e.text;
     const optionen = $('ereignis-optionen');
-    optionen.replaceChildren(...e.optionen.map((o) => {
+    optionen.replaceChildren(...e.optionen.filter(sichtbar).map((o) => {
       const knopf = document.createElement('button');
       knopf.type = 'button';
       knopf.className = 'option';
@@ -18,7 +20,14 @@ export function erzeugeOberflaeche() {
       const taste = document.createElement('kbd');
       taste.textContent = o.taste;
       knopf.append(taste, document.createTextNode(o.text));
-      knopf.addEventListener('click', () => waehle(o));
+      // Nur Klicks, die auf diesem Knopf begonnen haben: Wer am Handy „Benutzen“ antippt und damit ein Gespräch
+      // öffnet, dessen Finger landet sonst gleich auf der Antwort, die jetzt an derselben Stelle erscheint.
+      let gedrueckt = false;
+      knopf.addEventListener('pointerdown', () => { gedrueckt = true; });
+      knopf.addEventListener('click', (ev) => {
+        if (gedrueckt || ev.detail === 0) waehle(o); // detail 0: per Tastatur ausgelöst
+        gedrueckt = false;
+      });
       return knopf;
     }));
     ereignis.hidden = false;

@@ -13,6 +13,7 @@
 //   schutz        – (Rüstung) Anteil des Schadens, den sie abhält; getragen wird die beste
 //   essen         – { saettigung, wasser, leben, waerme } – was Essen bewirkt
 //   gebraucht     – true: wird beim Herstellen nicht verbraucht, wenn es als Werkzeug dient
+//   fisch         – true: zählt für Aufträge als Fisch
 export const GEGENSTAENDE = {
   // --- Materialien ---
   ast: { name: 'Ast', bild: '🥢', art: 'material', wert: 1, beschreibung: 'Trockenes Holz. Brennt gut und lässt sich schnitzen.' },
@@ -33,6 +34,12 @@ export const GEGENSTAENDE = {
   steinpilz: { name: 'Steinpilz', bild: '🍄', art: 'nahrung', wert: 3, essen: { saettigung: 6 }, beschreibung: 'Roh essbar, gebraten viel besser.' },
   gebratene_pilze: { name: 'Gebratene Pilze', bild: '🍳', art: 'nahrung', wert: 8, essen: { saettigung: 28, waerme: 5 }, beschreibung: 'Würzig und warm.' },
   brot: { name: 'Brot', bild: '🍞', art: 'nahrung', wert: 4, essen: { saettigung: 25 }, beschreibung: 'Hart und trocken, aber es macht satt. Aus dem Vorrat der Räuber.' },
+  rotauge: { name: 'Rotauge', bild: '🐟', art: 'nahrung', wert: 3, fisch: true, essen: { saettigung: 6 }, beschreibung: 'Ein kleiner Weißfisch mit roten Augen. Gebraten schmeckt er besser.' },
+  barsch: { name: 'Barsch', bild: '🐟', art: 'nahrung', wert: 6, fisch: true, essen: { saettigung: 8 }, beschreibung: 'Gestreift und stachelig. Jost zahlt gut dafür.' },
+  forelle: { name: 'Forelle', bild: '🐟', art: 'nahrung', wert: 10, fisch: true, essen: { saettigung: 10 }, beschreibung: 'Gepunktet und flink. Gebraten ein Festessen.' },
+  hecht: { name: 'Hecht', bild: '🐟', art: 'nahrung', wert: 22, fisch: true, essen: { saettigung: 14 }, beschreibung: 'Ein Räuber unter den Fischen, lang wie ein Arm. Selten und viel wert.' },
+  gebratener_fisch: { name: 'Gebratener Fisch', bild: '🍢', art: 'nahrung', wert: 9, essen: { saettigung: 30, waerme: 5 }, beschreibung: 'Knusprig über dem Feuer gebraten.' },
+  gebratene_forelle: { name: 'Gebratene Forelle', bild: '🍽️', art: 'nahrung', wert: 18, essen: { saettigung: 45, waerme: 8, leben: 10 }, beschreibung: 'Zart und duftend. Macht lange satt und stärkt.' },
   kamillentee: { name: 'Kamillentee', bild: '🍵', art: 'nahrung', wert: 5, essen: { wasser: 30, waerme: 15, leben: 5 }, beschreibung: 'Wärmt von innen.' },
 
   // --- Werkzeug und Waffen ---
@@ -44,6 +51,7 @@ export const GEGENSTAENDE = {
 
   // --- Rüstung (getragen wird von selbst die beste, die man dabeihat) ---
   lederwams: { name: 'Lederwams', bild: '🦺', art: 'ruestung', wert: 30, stapel: 1, schutz: 0.2, beschreibung: 'Aus Lederfetzen genäht. Hält ein Fünftel jedes Schlags ab.' },
+  angelrute: { name: 'Angelrute', bild: '🎣', art: 'werkzeug', wert: 10, stapel: 1, werkzeug: { art: 'angel', stufe: 1 }, beschreibung: 'Haselstock, Schnur und Haken. Damit fängst du am Ufer Fische (Benutzen am Wasser).' },
   fackel: { name: 'Fackel', bild: '🔥', art: 'werkzeug', wert: 4, beschreibung: 'Brennt nachts von selbst, solange du sie dabeihast, jede etwa zwei Spielstunden lang.' },
 
   // --- Heilmittel ---

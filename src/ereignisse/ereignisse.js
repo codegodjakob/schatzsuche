@@ -34,6 +34,16 @@ export function erzeugeEreignisse({ steuerung, oberflaeche, welt }) {
     erledigt: (id) => erledigt.has(id),
     weiss: (m) => merker.has(m),
     merke: (m) => merker.add(m),
+    vergiss: (m) => merker.delete(m),
+    // Fische zählen und (die billigsten zuerst) abgeben
+    fische: () => welt.inventar.liste().filter((d) => d.fisch).reduce((n, d) => n + d.anzahl, 0),
+    gibFischeAb: (n) => {
+      for (const d of welt.inventar.liste().filter((x) => x.fisch).sort((a, b) => a.wert - b.wert)) {
+        n -= welt.inventar.nimm(d.id, Math.min(n, d.anzahl));
+        if (n <= 0) break;
+      }
+    },
+    handel: (wer) => welt.handel?.(wer),
     sage: (text) => oberflaeche.nachricht(text),
     esse: (n) => welt.ueberleben.esse(n),
     trinke: (n) => welt.ueberleben.trinke(n),
@@ -45,6 +55,17 @@ export function erzeugeEreignisse({ steuerung, oberflaeche, welt }) {
     aufgabeErledigt: (id) => welt.aufgaben.istErledigt(id),
     schrittVon: (id) => welt.aufgaben.schrittVon(id),
   };
+
+  // Ein Ereignis gezielt zeigen (z. B. ein Gespräch, wenn man jemanden anspricht)
+  function zeige(id) {
+    if (aktuell) return false;
+    const e = EREIGNISSE.find((x) => x.id === id);
+    if (!e) return false;
+    aktuell = e;
+    e.beimZeigen?.(s);
+    oberflaeche.zeigeEreignis({ ...e, text: typeof e.text === 'function' ? e.text(s) : e.text }, (o) => waehle(o), moeglich, sichtbar);
+    return true;
+  }
 
   function schliesse(ereignis, option) {
     aktuell = null;
@@ -66,6 +87,7 @@ export function erzeugeEreignisse({ steuerung, oberflaeche, welt }) {
     if (o.bedingung && !o.bedingung(s)) return false;
     return true;
   }
+  const sichtbar = (o) => !o.bedingung || o.bedingung(s);
 
   // Eine offene Tafel bekommt ihre Tasten zuerst; „Benutzen“ (auch E) geht dann leer aus
   addEventListener('keydown', (e) => {
@@ -92,7 +114,7 @@ export function erzeugeEreignisse({ steuerung, oberflaeche, welt }) {
     if (naechstes) {
       aktuell = naechstes;
       naechstes.beimZeigen?.(s);
-      oberflaeche.zeigeEreignis(naechstes, (o) => waehle(o), moeglich);
+      oberflaeche.zeigeEreignis({ ...naechstes, text: typeof naechstes.text === 'function' ? naechstes.text(s) : naechstes.text }, (o) => waehle(o), moeglich, sichtbar);
     }
   }
 
@@ -107,6 +129,7 @@ export function erzeugeEreignisse({ steuerung, oberflaeche, welt }) {
   return {
     schritt,
     s,
+    zeige,
     vergiss,
     get aktuell() { return aktuell?.id ?? null; },
     erledigt,

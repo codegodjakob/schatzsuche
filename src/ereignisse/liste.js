@@ -4,7 +4,7 @@
 // Ein Ereignis hat:
 //   id          – eindeutiger Name, kleingeschrieben
 //   wann(s)     – ab wann es auftaucht
-//   text        – was der Spieler liest
+//   text        – was der Spieler liest (oder text(s), wenn es von der Lage abhängt)
 //   optionen    – Entscheidungen, jede mit Taste, Text und optional:
 //                 folge(s)      – was passiert
 //                 braucht/menge – ein Gegenstand (id) und wie viele, ohne die die Option nicht geht
@@ -21,9 +21,13 @@
 //   s.erledigt('ereignis'), s.weiss('merker'), s.merke('merker'), s.sage('Text')
 //   s.esse(n), s.trinke(n), s.waerme(n), s.winke(), s.einsiedlerDa
 //   s.starteAufgabe('id'), s.aufgabeAktiv('id'), s.aufgabeErledigt('id'), s.schrittVon('id')
+//   s.vergiss('merker'), s.fische(), s.gibFischeAb(n), s.handel('marta')
+//
+// Gespräche (gespraech-…) erscheinen nicht von selbst, sondern wenn man jemanden anspricht
+// (Benutzen in seiner Nähe).
 //
 // Reihenfolge zählt: Treffen mehrere zu, kommt das obere zuerst.
-import { ALTER_BAUM, LAGER, RAEUBERLAGER, TEICH } from '../welt/orte.js';
+import { ALTER_BAUM, DORF, LAGER, RAEUBERLAGER, TEICH } from '../welt/orte.js';
 
 const beimLager = (s, r = 6) => s.nahe(LAGER.x, LAGER.z, r);
 const amFeuerDesAlten = (s) => s.erledigt('einsiedler-gruss') && beimLager(s, 7);
@@ -269,6 +273,77 @@ const GESCHICHTE = [
   },
 ];
 
+// --- Erlenbach ---
+const DORF_EREIGNISSE = [
+  {
+    id: 'dorf-ankunft',
+    wann: (s) => s.nahe(DORF.x, DORF.z, 34),
+    text: 'Erlenbach: ein paar Fachwerkhäuser mit Strohdächern um einen Brunnen, Rauch steigt aus den Kaminen. '
+      + 'Auf dem Markt ruft eine Händlerin ihre Waren aus, am Weiher sitzt ein Fischer auf seinem Steg.',
+    optionen: [
+      { taste: 'E', text: 'Ins Dorf gehen', folge: (s) => s.sage('Sprich die Leute an: geh nah heran und tippe auf „Benutzen“ (E).') },
+    ],
+  },
+];
+
+const GESPRAECHE = [
+  {
+    id: 'gespraech-gerold',
+    wiederholbar: true, sperre: 0,
+    wann: () => false,
+    text: (s) => (s.weiss('gerold-gelesen')
+      ? '„Der Norden, mein Freund. Die Graufels-Berge. Aber geh nicht ohne gutes Werkzeug und ohne Vorräte, dort oben ist es kalt.“'
+      : s.hat('kartenteil_1')
+        ? 'Ein alter Mann mit weißem Bart blinzelt dich an. „Man sagt, du hättest etwas, das ich lesen soll? Zeig her.“'
+        : 'Ein alter Mann mit weißem Bart blinzelt dich an. „Gerold, Kartenleser. Wenn du Karten hast, die keiner versteht, bist du bei mir richtig.“'),
+    optionen: [
+      {
+        taste: 'E', text: 'Ihm Pergament und Kartenteil zeigen',
+        bedingung: (s) => s.hat('kartenteil_1') && !s.weiss('gerold-gelesen'),
+        folge: (s) => {
+          s.merke('gerold-gelesen');
+          s.gibErfahrung(60);
+          s.sage('Gerold hält beide Stücke ins Licht. „Die Schrift der Alten Könige. Das hier ist der Weiher, das die Straße, '
+            + 'und diese Zacken … die Graufels-Berge im Norden. Dort, in einer Höhle, liegt das nächste Stück. Sieben sind es insgesamt.“');
+        },
+      },
+      { taste: 'Q', text: 'Auf Wiedersehen' },
+    ],
+  },
+  {
+    id: 'gespraech-marta',
+    wiederholbar: true, sperre: 0,
+    wann: () => false,
+    text: '„Willkommen auf dem Markt von Erlenbach! Brot, Schnur, Salben, eine Angelrute? Und was du nicht mehr brauchst, kaufe ich dir ab.“',
+    optionen: [
+      { taste: 'E', text: 'Handeln', folge: (s) => s.handel('marta') },
+      { taste: 'R', text: 'Gibt es Arbeit?', bedingung: (s) => !s.aufgabeAktiv('auftrag_holz'), folge: (s) => s.starteAufgabe('auftrag_holz') },
+      {
+        taste: 'T', text: '8 Holzscheite abgeben', braucht: 'holzscheit', menge: 8, bedingung: (s) => s.aufgabeAktiv('auftrag_holz'),
+        folge: (s) => { s.nimm('holzscheit', 8); s.merke('abgegeben-holz'); s.sage('„Damit backe ich eine Woche lang. Hier, dein Lohn.“'); },
+      },
+      { taste: 'Q', text: 'Tschüss' },
+    ],
+  },
+  {
+    id: 'gespraech-jost',
+    wiederholbar: true, sperre: 0,
+    wann: () => false,
+    text: (s) => (s.hat('angelrute')
+      ? '„Na, beißen sie? Wirf die Angel aus und warte, bis der Schwimmer zuckt. Dann sofort ziehen!“'
+      : '„Ohne Angel kein Fisch, so einfach ist das. Ich verkauf dir eine, wenn du magst. Fische kaufe ich dir besser ab als jeder andere.“'),
+    optionen: [
+      { taste: 'E', text: 'Handeln', folge: (s) => s.handel('jost') },
+      { taste: 'R', text: 'Gibt es Arbeit?', bedingung: (s) => !s.aufgabeAktiv('auftrag_fische'), folge: (s) => s.starteAufgabe('auftrag_fische') },
+      {
+        taste: 'T', text: '5 Fische abgeben', bedingung: (s) => s.aufgabeAktiv('auftrag_fische') && s.fische() >= 5,
+        folge: (s) => { s.gibFischeAb(5); s.merke('abgegeben-fische'); s.sage('„Prächtige Fische! Hier, wie versprochen.“'); },
+      },
+      { taste: 'Q', text: 'Tschüss' },
+    ],
+  },
+];
+
 export function alleEreignisse() {
-  return GESCHICHTE;
+  return [...GESCHICHTE, ...DORF_EREIGNISSE, ...GESPRAECHE];
 }

@@ -3,8 +3,8 @@
 import * as THREE from 'three';
 import { ladeModell } from '../modelle.js';
 import { STUFEN } from '../qualitaet.js';
-import { hoeheBei, maskeBei, neigungBei, wasserspiegel, WELT_GROESSE } from './gelaende.js';
-import { START } from './orte.js';
+import { hoeheBei, maskeBei, neigungBei, pfadAbstand, wasserspiegel, WELT_GROESSE } from './gelaende.js';
+import { DORF, LAGER, RAEUBERLAGER, START } from './orte.js';
 import { zufall } from './zufall.js';
 import { ImprovedNoise } from 'three/addons/math/ImprovedNoise.js';
 
@@ -102,6 +102,11 @@ export function felsMaterial() {
   return mat;
 }
 
+const imOrt = (x, z) => Math.hypot(x - DORF.x, z - DORF.z) < DORF.radius + 6
+  || Math.hypot(x - LAGER.x, z - LAGER.z) < LAGER.radius + 2
+  || Math.hypot(x - RAEUBERLAGER.x, z - RAEUBERLAGER.z) < RAEUBERLAGER.radius + 2
+  || pfadAbstand(x, z) < 2.5;
+
 function erzeugeFelsen(z, qualitaet) {
   const formen = [felsForm(1), felsForm(2), felsForm(3), felsForm(4)];
   const mat = felsMaterial();
@@ -119,8 +124,10 @@ function erzeugeFelsen(z, qualitaet) {
     if (z() > chance) continue;
     const y = hoeheBei(x, zz);
     if (y < wsp + 0.1) continue;
-    const gross = z() ** 3;
-    plaetze[n % formen.length].push({ x, y, z: zz, s: 0.25 + gross * 2.6, dreh: z() * 6.28, kipp: (z() - 0.5) * 0.4 });
+    const gross = z() ** 3, dreh = z() * 6.28, kipp = (z() - 0.5) * 0.4;
+    // Nicht ins Dorf, nicht in die Lager, nicht auf Wege (erst nach dem Würfeln, damit alle anderen Felsen bleiben, wo sie sind)
+    if (imOrt(x, zz)) continue;
+    plaetze[n % formen.length].push({ x, y, z: zz, s: 0.25 + gross * 2.6, dreh, kipp });
     n++;
   }
   // ein paar große Findlinge am Rand der Wiese

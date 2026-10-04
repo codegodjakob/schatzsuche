@@ -7,7 +7,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { SAMMELSTELLEN } from '../inhalte/sammelstellen.js';
 import { hoeheBei, maskeBei, neigungBei, waldDichte, wasserspiegel } from './gelaende.js';
 import { felsForm } from './natur.js';
-import { ALTER_BAUM, BEERENSTRAEUCHER, LAGER, START, TEICH } from './orte.js';
+import { ALTER_BAUM, BEERENSTRAEUCHER, GEWAESSER, LAGER, START } from './orte.js';
 import { zeit } from './tageszeit.js';
 import { zufall } from './zufall.js';
 
@@ -110,7 +110,7 @@ function freiVonBaeumen(hindernisse) {
 }
 
 const abstand = (x, z, ort) => Math.hypot(x - ort.x, z - ort.z);
-const nichtAmTeich = (x, z) => abstand(x, z, TEICH) > TEICH.radius + 3;
+const nichtAmTeich = (x, z) => GEWAESSER.every((g) => abstand(x, z, g) > g.radius + 3);
 const nichtImLager = (x, z) => abstand(x, z, LAGER) > 3;
 
 function astPlaetze(frei) {

@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "node scripts/server.mjs",
-    "test": "node test/rauchtest.mjs && node test/handytest.mjs",
+    "test": "node test/rauchtest.mjs && node test/dorftest.mjs && node test/handytest.mjs",
     "vorschau": "node scripts/vorschau.mjs",
     "vorschau:pruefen": "node scripts/pruefe-vorschau.mjs"
   },

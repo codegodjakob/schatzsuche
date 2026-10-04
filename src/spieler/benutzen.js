@@ -1,5 +1,6 @@
-// „Benutzen“ (Taste E oder der große Knopf): das Naheliegende tun – aufheben, pflücken, Holz hacken,
-// trinken. Was eine Stelle hergibt, steht in src/inhalte/sammelstellen.js.
+// „Benutzen“ (Taste E oder der große Knopf): das Naheliegende tun – jemanden ansprechen, angeln,
+// aufheben, pflücken, Holz hacken, trinken. Was eine Stelle hergibt, steht in src/inhalte/sammelstellen.js.
+// Weitere Möglichkeiten (Gespräche, Angeln) kommen als „zusatz“ herein; sie gehen den Sammelstellen vor.
 import { SAMMELSTELLEN } from '../inhalte/sammelstellen.js';
 import { benenne } from '../inhalte/gegenstaende.js';
 import { hoeheBei, wasserspiegel } from '../welt/gelaende.js';
@@ -12,7 +13,7 @@ const kurz = (aktion) => {
   return wort[0].toUpperCase() + wort.slice(1);
 };
 
-export function erzeugeBenutzen({ sammeln, inventar, fortschritt, ueberleben, merke, nachricht = () => {}, gewinn = () => {} }) {
+export function erzeugeBenutzen({ sammeln, inventar, fortschritt, ueberleben, merke, nachricht = () => {}, gewinn = () => {}, zusatz = [] }) {
   const wsp = wasserspiegel();
   let warten = 0;
 
@@ -61,6 +62,10 @@ export function erzeugeBenutzen({ sammeln, inventar, fortschritt, ueberleben, me
 
   // Was ginge hier gerade? { text, kurz, tue() } oder null
   function vorschlag(ort, blickSeite) {
+    for (const quelle of zusatz) {
+      const v = quelle(ort, blickSeite);
+      if (v) return v;
+    }
     if (amWasser(ort)) return { text: 'Wasser trinken', kurz: 'Trinken', tue: trinke };
     const stelle = sammeln.naechste(ort, blickSeite);
     if (!stelle) return null;
@@ -72,6 +77,8 @@ export function erzeugeBenutzen({ sammeln, inventar, fortschritt, ueberleben, me
     vorschlag,
     amWasser,
     schritt(dt) { warten = Math.max(0, warten - dt); },
+    // Ist die kurze Pause nach dem letzten Benutzen vorbei?
+    get bereit() { return warten <= 0; },
     // Führt den Vorschlag aus (wenn gerade einer da ist)
     benutze(ort, blickSeite) {
       if (warten > 0) return false;

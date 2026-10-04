@@ -1,33 +1,12 @@
 // Handytest: Startet das Spiel wie auf einem Handy (Touchscreen, schmaler Bildschirm) und bedient
 // es nur mit dem Finger: Figur wählen, Ereignis antippen, mit dem Stick laufen und rennen,
-// wischend umsehen, mit „Benutzen“ etwas aufheben, zuschlagen, das Menü öffnen. Bildschirmfotos landen in
+// wischend umsehen, mit „Benutzen“ etwas aufheben, zuschlagen, das Menü öffnen, bei Marta handeln. Bildschirmfotos landen in
 // test-ergebnisse/.
-import { chromium } from 'playwright';
-import { mkdir } from 'node:fs/promises';
-import { starteServer } from '../scripts/server.mjs';
+import { starteSpiel } from './helfer.mjs';
+import { DOERFLER } from '../src/welt/orte.js';
 
-const ORDNER = new URL('../test-ergebnisse/', import.meta.url);
-await mkdir(ORDNER, { recursive: true });
-const foto = (name) => new URL(`${name}.png`, ORDNER).pathname;
-
-const { server, url } = await starteServer();
-const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-const kontext = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 1 });
-const seite = await kontext.newPage();
-await seite.addInitScript(() => { window.SCHATZSUCHE_QUALITAET = 'niedrig'; });
-await seite.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
-const fehler = [];
-seite.on('pageerror', (e) => fehler.push(e.message));
-seite.on('console', (m) => { if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) fehler.push(m.text()); });
+const { seite, kontext, url, pruefe, warte, spiel, foto, abbruch, ende } = await starteSpiel({ handy: true, schritt: null });
 const finger = await kontext.newCDPSession(seite);
-
-let ok = true;
-function pruefe(bedingung, text) {
-  console.log(`${bedingung ? '✓' : '✗'} ${text}`);
-  if (!bedingung) ok = false;
-}
-const warte = (fn, arg, sekunden = 120) => seite.waitForFunction(fn, arg, { timeout: sekunden * 1000, polling: 200 });
-const spiel = (fn, arg) => seite.evaluate(fn, arg);
 const beruehre = (type, punkte) => finger.send('Input.dispatchTouchEvent', { type, touchPoints: punkte });
 // Ein paar Bilder abwarten (im Test-Browser ohne Grafikkarte dauert ein Bild lange)
 const bilder = async (n) => {
@@ -44,7 +23,7 @@ try {
   pruefe(await spiel(() => document.getElementById('wahl-sie').classList.contains('gewaehlt')), 'Antippen zeigt sofort die Wahl');
   await warte(() => window.spiel?.ereignisse?.aktuell === 'erwachen', null, 400);
   pruefe(true, `Spiel beginnt von selbst${frueh ? ' (getippt, bevor die Welt fertig war)' : ''}`);
-  await seite.screenshot({ path: foto('handy-1-erwachen'), timeout: 300000 });
+  await foto('handy-1-erwachen');
   await seite.tap('#ereignis-optionen .option', { timeout: 60000 });
   await warte(() => !window.spiel.ereignisse.aktuell, null, 60);
   pruefe(true, 'Ereignis lässt sich antippen');
@@ -56,7 +35,7 @@ try {
   await beruehre('touchMove', [{ x: 90, y: 660, id: 1 }]);
   await warte(() => window.spiel.steuerung.zustand.gelaufen > 1.5, null, 300).catch(() => {});
   const tempo = await spiel(() => window.spiel.steuerung.zustand.tempo);
-  await seite.screenshot({ path: foto('handy-2-laufen'), timeout: 300000 });
+  await foto('handy-2-laufen');
   await beruehre('touchEnd', []);
   const strecke = (await spiel(() => window.spiel.steuerung.zustand.gelaufen)) - vorher;
   pruefe(strecke > 1, `Mit dem Stick laufen (${strecke.toFixed(1)} m)`);
@@ -88,7 +67,7 @@ try {
   }
   pruefe(beschriftet, 'Knopf „Benutzen“ zeigt „Ast aufheben“');
   await bilder(1);
-  await seite.screenshot({ path: foto('handy-3-benutzen'), timeout: 300000 });
+  await foto('handy-3-benutzen');
   let genommen = false;
   for (let i = 0; i < 6 && !genommen; i++) {
     if (await spiel(() => window.spiel.ereignisse.aktuell)) await seite.tap('#ereignis-optionen .option:last-child');
@@ -107,22 +86,39 @@ try {
   pruefe(await spiel(() => !document.getElementById('menue').hidden), 'Knopf „Menü“ öffnet das Menü');
   await seite.tap('[data-reiter="herstellen"]');
   pruefe(await spiel(() => document.querySelector('[data-reiter="herstellen"]').getAttribute('aria-selected') === 'true' && !!document.querySelector('.rezept')), 'Reiter „Herstellen“ zeigt das Rezeptbuch');
-  await seite.screenshot({ path: foto('handy-4-menue'), timeout: 300000 });
+  await foto('handy-4-menue');
   const menuePasst = await spiel(() => document.documentElement.scrollWidth <= innerWidth);
   pruefe(menuePasst, 'Das Menü passt auf den Bildschirm');
   await seite.tap('#menue-zu');
   pruefe(await spiel(() => document.getElementById('menue').hidden && window.spiel.steuerung.zustand.aktiv), 'Kreuz schließt das Menü, das Spiel läuft weiter');
   await bilder(1);
-  await seite.screenshot({ path: foto('handy-5-knoepfe'), timeout: 300000 });
+  await foto('handy-5-knoepfe');
   const passt = await spiel(() => document.documentElement.scrollWidth <= innerWidth);
   pruefe(passt, 'Nichts ragt über den Bildschirmrand');
+
+  // Handeln per Finger: zu Marta, „Benutzen“ antippen, im Gespräch „Handeln“, eine Angelrute kaufen
+  await spiel(([p, m]) => {
+    window.spiel.inventar.gibMuenzen(20);
+    window.spiel.teleport(p.x, p.z);
+    window.spiel.blick(Math.atan2(p.x - m.x, p.z - m.z), -0.1);
+  }, [{ x: DOERFLER.marta.x + 2.2, z: DOERFLER.marta.z - 2.6 }, DOERFLER.marta]);
+  await warte(() => window.spiel.doerfler, null, 300);
+  let angesprochen = false;
+  for (let i = 0; i < 10 && !angesprochen; i++) {
+    if (await spiel(() => window.spiel.ereignisse.aktuell)) await seite.tap('#ereignis-optionen .option:last-child');
+    if (!await warte(() => document.getElementById('knopf-benutzen').textContent === 'Mit Marta sprechen', null, 15).then(() => true, () => false)) continue;
+    await seite.tap('#knopf-benutzen');
+    angesprochen = await warte(() => window.spiel.ereignisse.aktuell === 'gespraech-marta', null, 15).then(() => true, () => false);
+  }
+  pruefe(angesprochen, 'Knopf „Mit Marta sprechen“ beginnt das Gespräch');
+  await seite.locator('#ereignis-optionen .option', { hasText: 'Handeln' }).tap({ timeout: 30000 });
+  await warte(() => window.spiel.menue.reiter === 'handel' && !document.getElementById('menue').hidden, null, 30);
+  await seite.locator('.handel section.karte').nth(0).locator('.handel-zeile', { hasText: 'Angelrute' }).getByRole('button').tap({ timeout: 30000 });
+  pruefe(await spiel(() => window.spiel.inventar.hat('angelrute')), 'Im Handel eine Angelrute gekauft');
+  await foto('handy-6-handel');
+  pruefe(await spiel(() => document.documentElement.scrollWidth <= innerWidth), 'Der Handel passt auf den Bildschirm');
+  await seite.tap('#menue-zu');
 } catch (e) {
-  pruefe(false, `Abbruch: ${e.message.split('\n')[0]}`);
-  await seite.screenshot({ path: foto('handy-fehler') }).catch(() => {});
-} finally {
-  pruefe(fehler.length === 0, `Keine Fehler im Browser${fehler.length ? `: ${fehler.join(' | ')}` : ''}`);
-  await browser.close();
-  server.close();
+  await abbruch(e, 'handy-fehler');
 }
-console.log(ok ? '\nAlles in Ordnung.' : '\nEtwas stimmt nicht – siehe oben.');
-process.exit(ok ? 0 : 1);
+await ende();

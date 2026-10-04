@@ -11,9 +11,11 @@
 //                     ort                – { x, z }: wohin der Hinweis in der Welt zeigt
 //   belohnung     – { erfahrung, muenzen, gegenstaende: { id: anzahl } }
 //   danach        – ids von Aufgaben, die nach dieser beginnen
+//   wiederholbar  – true: ein Auftrag, den man immer wieder annehmen kann; zuruecksetzen(s) räumt
+//                   dann auf, was der letzte Durchgang hinterlassen hat
 //
 // Was s kann, steht in src/ereignisse/liste.js.
-import { LAGER, RAEUBERLAGER, TEICH } from '../welt/orte.js';
+import { DOERFLER, LAGER, MARKTSTAND, RAEUBERLAGER, STEG, TEICH, WEIHER } from '../welt/orte.js';
 
 const bis = (n, max) => Math.min(n, max);
 
@@ -30,7 +32,8 @@ export const AUFGABEN = [
       { text: 'Frag den Einsiedler nach dem Weg', fertig: (s) => s.weiss('weg-nach-erlenbach'), ort: LAGER },
       { text: 'Besiege den Räuberhauptmann an der Straße nach Osten und nimm ihm das Kartenteil ab', fertig: (s) => s.hat('kartenteil_1') || s.weiss('kartenteil-gezeigt'), ort: RAEUBERLAGER },
       { text: 'Zeig dem Einsiedler das Kartenteil', fertig: (s) => s.weiss('kartenteil-gezeigt'), ort: LAGER },
-      { text: 'Reise nach Erlenbach im Osten (das Dorf wird gerade gebaut)', fertig: () => false },
+      { text: 'Folg der Straße nach Erlenbach und zeig Gerold, dem Kartenleser, die Karte', fertig: (s) => s.weiss('gerold-gelesen'), ort: DOERFLER.gerold },
+      { text: 'Zieh nach Norden in die Graufels-Berge (kommt in einer späteren Etappe)', fertig: () => false },
     ],
     belohnung: { erfahrung: 0 },
   },
@@ -108,6 +111,32 @@ export const AUFGABEN = [
       { text: 'Näh dir ein Lederwams (Menü, Herstellen; braucht Handwerk Stufe 2)', fertig: (s) => s.hergestellt('lederwams') > 0 },
     ],
     belohnung: { erfahrung: 40 },
+  },
+  {
+    id: 'auftrag_fische',
+    titel: 'Fisch für Jost',
+    geber: 'Jost',
+    wiederholbar: true,
+    beschreibung: '„Die Leute wollen Fisch, und ich komme mit dem Fangen nicht nach. Bring mir fünf, egal welche, dann leg ich zwanzig Kupfer obendrauf.“',
+    schritte: [
+      { text: (s) => `Fang fünf Fische (${bis(s.fische(), 5)}/5)`, fertig: (s) => s.fische() >= 5 || s.weiss('abgegeben-fische'), ort: WEIHER },
+      { text: 'Bring sie Jost am Steg', fertig: (s) => s.weiss('abgegeben-fische'), ort: STEG },
+    ],
+    belohnung: { erfahrung: 30, muenzen: 20 },
+    zuruecksetzen: (s) => s.vergiss('abgegeben-fische'),
+  },
+  {
+    id: 'auftrag_holz',
+    titel: 'Holz für Martas Ofen',
+    geber: 'Marta',
+    wiederholbar: true,
+    beschreibung: '„Mein Ofen frisst Holz wie ein Bär Honig. Acht Scheite, und du bekommst achtzehn Kupfer.“',
+    schritte: [
+      { text: (s) => `Hacke Holz mit der Axt (${bis(s.anzahl('holzscheit'), 8)}/8)`, fertig: (s) => s.anzahl('holzscheit') >= 8 || s.weiss('abgegeben-holz') },
+      { text: 'Bring es Marta auf den Markt', fertig: (s) => s.weiss('abgegeben-holz'), ort: MARKTSTAND },
+    ],
+    belohnung: { erfahrung: 25, muenzen: 18 },
+    zuruecksetzen: (s) => s.vergiss('abgegeben-holz'),
   },
   {
     id: 'pilze',

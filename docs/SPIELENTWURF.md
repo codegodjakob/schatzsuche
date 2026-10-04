@@ -303,7 +303,7 @@ Etappe ein Stück besser.
 
 | Etappe | Inhalt |
 |---|---|
-| **M1 Fundament** (die Grundversion) | 1. RPG-Kern: Werte, Stufen, Statuspunkte, großes Inventar, Sammeln, Rezeptbuch, Aufgabenbuch, Münzen (**fertig**, siehe unten). 2. Kampf (**fertig**, siehe unten): Waffen, Räuber, der Räuberhauptmann als erster Boss, Beute. 3. Dorf Erlenbach: Händler, Fischer mit Angelrute, Angeln, Jobs. 4. Charakter-Editor: Gesicht, Haut, Haare, Bart, Körper; Haare und Bart wachsen; Muskeln wachsen; erste Kleidung sichtbar |
+| **M1 Fundament** (die Grundversion) | 1. RPG-Kern: Werte, Stufen, Statuspunkte, großes Inventar, Sammeln, Rezeptbuch, Aufgabenbuch, Münzen (**fertig**, siehe unten). 2. Kampf (**fertig**, siehe unten): Waffen, Räuber, der Räuberhauptmann als erster Boss, Beute. 3. Dorf Erlenbach (**fertig**, siehe unten): Händler, Fischer mit Angelrute, Angeln, Jobs. 4. Charakter-Editor: Gesicht, Haut, Haare, Bart, Körper; Haare und Bart wachsen; Muskeln wachsen; erste Kleidung sichtbar |
 | **M2 Leben im Dorf** | Weitere Berufe (Bergbau, Schmieden, Kochen, Gerben), Beziehungen, Tagesabläufe, Haus mieten, Truhe, Pferd |
 | **M3 Abenteuer** | Neue Gebiete, Tiere, Höhlen, Bogen, weitere Bosse, Kartenteile 1 bis 3 |
 | **M4 Aufstieg** | Klassen und Fähigkeitsbäume vollständig, Ränge in Militär, Rat und Gilden, Burgstadt Rabenfels |
@@ -352,6 +352,34 @@ Einträge dort; dieselben Listen kann später eine KI für Welt-Varianten fülle
   er im Kartenteil ein Stück der Karte zum Schatz und schickt einen nach Erlenbach (Stufe 3).
 - **Anzeigen**: Lebensbalken über den Gegnern, aufsteigende Schadenszahlen (gelb bei Volltreffern),
   ein großer Balken für den Hauptmann, ein roter Rand, wenn man getroffen wird.
+
+### Was in M1, Stufe 3 gebaut ist
+
+- **Erlenbach**: Die Straße nach Osten endet in einem Dorf aus sieben Fachwerkhäusern mit
+  Strohdach (eines davon eine Scheune) um einen Dorfplatz mit Brunnen, dazu Martas Marktstand und
+  am Nordrand ein Weiher mit einem Steg, auf dem man bis über das tiefe Wasser hinausgehen kann.
+- **Drei Dorfbewohner**, jeder eine eigene Figur: **Gerold**, der alte Kartenleser vor seinem
+  Haus, **Marta**, die Händlerin am Marktstand, und **Jost**, der Fischer am Steg. Sie schauen einen
+  an, wenn man näher kommt, und winken. Ansprechen: hingehen und „Benutzen“. Damit das Spiel am
+  Handy schnell startet, laden sie erst, wenn man sich dem Dorf nähert.
+- **Handel** im Menü (eigener Reiter, solange man mit jemandem handelt): Marta verkauft Brot,
+  Angelrute, Schnur, Fackeln, Heilsalbe, Kamillentee, Lederwams und Steinmesser und kauft alles
+  andere; Jost verkauft Angelruten und gebratenen Fisch und zahlt für Fisch viel mehr als Marta.
+  Kaufen kostet mehr, als Verkaufen bringt. Wer an einem Tag viel vom Gleichen verkauft, bekommt
+  für jedes weitere Stück etwas weniger (höchstens die Hälfte). Ausstrahlung macht die Preise besser.
+- **Angeln**: mit einer Angelrute ans Ufer oder auf den Steg, aufs Wasser schauen, „Benutzen“: Die
+  Figur holt aus und wirft, ein rot-weißer Schwimmer fliegt im Bogen aufs Wasser und treibt dort. Taucht
+  er unter und das Wasser kräuselt sich (Biss!), sofort noch einmal „Benutzen“: Die Rute fährt hoch.
+  Wer zu früh zieht, zu lange wartet oder losläuft, geht leer aus. Vier Fische: Rotauge (häufig),
+  Barsch, Forelle, Hecht (selten, viel wert). Mit der Berufsstufe „Fischen“ beißen sie schneller,
+  das Zeitfenster wird größer und die großen Fische häufiger. Wer Durst hat, trinkt am Ufer zuerst;
+  erst danach wirft man aus.
+- **Kochen**: Rotauge und Barsch werden am Feuer zu gebratenem Fisch, eine Forelle mit Kamille (ab
+  Kochen Stufe 2) zu gebratener Forelle, die auch das Leben stärkt. Den Hecht verkauft man besser.
+- **Jobs**, die man immer wieder annehmen kann („Gibt es Arbeit?“): fünf Fische für Jost (20 Kupfer),
+  acht Holzscheite für Martas Ofen (18 Kupfer).
+- **Hauptgeschichte**: Gerold liest Pergament und Kartenteil. Die Schrift der Alten Könige zeigt den
+  Weiher, die Straße und die Graufels-Berge im Norden: Dort liegt das nächste Stück.
 
 ## Offene Fragen für Jakob und Vincenz
 

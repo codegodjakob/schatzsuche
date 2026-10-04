@@ -3,7 +3,7 @@
 // Gras, Erde (Pfad, Waldboden), Fels (steil), Ufer.
 import * as THREE from 'three';
 import { ImprovedNoise } from 'three/addons/math/ImprovedNoise.js';
-import { TEICH, LAGER, PFAD, RAEUBERLAGER, START, STRASSE } from './orte.js';
+import { DORF, GEWAESSER, HAEUSER, LAGER, PFAD, RAEUBERLAGER, START, STEG, STRASSE } from './orte.js';
 
 export const WELT_GROESSE = 900;
 export const RASTER = 512;
@@ -23,8 +23,19 @@ function fbm(x, z, oktaven, saat = SAAT) {
 }
 const weich = (a, b, t) => { const x = Math.min(1, Math.max(0, (t - a) / (b - a))); return x * x * (3 - 2 * x); };
 
-// Pfad zum Einsiedler und Straße nach Osten als dichte Punktfolgen (Catmull-Rom geglättet)
-const wege = [[PFAD, 160], [STRASSE, 140]].map(([stuetzen, anzahl]) => {
+// Trampelpfade in Erlenbach: vom Rand des Dorfplatzes zu jeder Haustür und zum Steg, leicht geschwungen.
+// bis = wie weit vor dem Ziel der Pfad endet (negativ: darüber hinaus)
+function dorfweg(ziel, bis) {
+  const dx = ziel.x - DORF.x, dz = ziel.z - DORF.z, l = Math.hypot(dx, dz);
+  const ux = dx / l, uz = dz / l;
+  const von = [DORF.x + ux * 8, DORF.z + uz * 8];
+  const ende = [ziel.x - ux * bis, ziel.z - uz * bis];
+  return [von, [(von[0] + ende[0]) / 2 - uz * 0.8, (von[1] + ende[1]) / 2 + ux * 0.8], ende];
+}
+const DORFWEGE = [...HAEUSER.map((h) => dorfweg(h, h.tiefe / 2 - 0.2)), dorfweg(STEG, -0.5)];
+
+// Pfad zum Einsiedler, Straße nach Osten und die Wege im Dorf als dichte Punktfolgen (Catmull-Rom geglättet)
+const wege = [[PFAD, 160], [STRASSE, 140], ...DORFWEGE.map((w) => [w, 30])].map(([stuetzen, anzahl]) => {
   const punkte = new THREE.CatmullRomCurve3(stuetzen.map(([x, z]) => new THREE.Vector3(x, 0, z))).getSpacedPoints(anzahl);
   return { punkte, box: new THREE.Box3().setFromPoints(punkte).expandByScalar(12) };
 });
@@ -46,7 +57,10 @@ export function waldDichte(x, z) {
   w *= weich(LAGER.radius * 0.9, LAGER.radius * 1.4, Math.hypot(x - LAGER.x, z - LAGER.z));
   w *= weich(RAEUBERLAGER.radius * 0.9, RAEUBERLAGER.radius * 1.4, Math.hypot(x - RAEUBERLAGER.x, z - RAEUBERLAGER.z));
   w *= weich(2.5, 6, pfadAbstand(x, z));
-  w *= weich(TEICH.radius * 1.4, TEICH.radius * 2.2, Math.hypot(x - TEICH.x, z - TEICH.z));
+  for (const g of GEWAESSER) w *= weich(g.radius * 1.4, g.radius * 2.2, Math.hypot(x - g.x, z - g.z));
+  w *= weich(DORF.radius * 0.9, DORF.radius * 1.3, Math.hypot(x - DORF.x, z - DORF.z));
+  // kein Baum in oder dicht an einem Haus am Dorfrand
+  for (const h of HAEUSER) w *= weich(h.breite * 0.75, h.breite * 0.75 + 4, Math.hypot(x - h.x, z - h.z));
   return w;
 }
 
@@ -54,8 +68,10 @@ function hoeheRoh(x, z) {
   const d = Math.hypot(x, z);
   let h = fbm(x * 0.012, z * 0.012, 4) * 2.2;
   h += Math.max(0, fbm(x * 0.0045 + 3, z * 0.0045, 5) + 0.15) * 70 * weich(70, 320, d);
-  const dt = Math.hypot(x - TEICH.x, z - TEICH.z);
-  h -= TEICH.tiefe * 1.6 * (1 - weich(TEICH.radius * 0.4, TEICH.radius * 1.5, dt));
+  for (const g of GEWAESSER) {
+    const dt = Math.hypot(x - g.x, z - g.z);
+    h -= g.tiefe * 1.6 * (1 - weich(g.radius * 0.4, g.radius * 1.5, dt));
+  }
   // Lichtung des Lagers etwas eingeebnet
   const dl = Math.hypot(x - LAGER.x, z - LAGER.z);
   const lagerHoehe = fbm(LAGER.x * 0.012, LAGER.z * 0.012, 4) * 2.2;
@@ -93,9 +109,11 @@ let spiegel;
 export function wasserspiegel() {
   if (spiegel === undefined) {
     let tiefste = Infinity;
-    for (let a = 0; a < 96; a++) {
-      const w = (a / 96) * Math.PI * 2;
-      tiefste = Math.min(tiefste, hoeheRoh(TEICH.x + Math.cos(w) * TEICH.radius * 1.3, TEICH.z + Math.sin(w) * TEICH.radius * 1.3));
+    for (const g of GEWAESSER) {
+      for (let a = 0; a < 96; a++) {
+        const w = (a / 96) * Math.PI * 2;
+        tiefste = Math.min(tiefste, hoeheRoh(g.x + Math.cos(w) * g.radius * 1.3, g.z + Math.sin(w) * g.radius * 1.3));
+      }
     }
     spiegel = tiefste - 0.12;
   }
@@ -115,7 +133,8 @@ export const masken = new Uint8Array(RASTER * RASTER * 4);
       const ufer = (1 - weich(wsp - 0.05, wsp + 0.6, h));
       const pfad = 1 - weich(0.6, 1.9, pfadAbstand(x, z) + (fbm(x * 0.4, z * 0.4, 2) * 0.8));
       const lager = Math.max(1 - weich(LAGER.radius * 0.35, LAGER.radius * 0.8, Math.hypot(x - LAGER.x, z - LAGER.z)),
-        1 - weich(RAEUBERLAGER.radius * 0.3, RAEUBERLAGER.radius * 0.75, Math.hypot(x - RAEUBERLAGER.x, z - RAEUBERLAGER.z)));
+        1 - weich(RAEUBERLAGER.radius * 0.3, RAEUBERLAGER.radius * 0.75, Math.hypot(x - RAEUBERLAGER.x, z - RAEUBERLAGER.z)),
+        1 - weich(7, 12, Math.hypot(x - DORF.x, z - DORF.z))); // Dorfplatz
       const wald = waldDichte(x, z) * 0.85;
       const flecken = weich(0.66, 0.82, fbm(x * 0.05 + 9, z * 0.05, 3) * 0.5 + 0.5) * 0.3;
       const erde = Math.min(1, Math.max(pfad, lager * 0.9, wald, flecken) * (1 - fels));

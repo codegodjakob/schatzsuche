@@ -1,13 +1,11 @@
-// Der Teich: spiegelt den Himmel, kräuselt sich im Wind, wird zum Ufer hin flach und durchsichtig.
+// Teich und Weiher: spiegeln den Himmel, kräuseln sich im Wind, werden zum Ufer hin flach und durchsichtig.
 import * as THREE from 'three';
 import { rasterTexturen, wasserspiegel } from './gelaende.js';
-import { TEICH } from './orte.js';
+import { GEWAESSER } from './orte.js';
 import { WIND_GLSL, windUniforms } from './wind.js';
 
 export function erzeugeWasser() {
   const { hoehe, groesse } = rasterTexturen();
-  const geo = new THREE.CircleGeometry(TEICH.radius * 1.45, 96, 0, Math.PI * 2);
-  geo.rotateX(-Math.PI / 2);
   const mat = new THREE.MeshPhysicalMaterial({
     color: 0x1d3530, roughness: 0.05, metalness: 0, transparent: true, depthWrite: false,
     envMapIntensity: 1.2, specularIntensity: 1, ior: 1.33,
@@ -43,9 +41,16 @@ export function erzeugeWasser() {
           #include <opaque_fragment>
         `);
   };
-  const wasser = new THREE.Mesh(geo, mat);
-  wasser.position.set(TEICH.x, wasserspiegel(), TEICH.z);
-  wasser.renderOrder = 2;
-  wasser.name = 'teich';
-  return wasser;
+  // Eine Scheibe je Gewässer; wo das Ufer höher liegt als der Wasserspiegel, blendet der Shader sie aus
+  const gruppe = new THREE.Group();
+  for (const g of GEWAESSER) {
+    const geo = new THREE.CircleGeometry(g.radius * 1.45, 96, 0, Math.PI * 2);
+    geo.rotateX(-Math.PI / 2);
+    const wasser = new THREE.Mesh(geo, mat);
+    wasser.position.set(g.x, wasserspiegel(), g.z);
+    wasser.renderOrder = 2;
+    wasser.name = 'teich';
+    gruppe.add(wasser);
+  }
+  return gruppe;
 }

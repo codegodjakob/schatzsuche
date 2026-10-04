@@ -16,9 +16,10 @@ werden. Das Werkzeug `werkzeuge/figuren/` kann dann andere BVH-Dateien verwenden
 |---|---|---|
 | Menschlicher Grundkörper, Körperformen, Skelett, Haut-Gewichte, Hautbereich-Masken | [MakeHuman / MPFB2](https://github.com/makehumancommunity/mpfb2) | CC0 |
 | Augen (Form und Textur) | [MakeHuman](https://github.com/makehumancommunity/makehuman) | CC0 |
-| Bewegungen: Gehen, Rennen, Sprinten, erschöpftes Gehen, Gehen eines alten Menschen, Winken, Gang und Lauf der Räuber („chimpira“) und des Hauptmanns („giant“), Hieb, Faustschlag, Tritt; Stehen (aus dem ersten Bild einer Aufnahme) | [Bandai Namco Research Motion Dataset](https://github.com/BandaiNamcoResearchInc/Bandai-Namco-Research-Motiondataset), © Bandai Namco Research Inc. | CC BY-NC 4.0 |
-| Haut-Texturen, Haare, Bart, Lendenschurz, Brustband, Kutte, Kittel der Räuber | selbst erzeugt mit `werkzeuge/figuren/` | wie das Projekt |
-| Waffen in der Hand (Speer, Messer, Axt, Keulen), Zelte des Räuberlagers | selbst erzeugt im Code | wie das Projekt |
+| Bewegungen: Gehen, Rennen, Sprinten, erschöpftes Gehen, Gehen eines alten Menschen, weibliches Gehen, Winken (auch eines alten Menschen), Gang und Lauf der Räuber („chimpira“) und des Hauptmanns („giant“), Hieb, Faustschlag, Tritt; Stehen (aus dem ersten Bild einer Aufnahme) | [Bandai Namco Research Motion Dataset](https://github.com/BandaiNamcoResearchInc/Bandai-Namco-Research-Motiondataset), © Bandai Namco Research Inc. | CC BY-NC 4.0 |
+| Haut-Texturen, Haare, Bart, Lendenschurz, Brustband, Kutte, Kittel der Räuber, Kleider von Gerold, Marta und Jost | selbst erzeugt mit `werkzeuge/figuren/` | wie das Projekt |
+| Waffen in der Hand (Speer, Messer, Axt, Keulen, Angelrute), Schwimmer, Zelte des Räuberlagers | selbst erzeugt im Code | wie das Projekt |
+| Erlenbach: Fachwerkhäuser, Putz- und Strohtexturen, Brunnen, Marktstand mit gestreifter Markise, Steg | selbst erzeugt im Code (`src/welt/dorf.js`) | wie das Projekt |
 
 ## Pflanzen, Boden, Felsen
 

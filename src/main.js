@@ -11,18 +11,22 @@ import { erzeugeFeuer, erzeugeFeuerlichter } from './welt/feuer.js';
 import { erzeugeSammeln } from './welt/sammeln.js';
 import { erzeugeMarkierung } from './welt/markierung.js';
 import { erzeugeRaeuberlager } from './welt/raeuberlager.js';
+import { erzeugeDorf } from './welt/dorf.js';
 import { inDieHand } from './welt/waffen.js';
 import { entferneHindernis, hindernis } from './welt/kollision.js';
 import { wind, windSchritt } from './welt/wind.js';
 import { SEKUNDEN_JE_STUNDE, tageszeitSchritt, uhrzeitText, zeit } from './welt/tageszeit.js';
-import { LAGER, RAEUBERLAGER, START } from './welt/orte.js';
+import { DORF, LAGER, RAEUBERLAGER, START } from './welt/orte.js';
 import { ladeFigur } from './spieler/figur.js';
 import { erzeugeSteuerung } from './spieler/steuerung.js';
 import { erzeugeInventar } from './spieler/inventar.js';
 import { erfahrungFuer, erzeugeFortschritt } from './spieler/fortschritt.js';
 import { erzeugeHerstellen } from './spieler/herstellen.js';
 import { erzeugeBenutzen } from './spieler/benutzen.js';
+import { erzeugeHandel } from './spieler/handel.js';
+import { erzeugeAngeln } from './spieler/angeln.js';
 import { erzeugeEinsiedler } from './figuren/einsiedler.js';
+import { erzeugeDoerfler } from './figuren/doerfler.js';
 import { erzeugeEreignisse } from './ereignisse/ereignisse.js';
 import { erzeugeAufgaben } from './ereignisse/aufgaben.js';
 import { erzeugeGegner } from './kampf/gegner.js';
@@ -119,6 +123,10 @@ szene.add(raeuberlager.objekt);
 const raeuberfeuer = erzeugeFeuer(RAEUBERLAGER.x, RAEUBERLAGER.z, { felsMaterial: natur.felsMaterial, rindenMaterial: baeume.rinde });
 szene.add(raeuberfeuer.objekt);
 hindernis(RAEUBERLAGER.x, RAEUBERLAGER.z, 0.75);
+oberflaeche.laden('Das Dorf Erlenbach …');
+await atmen();
+const dorf = erzeugeDorf();
+szene.add(dorf.objekt);
 const feuerstellen = [
   { feuer: lagerfeuer, ort: lagerfeuer.ort, brennt: () => true },
   { feuer: raeuberfeuer, ort: raeuberfeuer.ort, brennt: () => true },
@@ -145,6 +153,19 @@ Promise.allSettled([figurenLaden.er, figurenLaden.sie]).then(() => erzeugeEinsie
   .then(() => gegner.lade())
   .then(() => window.notiere?.('Räuber geladen'))
   .catch((e) => window.zeigeFehler?.(`Die Räuber konnten nicht geladen werden (${e.message})`));
+
+// Die Leute von Erlenbach laden erst, wenn man sich dem Dorf nähert: Das spart am Handy
+// Speicher und Datenvolumen. Bis man dort ist, stehen sie längst an ihrem Platz.
+let doerfler = null, doerflerLaden = null;
+function doerflerPruefen(ort) {
+  if (doerflerLaden || Math.hypot(ort.x - DORF.x, ort.z - DORF.z) > 160) return;
+  doerflerLaden = erzeugeDoerfler().then((d) => {
+    doerfler = d;
+    for (const p of d.leute) szene.add(p.objekt);
+    window.spiel.doerfler = d;
+    window.notiere?.('Dorfbewohner geladen');
+  }).catch((e) => window.zeigeFehler?.(`Die Leute im Dorf konnten nicht geladen werden (${e.message})`));
+}
 
 window.spiel.geladen = true;
 oberflaeche.laden('Bereit. Wähle deine Figur.');
@@ -193,9 +214,31 @@ const aufgaben = erzeugeAufgaben({
 });
 welt.herstellen = herstellen;
 welt.aufgaben = aufgaben;
+const handel = erzeugeHandel({ inventar, fortschritt, nachricht, gewinn });
+let aktionTakt = 0;
+const angeln = erzeugeAngeln({
+  szene, steuerung, inventar, fortschritt, figur: () => figur, nachricht, gewinn,
+  beiBiss: () => { aktionTakt = 0; nachricht('Biss! Jetzt ziehen!'); },
+  beiWurf: () => { waffeNeu = true; aktionTakt = 0; },
+});
+// Ab dieser Wassermenge wirft man am Ufer die Angel aus, statt zu trinken
+const DURSTIG = 70;
 const benutzen = erzeugeBenutzen({
   sammeln, inventar, fortschritt, ueberleben, nachricht, gewinn,
   merke: (m) => ereignisse.merker.add(m),
+  zusatz: [
+    // Beim Angeln heißt „Benutzen“: ziehen
+    () => (angeln.aktiv
+      ? (angeln.biss ? { text: 'Jetzt ziehen!', kurz: 'Ziehen', tue: angeln.ziehe } : { text: 'Angel einholen', kurz: 'Einholen', tue: angeln.ziehe })
+      : null),
+    // Jemanden ansprechen
+    (ort) => {
+      const p = doerfler?.naechster(ort);
+      return p ? { text: `Mit ${p.name} sprechen`, kurz: 'Sprechen', tue: () => ereignisse.zeige(`gespraech-${p.art}`) } : null;
+    },
+    // Mit der Angel am Ufer (wer Durst hat, trinkt zuerst)
+    () => (ueberleben.werte.wasser >= DURSTIG && angeln.kannWerfen() ? { text: 'Angel auswerfen', kurz: 'Angeln', tue: angeln.wirfAus } : null),
+  ],
 });
 
 // ---------------------------------------------------------------- Kampf
@@ -330,7 +373,7 @@ function iss(id) {
 
 let neuStarten = false;
 const menue = erzeugeMenue({
-  inventar, fortschritt, herstellen, aufgaben, amFeuer, iss,
+  inventar, fortschritt, herstellen, aufgaben, amFeuer, iss, handel,
   wirfWeg: (id, n) => inventar.nimm(id, n),
   wechsleGrafik: () => { wechsleGrafik(); nach.zeichne(); }, // ein Bild in der neuen Stufe, auch bei offenem Menü
   grafikName: () => qualitaet.name,
@@ -343,6 +386,7 @@ const menue = erzeugeMenue({
     if (!messung.fertig) { messung.ab = null; messung.bilder = 0; }
   },
 });
+welt.handel = (wer) => menue.oeffneHandel(wer);
 document.getElementById('ziel').addEventListener('click', () => { if (spielLaeuft && !ueberleben.tot) menue.oeffne('aufgaben'); });
 document.getElementById('hud-punkte').addEventListener('click', () => { if (spielLaeuft && !ueberleben.tot) menue.oeffne('figur'); });
 
@@ -358,10 +402,14 @@ function tippsPruefen() {
   if (ueberleben.werte.saettigung < 50 && inventar.liste().some((d) => d.essen?.saettigung)) {
     tipp('essen', 'Hunger? Öffne das Inventar, tippe auf etwas Essbares und dann auf „Essen“.');
   }
+  if (inventar.hat('angelrute')) {
+    tipp('angeln', 'Mit der Angel ans Ufer stellen, aufs Wasser schauen und „Benutzen“: Du wirfst aus. Taucht der Schwimmer unter, sofort noch einmal „Benutzen“!');
+  }
 }
 
 Object.assign(window.spiel, {
   steuerung, ereignisse, ueberleben, inventar, fortschritt, herstellen, aufgaben, sammeln, benutzen, menue, gegner, kampf,
+  handel, angeln, dorf, wasserspiegel: wasserspiegel(),
   speichere: () => speichereJetzt(),
   fackelBrennt: () => fackelAn,
   // Prüfhilfen (für werkzeuge/foto_spiel.mjs und die Browser-Konsole)
@@ -457,6 +505,7 @@ wahl.then(async (art) => {
 function sterben(grund) {
   steuerung.zustand.aktiv = false;
   menue.schliesse();
+  angeln.einholen();
   ereignisse.vergiss();
   gegner.zurueck();
   // Was man bei sich trägt, ist fort. Was man gelernt hat, bleibt, und das Pergament auch.
@@ -489,7 +538,7 @@ addEventListener('keydown', (e) => {
   if (!steuerung.zustand.aktiv) return;
   if (e.code === 'KeyE' && !ereignisse.aktuell) benutzen.benutze(steuerung.zustand.ort, steuerung.zustand.blickSeite);
   if (e.code === 'KeyF') machFeuer();
-  if (e.code === 'KeyX') kampf.schlage();
+  if (e.code === 'KeyX') schlage();
   if (e.code === 'KeyG') {
     wechsleGrafik();
     nachricht(`Grafik: ${qualitaet.name}`);
@@ -497,8 +546,14 @@ addEventListener('keydown', (e) => {
 });
 
 flaeche.addEventListener('mousedown', (e) => {
-  if (e.button === 0 && document.pointerLockElement === flaeche && steuerung.zustand.aktiv) kampf.schlage();
+  if (e.button === 0 && document.pointerLockElement === flaeche && steuerung.zustand.aktiv) schlage();
 });
+
+// Wer zuschlägt, legt vorher die Angel weg
+function schlage() {
+  if (angeln.aktiv) angeln.einholen();
+  kampf.schlage();
+}
 
 function wechsleGrafik() {
   qualitaet = naechsteStufe(qualitaet);
@@ -554,7 +609,7 @@ function anzeigen() {
 // ---------------------------------------------------------------- Schleife
 const uhr = new THREE.Clock();
 const blickpunkt = new THREE.Vector3();
-let anzeigeTakt = 0, aktionTakt = 0, wachsTakt = 0;
+let anzeigeTakt = 0, wachsTakt = 0;
 const messung = { ab: null, bilder: 0, fertig: false };
 // Längster Zeitschritt je Bild. Prüfungen im langsamen Test-Browser dürfen ihn vergrößern
 // (window.SCHATZSUCHE_SCHRITT), damit dort die Spielzeit nicht im Schneckentempo vergeht.
@@ -583,10 +638,11 @@ renderer.setAnimationLoop(() => {
     ereignisse.schritt(dt);
     ueberleben.schritt(dt, { ort: steuerung.zustand.ort, tempo: steuerung.zustand.tempo });
     benutzen.schritt(dt);
+    angeln.schritt(dt);
     kampf.schritt(dt);
     gegner.schritt(dt, { ort: steuerung.zustand.ort, lebt: !ueberleben.tot });
     anzeige.aktualisiere(gegner.alle, steuerung.zustand.ort);
-    if (waffeNeu) { waffeNeu = false; inDieHand(figur, inventar.besteWaffe()); }
+    if (waffeNeu) { waffeNeu = false; inDieHand(figur, angeln.haeltRute ? null : inventar.besteWaffe()); }
     blickpunkt.copy(steuerung.zustand.ort);
   } else {
     // Vor dem Start: langsamer Kameraflug über die Wiese
@@ -599,9 +655,11 @@ renderer.setAnimationLoop(() => {
   gras.aktualisiere(blickpunkt, kamera);
   baeume.aktualisiere(dt, blickpunkt, himmel.licht, kamera, zeit.hell);
   for (const f of feuerstellen) if (f.brennt()) f.feuer.aktualisiere(dt, wind.richtung.value, zeit.hell);
+  dorf.aktualisiere(dt, wind.richtung.value, zeit.hell);
   fackelSchritt(dt);
   feuerlichter.verteile(fackelAn ? [...feuerstellen, fackel] : feuerstellen, blickpunkt);
   einsiedler?.aktualisiere(dt, blickpunkt);
+  doerfler?.aktualisiere(dt, blickpunkt);
   markierung.schritt(dt);
   // Augen gewöhnen sich an die Dunkelheit
   renderer.toneMappingExposure = THREE.MathUtils.lerp(1.05, 0.62, zeit.hell);
@@ -623,6 +681,7 @@ renderer.setAnimationLoop(() => {
       aufgaben.pruefe();
       anzeigen();
       tippsPruefen();
+      doerflerPruefen(steuerung.zustand.ort);
     }
     wachsTakt -= dt;
     if (wachsTakt <= 0) {

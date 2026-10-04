@@ -19,6 +19,9 @@ export const REZEPTE = [
   { id: 'lagerfeuer', bauwerk: 'lagerfeuer', zutaten: { ast: 3 }, werkzeug: ['feuerstein'], ort: 'hand', beruf: 'handwerk', stufe: 1, erfahrung: 8, merker: 'kann-feuer' },
   { id: 'fackel', ergebnis: 'fackel', zutaten: { ast: 1, fasern: 2 }, ort: 'feuer', beruf: 'handwerk', stufe: 1, erfahrung: 3 },
   { id: 'gebratene_pilze', ergebnis: 'gebratene_pilze', zutaten: { steinpilz: 2 }, ort: 'feuer', beruf: 'kochen', stufe: 1, erfahrung: 8 },
+  { id: 'fisch_rotauge', ergebnis: 'gebratener_fisch', zutaten: { rotauge: 1 }, ort: 'feuer', beruf: 'kochen', stufe: 1, erfahrung: 5 },
+  { id: 'fisch_barsch', ergebnis: 'gebratener_fisch', zutaten: { barsch: 1 }, ort: 'feuer', beruf: 'kochen', stufe: 1, erfahrung: 5 },
+  { id: 'gebratene_forelle', ergebnis: 'gebratene_forelle', zutaten: { forelle: 1, kamille: 1 }, ort: 'feuer', beruf: 'kochen', stufe: 2, erfahrung: 12 },
   { id: 'kamillentee', ergebnis: 'kamillentee', zutaten: { kamille: 3 }, ort: 'feuer', beruf: 'kochen', stufe: 1, erfahrung: 6 },
   { id: 'heilsalbe', ergebnis: 'heilsalbe', zutaten: { johanniskraut: 3 }, werkzeug: ['steinmesser'], ort: 'hand', beruf: 'kraeuterkunde', stufe: 2, erfahrung: 14 },
 ];

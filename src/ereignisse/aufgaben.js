@@ -15,8 +15,13 @@ export function erzeugeAufgaben({ s, inventar, fortschritt, nachricht = () => {}
   }
 
   function starte(id, { leise = false } = {}) {
-    if (aktiv.has(id) || erledigt.has(id)) return;
-    aufgabe(id); // wirft bei Tippfehlern
+    const a = aufgabe(id); // wirft bei Tippfehlern
+    if (aktiv.has(id)) return;
+    if (erledigt.has(id)) {
+      if (!a.wiederholbar) return;
+      erledigt.delete(id); // ein Auftrag beginnt von vorn
+    }
+    a.zuruecksetzen?.(s);
     aktiv.set(id, 0);
     if (!leise) nachricht(`Neue Aufgabe: ${aufgabe(id).titel}`);
     waehleVerfolgte();

@@ -34,6 +34,12 @@ function rauchTextur() {
 
 let geteilteTexturen = null;
 
+// Das Rauchbild teilen sich alle Feuer und Kamine
+export function rauchBild() {
+  geteilteTexturen ??= { flamme: flammenTextur(), rauch: rauchTextur() };
+  return geteilteTexturen.rauch;
+}
+
 export function erzeugeFeuer(x, z, { felsMaterial = null, rindenMaterial = null } = {}) {
   geteilteTexturen ??= { flamme: flammenTextur(), rauch: rauchTextur() };
   const y = hoeheBei(x, z);

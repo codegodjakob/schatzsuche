@@ -70,7 +70,23 @@ const FORMEN = {
   },
 };
 
+FORMEN.angelrute = () => {
+  const g = new THREE.Group();
+  g.add(stab(-0.3, 2.0, 0.014, 0.005, holz));
+  const rolle = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.008, 4, 10), schnur);
+  rolle.position.y = 0.05;
+  g.add(rolle);
+  return g;
+};
+
 export const hatForm = (id) => id in FORMEN;
+
+// Baut eine Form für sich (z. B. die Angelrute, die beim Angeln frei geführt wird)
+export function baueForm(id) {
+  const form = FORMEN[id]();
+  form.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+  return form;
+}
 
 // Hängt eine Waffe an die rechte Hand einer Figur (ersetzt die vorige). id = null: leere Hand.
 // Der Griff liegt in der Faust, quer zur Hand, vom kleinen Finger zum Zeigefinger.
@@ -80,9 +96,9 @@ export function inDieHand(figur, id) {
   const alt = hand.getObjectByName('waffe');
   if (alt) hand.remove(alt);
   if (!id || !FORMEN[id]) return null;
-  const waffe = FORMEN[id]();
+  const waffe = baueForm(id);
   waffe.name = 'waffe';
-  waffe.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+  waffe.userData.form = id;
   const mitte = hand.getObjectByName('middle_01_r')?.position ?? new THREE.Vector3(0, -0.09, 0);
   const zeige = hand.getObjectByName('index_01_r')?.position;
   const klein = hand.getObjectByName('pinky_01_r')?.position;

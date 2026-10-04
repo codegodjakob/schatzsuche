@@ -1,6 +1,6 @@
 // Das Menü: Inventar, Herstellen, Figur und Aufgaben. Öffnet mit I, K, C, J (auf dem Handy mit dem
 // Knopf „Menü“), schließt mit Esc, derselben Taste oder dem Kreuz. Solange es offen ist, steht das
-// Spiel still (darum kümmert sich main.js über beiOffen).
+// Spiel still (darum kümmert sich main.js über beiOffen). Beim Handeln kommt ein fünfter Reiter dazu.
 import { ARTEN, gegenstand } from '../inhalte/gegenstaende.js';
 import { aufgabe } from '../inhalte/aufgaben.js';
 import { BERUFE, WERTE } from '../inhalte/berufe.js';
@@ -12,6 +12,7 @@ const REITER = [
   { id: 'herstellen', taste: 'KeyK' },
   { id: 'figur', taste: 'KeyC' },
   { id: 'aufgaben', taste: 'KeyJ' },
+  { id: 'handel', taste: null },
 ];
 const WERKZEUGNAMEN = { messer: 'Messer', axt: 'Axt' };
 
@@ -56,7 +57,7 @@ function belohnungText(id) {
 }
 
 export function erzeugeMenue({
-  inventar, fortschritt, herstellen, aufgaben, amFeuer, iss, wirfWeg, wechsleGrafik, grafikName, neuBeginnen,
+  inventar, fortschritt, herstellen, aufgaben, amFeuer, iss, wirfWeg, wechsleGrafik, grafikName, neuBeginnen, handel,
   darfOeffnen = () => true, beiOffen = () => {},
 }) {
   const menue = document.getElementById('menue');
@@ -65,6 +66,8 @@ export function erzeugeMenue({
   let auswahl = null; // gewählter Gegenstand im Inventar
   let offen = false;
   let neuFragen = false; // „Neu beginnen“ wartet auf Bestätigung
+  let haendler = null; // mit wem gerade gehandelt wird
+  const handelReiter = menue.querySelector('[data-reiter="handel"]');
 
   for (const k of menue.querySelectorAll('[data-reiter]')) k.addEventListener('click', () => oeffne(k.dataset.reiter));
   document.getElementById('menue-zu').addEventListener('click', () => schliesse());
@@ -85,13 +88,23 @@ export function erzeugeMenue({
     if (!offen) return;
     offen = false;
     menue.hidden = true;
+    if (reiter === 'handel') reiter = 'inventar';
+    haendler = null;
+    handelReiter.hidden = true;
     beiOffen(false);
+  }
+
+  function oeffneHandel(wer) {
+    haendler = wer;
+    handelReiter.hidden = false;
+    handelReiter.textContent = 'Handel'; // mit wem, steht oben im Reiter
+    oeffne('handel');
   }
 
   addEventListener('keydown', (e) => {
     if (e.repeat) return;
     if (e.code === 'Escape' && offen) { schliesse(); return; }
-    const r = REITER.find((x) => x.taste === e.code);
+    const r = REITER.find((x) => x.taste && x.taste === e.code);
     if (!r || (!offen && !darfOeffnen())) return;
     e.stopImmediatePropagation();
     if (offen && reiter === r.id) schliesse(); else oeffne(r.id);
@@ -99,7 +112,8 @@ export function erzeugeMenue({
 
   function zeichne() {
     for (const k of menue.querySelectorAll('[data-reiter]')) k.setAttribute('aria-selected', String(k.dataset.reiter === reiter));
-    const teil = { inventar: zeichneInventar, herstellen: zeichneHerstellen, figur: zeichneFigur, aufgaben: zeichneAufgaben }[reiter]();
+    if (reiter === 'handel' && !haendler) reiter = 'inventar';
+    const teil = { inventar: zeichneInventar, herstellen: zeichneHerstellen, figur: zeichneFigur, aufgaben: zeichneAufgaben, handel: zeichneHandel }[reiter]();
     inhalt.replaceChildren(teil);
   }
 
@@ -246,6 +260,39 @@ export function erzeugeMenue({
     return wrap;
   }
 
+  // ---------------------------------------------------------------- Handel
+  function zeichneHandel() {
+    const h = handel.haendler(haendler);
+    const wrap = el('div', 'handel');
+    const kopf = el('div', 'inv-kopf');
+    kopf.append(el('span', '', `${h.name}, ${h.titel}`), el('span', 'geld', `${inventar.muenzen} Kupfer`));
+    const kaufen = el('section', 'karte');
+    kaufen.append(el('h3', '', `${h.name} verkauft`));
+    for (const id of h.waren) {
+      const g = gegenstand(id), preis = handel.kaufpreis(haendler, id);
+      const zeile = el('div', 'handel-zeile');
+      const k = knopf('Kaufen', () => { handel.kaufe(haendler, id); zeichne(); }, 'knopf-text klein');
+      k.disabled = inventar.muenzen < preis;
+      zeile.append(el('span', 'bild', g.bild ?? ''), el('span', 'name', g.name), el('span', 'preis', `${preis} Kupfer`), k);
+      kaufen.append(zeile);
+    }
+    const verkaufen = el('section', 'karte');
+    verkaufen.append(el('h3', '', 'Du verkaufst'));
+    const dinge = inventar.liste().filter((d) => d.art !== 'aufgabe' && d.wert > 0);
+    if (!dinge.length) verkaufen.append(el('p', 'leer-hinweis', 'Du hast nichts, was sich verkaufen ließe.'));
+    for (const d of dinge) {
+      const preis = handel.verkaufspreis(haendler, d.id);
+      const zeile = el('div', 'handel-zeile');
+      const knoepfe = el('span', 'handel-knoepfe');
+      knoepfe.append(knopf('Verkaufen', () => { handel.verkaufe(haendler, d.id, 1); zeichne(); }, 'knopf-text klein'));
+      if (d.anzahl > 1) knoepfe.append(knopf('Alle', () => { handel.verkaufe(haendler, d.id, d.anzahl); zeichne(); }, 'knopf-text klein'));
+      zeile.append(el('span', 'bild', d.bild ?? ''), el('span', 'name', d.anzahl > 1 ? `${d.name} (${d.anzahl})` : d.name), el('span', 'preis', `${preis} Kupfer`), knoepfe);
+      verkaufen.append(zeile);
+    }
+    wrap.append(kopf, kaufen, verkaufen, el('p', 'klein hinweis', 'Wer an einem Tag viel vom Gleichen verkauft, bekommt dafür etwas weniger. Ausstrahlung bringt bessere Preise.'));
+    return wrap;
+  }
+
   // ---------------------------------------------------------------- Aufgaben
   function zeichneAufgaben() {
     const wrap = el('div', 'aufgaben');
@@ -274,7 +321,7 @@ export function erzeugeMenue({
   }
 
   return {
-    oeffne, schliesse, zeichne,
+    oeffne, schliesse, zeichne, oeffneHandel,
     get offen() { return offen; },
     get reiter() { return reiter; },
   };
