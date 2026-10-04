@@ -46,7 +46,7 @@ sich leicht erweitern, nach Roblox übertragen und später per KI variieren lass
 | `src/ereignisse/ereignisse.js` | Die Mechanik dahinter (nur ändern, wenn sie etwas Neues können muss) |
 | `src/ereignisse/aufgaben.js` | Führt die Aufgaben aus `src/inhalte/aufgaben.js`: starten, Schritte abhaken, belohnen |
 | `src/ereignisse/begegnungen.js` | **Begegnungen unterwegs**: was von selbst passiert (Wegelagerer, Hausierer, Karawane, Sturm, Reisende), je nach Ort und Tageszeit. Eine neue Begegnung ist ein neuer Eintrag |
-| `src/ui/` | Startbildschirm, Ereignis-Tafel, Nachrichten, Anzeigen; `menue.js` = Inventar, Herstellen, Figur, Aufgaben, Handel; `editor.js` = Charakter-Editor; `kampfanzeige.js` = Lebensbalken, Schadenszahlen, Boss-Balken; `beruehrung.js` = Fingersteuerung für Handy und Tablet; `symbole.js` = die gezeichneten Bilder aller Gegenstände (ein neuer Gegenstand ohne eigenes Bild zeigt einen Beutel) |
+| `src/ui/` | Startbildschirm, Ereignis-Tafel, Nachrichten, Anzeigen; `menue.js` = Inventar, Herstellen, Figur, Aufgaben, Handel; `editor.js` = Charakter-Editor; `karte.js` = die Karte oben rechts (unerkundet ist Pergament, Taste M macht sie groß); `kampfanzeige.js` = Lebensbalken, Schadenszahlen, Boss-Balken; `beruehrung.js` = Fingersteuerung für Handy und Tablet; `symbole.js` = die gezeichneten Bilder aller Gegenstände (ein neuer Gegenstand ohne eigenes Bild zeigt einen Beutel) |
 | `src/spielstand.js` | Speichern und Laden im Browser (localStorage); das Skript in `index.html` liest ihn für „Weiterspielen“ |
 | `src/modelle.js` | Lädt 3D-Modelle (auch in der Vorschau, wo sie als Text vorliegen) |
 | `src/qualitaet.js`, `src/nachbearbeitung.js` | Grafikstufen (hoch/mittel/niedrig) und Bild-Nachbearbeitung |

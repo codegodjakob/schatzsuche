@@ -46,6 +46,7 @@ import { erzeugeBeruehrung } from './ui/beruehrung.js';
 import { erzeugeMenue } from './ui/menue.js';
 import { erzeugeKampfanzeige } from './ui/kampfanzeige.js';
 import { erzeugeEditor } from './ui/editor.js';
+import { erzeugeKarte } from './ui/karte.js';
 import { ergaenze, wachse, wendeAn } from './spieler/aussehen.js';
 import { erzeugeNachbearbeitung } from './nachbearbeitung.js';
 import { BERUFE } from './inhalte/berufe.js';
@@ -551,6 +552,7 @@ const begegnungen = erzeugeBegegnungen({
 
 // ---------------------------------------------------------------- Tiere
 const feen = erzeugeFeen({ szene });
+const karte = erzeugeKarte({ huelle: document.getElementById('karte') });
 const tiere = erzeugeTiere({
   szene,
   beiErlegt: (t) => {
@@ -777,7 +779,7 @@ function tippsPruefen() {
 Object.defineProperty(window.spiel, 'aussehen', { get: () => aussehen });
 Object.assign(window.spiel, {
   editor,
-  steuerung, ereignisse, ueberleben, inventar, fortschritt, herstellen, aufgaben, sammeln, benutzen, menue, faellen, baeume, bauen, natur, unterholz, begegnungen, tiere, feen, schiesse, gegner, kampf,
+  steuerung, ereignisse, ueberleben, inventar, fortschritt, herstellen, aufgaben, sammeln, benutzen, menue, faellen, baeume, bauen, natur, unterholz, begegnungen, tiere, feen, karte, schiesse, gegner, kampf,
   handel, angeln, dorf, wasserspiegel: wasserspiegel(),
   speichere: () => speichereJetzt(),
   fackelBrennt: () => fackelAn,
@@ -808,6 +810,7 @@ function spielstand() {
     faellen: faellen.speichern(),
     begegnungen: begegnungen.speichern(),
     tiere: tiere.speichern(),
+    karte: karte.speichern(),
     bauwerke: bauen.speichern(),
     gegraben,
     felsen: [...abgebaut],
@@ -841,6 +844,7 @@ function ladeStand(st) {
   faellen.laden(st.faellen);
   begegnungen.laden(st.begegnungen);
   tiere.laden(st.tiere);
+  karte.laden(st.karte);
   bauen.laden(st.bauwerke);
   for (const [x, z] of st.gegraben ?? []) { aendereBoden(x, z, 0.3, 1.6); druecke(x, z, 1.3, 1); gegraben.push([x, z]); }
   for (const [x, z] of gegraben) zeigeGrube(x, z);
@@ -940,6 +944,11 @@ addEventListener('keydown', (e) => {
     if (spielLaeuft) hilfeUmschalten();
     return;
   }
+  if (e.code === 'KeyM') {
+    if (spielLaeuft) karte.schalteGross();
+    return;
+  }
+  if (e.code === 'Escape' && karte.gross) { karte.schalteGross(false); return; }
   if (!steuerung.zustand.aktiv) return;
   if (e.code === 'KeyE' && !ereignisse.aktuell) benutzen.benutze(steuerung.zustand.ort, steuerung.zustand.blickSeite);
   if (e.code === 'KeyF') machFeuer();
@@ -1158,6 +1167,7 @@ renderer.setAnimationLoop(() => {
   faellen.schritt(pausiert ? 0 : dt);
   if (!pausiert) { tiere.schritt(dt, steuerung.zustand.ort); pfeilSchritt(dt); }
   feen.schritt(pausiert ? 0 : dt, steuerung.zustand.ort);
+  if (spielLaeuft) karte.schritt(dt, steuerung.zustand.ort, steuerung.zustand.blickSeite);
   if (spielLaeuft && !pausiert) begegnungen.schritt(dt);
   sammeln.aktualisiere(dt, zeit.hell, renderer.getPixelRatio());
   // Augen gewöhnen sich an die Dunkelheit

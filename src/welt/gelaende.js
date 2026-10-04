@@ -47,6 +47,9 @@ const wege = [[PFAD, 160], [STRASSE, 140], [STRASSE_NORD, 140], ...DORFWEGE.map(
   const punkte = new THREE.CatmullRomCurve3(stuetzen.map(([x, z]) => new THREE.Vector3(x, 0, z))).getSpacedPoints(anzahl);
   return { punkte, box: new THREE.Box3().setFromPoints(punkte).expandByScalar(12) };
 });
+// Die geglätteten Wege und Straßen als Punktlisten (für die Karte)
+export const wegLinien = () => wege.map((w) => w.punkte);
+
 export function pfadAbstand(x, z) {
   let best = Infinity;
   for (const { punkte, box } of wege) {

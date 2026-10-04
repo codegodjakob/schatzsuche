@@ -503,12 +503,21 @@ Händler, Handwerk, Begegnungen und Vorhaben.
 | **Das Wüstenreich** | Ägypten und Rom | Wüste, Oase, großer Fluss | Steinstadt mit Säulen, Tempel, Pyramiden, Legionen, Märkte mit Gewürzen; Arena; Bürokratie und Intrigen. |
 | **Graufels-Berge** | Zwergensagen | Gebirge im Norden | Zwergenhallen, Ruinen der Alten Könige, Schmiedekunst. |
 | **Elbenwald** | Tolkien | uralter Wald | Baumhäuser, Elbenbögen, alte Magie. |
+| **Küsten und Meere** | Hanse, Venedig, Wikinger | Steilküsten, Buchten, Inseln | Große Hafenstädte mit Kais, Kränen und Lagerhäusern; kleine Fischerdörfer; Pfahlbauten im Flachwasser. Schiffe aller Art: Wikingerboote, Galeeren, Koggen, große Segelschiffe wie die von Kolumbus, Piratenschiffe. Man kann anheuern, mitfahren und später ein eigenes Boot besitzen. |
+| **Die Piraten** | Freibeuter der Karibik | Inselfestung, versteckte Buchten | Organisierte Piraten mit Kapitänen, eigenem Gesetz und Flotte; man kann gegen sie kämpfen, mit ihnen handeln oder bei ihnen anheuern. |
+| **Jenseits des Meeres: der Regenwald** | Maya, Azteken, Inka | Dschungel, Wasserfälle, Hochland | Stufenpyramiden, Tempelstädte im Urwald, Bergstädte auf Terrassen, Gold, Federschmuck, Hängebrücken; ein bisschen fantasievoll. |
+| **Das Baumvolk** | Ewoks und Wookies (Star Wars) | Riesenbäume | Kleine und große pelzige Waldwesen in Dörfern hoch in den Bäumen, verbunden mit Seilbrücken. |
 | **Trolle und Fabelwesen** | Sagen | Höhlen, Brücken, Schluchten | Brückentrolle, Greife, Lindwürmer als seltene, gefährliche Begegnungen. |
 
 **Erster Schritt (gebaut)**: das **Moor** rund um den Moorsee (`MOOR` in `src/welt/orte.js`) mit dunklem Torfboden
 und glänzenden Pfützen, und darin die **Feen** (`src/welt/feen.js`): kleine Lichter mit Libellenflügeln, tagsüber
 nur wenige, nachts ein ganzer Schwarm, der neugierig um einen kreist. Tanzt man mit ihnen, schenken sie einem
 Feentau, der heilt. Will man eine fangen, locken sie einen ins kalte Wasser.
+
+**Die Karte (gebaut)**: Oben rechts zeigt eine Karte die ganze Welt, Norden oben. Zu Beginn ist alles altes
+Pergament; wo man hingeht, zeichnet sich das Land ein (Wiesen, Wald, Felsen, Wasser, Moor, Wege), und bekannte
+Orte stehen mit Namen darauf. Taste M oder Tippen macht sie groß. Was man erkundet hat, bleibt im Spielstand.
+Wird die Welt größer, wächst die Karte mit: Ferne Reiche erscheinen erst, wenn man dort war.
 
 **Nächste Schritte**: Die Welt wird in Reiche aufgeteilt, die man erst lädt, wenn man hinreist (wie die Dorfbewohner).
 Zuerst ein germanisches Langhaus-Dorf, dann die Steppe mit dem Reitervolk und dem eigenen Pferd.

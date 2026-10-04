@@ -139,7 +139,7 @@ export function erzeugeOberflaeche() {
 
   function spielBeginnt() {
     $('start').hidden = true;
-    for (const id of ['hilfe-knopf', 'werte', 'uhr', 'beruehrung']) $(id).hidden = false;
+    for (const id of ['hilfe-knopf', 'karte', 'werte', 'uhr', 'beruehrung']) $(id).hidden = false;
   }
 
   function zeigeWerte(w) {

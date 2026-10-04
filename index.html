@@ -128,8 +128,18 @@ h1 {
 #band-text { margin: 0.45rem 0 0; text-wrap: balance; }
 
 /* Steuerung: ein kleiner „?“-Knopf oben rechts klappt die Hilfe auf (oder Taste H) */
+/* Karte oben rechts (Taste M oder Tippen macht sie groß); der „?“-Knopf sitzt links daneben */
+#karte {
+  position: fixed; right: 16px; top: calc(16px + env(safe-area-inset-top, 0px)); z-index: 2; box-sizing: border-box;
+  width: 10.5rem; aspect-ratio: 1; padding: 4px; border-radius: 6px; cursor: zoom-in;
+}
+#karte canvas { display: block; width: 100%; height: 100%; border-radius: 3px; }
+#karte.gross {
+  width: min(86vh, calc(100vw - 32px)); max-width: 100%; top: 50%; left: 50%; right: auto; transform: translate(-50%, -50%);
+  z-index: 6; padding: 8px; cursor: zoom-out;
+}
 #hilfe-knopf {
-  position: fixed; right: 16px; top: calc(16px + env(safe-area-inset-top, 0px)); z-index: 3; width: 2.6rem; height: 2.6rem; border-radius: 50%;
+  position: fixed; right: calc(16px + 10.5rem + 0.6rem); top: calc(16px + env(safe-area-inset-top, 0px)); z-index: 3; width: 2.6rem; height: 2.6rem; border-radius: 50%;
   font: 400 1.4rem/1 var(--schrift-titel); color: var(--messing-hell); cursor: pointer; padding: 0;
 }
 #hilfe-knopf[aria-expanded="true"] { color: var(--nacht); background: var(--glut); }
@@ -377,6 +387,8 @@ html.beruehrung #ziel { padding: 0.4rem 0.6rem 0.4rem 0.45rem; }
 html.beruehrung #ziel-titel { font-size: 0.95rem; }
 html.beruehrung #ziel-schritt { font-size: 0.8rem; }
 /* Am Handy sind oben links die Aufgabe und oben rechts die Werte; die Hilfe sitzt über den Knöpfen */
+html.beruehrung #karte { top: calc(16px + 9rem + env(safe-area-inset-top, 0px)); width: 7rem; padding: 3px; }
+html.beruehrung #karte.gross { top: 50%; width: min(86vh, calc(100vw - 32px)); }
 html.beruehrung #hilfe-knopf { top: auto; bottom: calc(16px + 11.2rem + env(safe-area-inset-bottom, 0px)); right: calc(16px + env(safe-area-inset-right, 0px)); }
 html.beruehrung #hinweise { top: auto; bottom: calc(16px + 14.4rem + env(safe-area-inset-bottom, 0px)); max-height: calc(100% - 16rem - 9rem); }
 html.beruehrung #werte { top: calc(16px + env(safe-area-inset-top, 0px)); bottom: auto; left: auto; right: 16px; width: 10.2rem; padding: 0.5rem 0.65rem; gap: 0.25rem; box-sizing: border-box; }
@@ -482,6 +494,7 @@ html.beruehrung #aktion { display: none !important; }
   </div>
 </section>
 
+<div id="karte" class="tafel" hidden title="Karte (M)"></div>
 <button type="button" id="hilfe-knopf" class="tafel" hidden aria-expanded="false" aria-controls="hinweise" title="Steuerung (H)">?</button>
 <section id="hinweise" class="tafel" hidden aria-labelledby="hilfe-titel">
   <h2 id="hilfe-titel">Steuerung</h2>
@@ -498,6 +511,7 @@ html.beruehrung #aktion { display: none !important; }
     <dt><kbd>V</kbd></dt><dd>Blick über die Schulter oder aus den Augen</dd>
     <dt><kbd>I</kbd> <kbd>K</kbd> <kbd>C</kbd> <kbd>J</kbd></dt><dd>Inventar, Herstellen, Figur, Tagebuch</dd>
     <dt><kbd>G</kbd></dt><dd>Grafik: <b class="qualitaet-name">hoch</b></dd>
+    <dt><kbd>M</kbd></dt><dd>Karte groß und klein (oder auf die Karte tippen)</dd>
     <dt><kbd>H</kbd></dt><dd>diese Hilfe auf und zu</dd>
   </dl>
   <dl class="nur-finger">

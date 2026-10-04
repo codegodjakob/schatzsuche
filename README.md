@@ -33,6 +33,7 @@ Claude veröffentlicht nach jeder Änderung eine Vorschau als Link. Der steht im
 | `R` | mit dem Bogen schießen (wenn man einen hat) |
 | `T` | Fackel anzünden oder wegstecken (nachts brennt sie von selbst in der linken Hand) |
 | `G` | Grafikqualität: hoch, mittel, niedrig |
+| `M` oder Tippen auf die Karte oben rechts | Karte groß und klein |
 | `H` oder Knopf `?` oben rechts | Steuerung auf- und zuklappen |
 
 Das Spiel speichert sich von selbst. Beim nächsten Öffnen steht oben „Weiterspielen“.

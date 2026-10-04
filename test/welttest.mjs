@@ -1,5 +1,5 @@
 // Die lebendige Welt: Begegnungen unterwegs (Karawane, Wegelagerer, Brida, Sturm), Kleidung gegen Kälte,
-// Jagd mit Pfeil und Bogen, Feen im Moor.
+// Jagd mit Pfeil und Bogen, Feen im Moor, die Karte.
 import { starteSpiel } from './helfer.mjs';
 
 const { seite, url, pruefe, warte, spiel, taste, foto, ereignis, tafelnWeg, abbruch, ende } = await starteSpiel();
@@ -94,6 +94,16 @@ try {
   pruefe(await spiel(() => window.spiel.inventar.anzahl('feentau') === 2), 'Im Moor mit den Feen getanzt: zwei Fläschchen Feentau');
   await seite.waitForTimeout(3000);
   await foto('welt-4-feen');
+
+  // Die Karte: Wo man war, ist das Land eingezeichnet; der Rest ist noch Pergament
+  pruefe(await spiel(() => window.spiel.karte.istErkundet(200, 40) && window.spiel.karte.istErkundet(-52, -110) && !window.spiel.karte.istErkundet(400, 400)),
+    'Karte: Erlenbach und das Moor sind erkundet, die ferne Ecke nicht');
+  await spiel(() => window.spiel.zeit.stunde = 12);
+  await taste('KeyM');
+  pruefe(await spiel(() => window.spiel.karte.gross), 'Taste M macht die Karte groß');
+  await seite.waitForTimeout(1500);
+  await foto('welt-5-karte');
+  await taste('KeyM');
 } catch (e) {
   await abbruch(e, 'welt-fehler');
 }
