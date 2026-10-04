@@ -4,6 +4,7 @@
 // Höhe und Grasdichte kommen aus den Geländetexturen. Drei Ringe: nah dicht, weiter weg lichter.
 import * as THREE from 'three';
 import { rasterTexturen } from './gelaende.js';
+import { STEPPE } from './orte.js';
 import { spurenBild } from './bodenspuren.js';
 import { WIND_GLSL, windUniforms } from './wind.js';
 
@@ -81,6 +82,7 @@ const PLATZ = /* glsl */ `
   float buesche = step(0.93, gHash(zelle * 0.37 + 4.0)); // vereinzelt hohe Büschel
   float wuchs = mix(0.35, 0.95, smoothstep(0.2, 0.8, flecken)) * (0.5 + 0.6 * pow(gHash(zelle + 9.1), 1.5)) + buesche * 0.45;
   wuchs *= mix(0.45, 1.0, maske.r);
+  wuchs *= 1.0 + 0.4 * smoothstep(${STEPPE.von.toFixed(1)}, ${STEPPE.bis.toFixed(1)}, ort.x) * (1.0 - smoothstep(${STEPPE.zInnen.toFixed(1)}, ${STEPPE.zAussen.toFixed(1)}, abs(ort.y)));
   float groesse = ring * da * wuchs * uHoehenFaktor;
   groesse *= 1.0 - texture(uSpuren, rasterUv).r; // niedergedrückt (bodenspuren.js)
   float gier = gHash(zelle + 5.3) * 6.2831 + halm.x;
@@ -112,7 +114,11 @@ const PLATZ = /* glsl */ `
   vec3 gruen = mix(vec3(0.09, 0.17, 0.035), mix(vec3(0.19, 0.30, 0.06), vec3(0.24, 0.33, 0.09), flaeche2), hy);
   gruen = mix(gruen, gruen * vec3(1.15, 1.05, 0.7), step(0.7, art)); // andere Grasart, gelblicher
   vec3 gelb = mix(vec3(0.20, 0.19, 0.07), vec3(0.42, 0.40, 0.18), hy);
-  vGrasFarbe = mix(gruen, gelb, trocken * 0.45) * (0.78 + 0.4 * gHash(zelle + 6.6 + halm.x));
+  // Steppe im Osten: höher, trockener, golden
+  float steppeW = smoothstep(${STEPPE.von.toFixed(1)}, ${STEPPE.bis.toFixed(1)}, ort.x) * (1.0 - smoothstep(${STEPPE.zInnen.toFixed(1)}, ${STEPPE.zAussen.toFixed(1)}, abs(ort.y)));
+  trocken = mix(trocken, 0.55 + 0.45 * gHash(zelle + 4.4), steppeW);
+  gelb = mix(gelb, mix(vec3(0.26, 0.21, 0.08), vec3(0.62, 0.52, 0.26), hy), steppeW);
+  vGrasFarbe = mix(gruen, gelb, trocken * mix(0.45, 0.95, steppeW)) * (0.78 + 0.4 * gHash(zelle + 6.6 + halm.x));
   vGrasFarbe *= mix(0.45, 1.0, smoothstep(0.0, 0.45, hy)); // Schatten im dichten Gras am Boden
   vDurchscheinen = hy;
   // Normale: abgerundet (Mischung aus Halmfläche und oben), wirkt wie ein gewölbter Halm

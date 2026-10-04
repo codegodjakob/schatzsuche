@@ -1,5 +1,5 @@
 // Die lebendige Welt: Begegnungen unterwegs (Karawane, Wegelagerer, Brida, Sturm), Kleidung gegen Kälte,
-// Jagd mit Pfeil und Bogen, Feen im Moor, die Karte, Hrodgard.
+// Jagd mit Pfeil und Bogen, Feen im Moor, die Karte, Hrodgard, die Steppe mit dem Reitervolk.
 import { starteSpiel } from './helfer.mjs';
 
 const { seite, url, pruefe, warte, spiel, taste, foto, ereignis, tafelnWeg, abbruch, ende } = await starteSpiel();
@@ -22,7 +22,7 @@ async function sprich(art, name, abstand = 1.8) {
     await spiel(([a, d]) => {
       const p = window.spiel.doerfler.leute.find((x) => x.art === a).objekt.position;
       window.spiel.teleport(p.x + d, p.z);
-      window.spiel.blick(Math.PI / 2, -0.1); // nach Westen, zu ihm hin
+      window.spiel.blick(d > 0 ? Math.PI / 2 : -Math.PI / 2, -0.1); // zu ihm hin (von Osten nach Westen schauen oder umgekehrt)
     }, [art, abstand]);
     const bereit = await warte((t) => {
       const z = window.spiel.steuerung.zustand;
@@ -159,6 +159,40 @@ try {
   await seite.waitForTimeout(3000);
   await foto('welt-6-hrodgard');
   pruefe(await spiel(() => document.querySelectorAll('.feind-balken').length === 0), 'Keine Lebensbalken von verschwundenen Wegelagerern mehr');
+
+  // Die Steppe und das Reitervolk: Bleda lässt einen dreimal vom Pflock aus die Scheibe treffen
+  await spiel(() => window.spiel.teleport(320, 10));
+  await ereignis('steppe', 'KeyE');
+  await spiel(() => window.spiel.teleport(345, 10));
+  await ereignis('jurtenlager-ankunft', 'KeyE');
+  await warte(() => window.spiel.doerfler?.leute.some((x) => x.art === 'bleda'), null, 600);
+  // Bleda steht am Pflock und schaut nach Osten; man spricht ihn von Westen her an
+  await sprich('bleda', 'Bleda', -1.8);
+  await antworte('KeyE');
+  pruefe(await spiel(() => window.spiel.aufgaben.istAktiv('bogenprobe')), 'Bleda stellt die Bogenprobe');
+  await spiel(() => { window.spiel.inventar.gib('bogen', 1); window.spiel.inventar.gib('pfeil', 10); });
+  for (let i = 0; i < 8 && !(await spiel(() => window.spiel.ereignisse.s.weiss('bogenprobe-geschafft'))); i++) {
+    await tafelnWeg();
+    await spiel(() => {
+      const z = window.spiel.steuerung.zustand;
+      window.spiel.teleport(374, 33.3); // am Pflock, ein wenig neben Bleda
+      const m = window.spiel.jurtenlager.scheibenMitte;
+      if (!z.ichSicht) { window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyV' })); window.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyV' })); }
+      const dx = m.x - z.ort.x, dz = m.z - z.ort.z, d = Math.hypot(dx, dz);
+      window.spiel.blick(Math.atan2(-dx, -dz), Math.atan2(m.y - (z.ort.y + 1.5), d));
+    });
+    const bild = await spiel(() => window.spiel.bilder);
+    await warte((n) => window.spiel.bilder >= n + 2, bild, 120);
+    await taste('KeyR');
+    await seite.waitForTimeout(1000);
+    await warte(() => window.spiel.bogenBereit(), null, 240);
+  }
+  pruefe(await spiel(() => window.spiel.ereignisse.s.weiss('bogenprobe-geschafft')), 'Dreimal vom Pflock aus die Scheibe getroffen');
+  await foto('welt-7-bogenprobe');
+  await spiel(() => { const z = window.spiel.steuerung.zustand; if (z.ichSicht) { window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyV' })); window.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyV' })); } });
+  await sprich('bleda', 'Bleda', -1.8);
+  await antworte('KeyR');
+  pruefe(await spiel(() => window.spiel.inventar.hat('reiterbogen')), 'Bleda schenkt einen Reiterbogen');
 } catch (e) {
   await abbruch(e, 'welt-fehler');
 }

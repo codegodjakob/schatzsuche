@@ -217,6 +217,37 @@ FIGUREN = {
             ('winken', 'ganz', D2 / 'dataset-2_wave-right-hand_normal_007.bvh'),
         ],
     ),
+    # Steppe: Uldin, Khan des Reitervolks – älter, schmale Augen, langes schwarzes Haar, dünner Bart, tiefblauer Mantel
+    'uldin': dict(
+        makro=dict(gender=1.0, age=0.6, muscle=0.7, weight=0.55, height=0.5, proportions=0.7,
+                   rassen={'caucasian': 0.35, 'african': 0.0, 'asian': 0.65}),
+        haut=dict(hautfarbe=(0.7, 0.52, 0.38), haarfarbe=(0.06, 0.05, 0.05), bart=0.6, alter=0.55, schmutz=0.3),
+        haare=dict(art='lang', laenge=(0.18, 0.28), anzahl=2000, breite=0.02, bart=True,
+                   bart_laenge=(0.06, 0.12), bart_anzahl=900),
+        kleidung='kutte',
+        kutte=dict(saum=0.35, weite=0.14, farbe=(0.14, 0.2, 0.38), saat=111, guertel=(0.62, 0.48, 0.2, 1)),
+        textur=1024,
+        bewegungen=[
+            ('stehen', 'stehen', D2 / 'dataset-2_wave-right-hand_normal_002.bvh'),
+            ('gehen', 'zyklus', D1 / 'dataset-1_walk_normal_001.bvh'),
+            ('winken', 'ganz', D2 / 'dataset-2_wave-right-hand_normal_003.bvh'),
+        ],
+    ),
+    # Steppe: Bleda, Bogenschütze – jung, sehnig, kurzes schwarzes Haar, rotbrauner Kaftan
+    'bleda': dict(
+        makro=dict(gender=1.0, age=0.3, muscle=0.85, weight=0.4, height=0.55, proportions=0.8,
+                   rassen={'caucasian': 0.3, 'african': 0.0, 'asian': 0.7}),
+        haut=dict(hautfarbe=(0.72, 0.54, 0.4), haarfarbe=(0.05, 0.04, 0.04), bart=0.3, alter=0.2, schmutz=0.4),
+        haare=dict(art='kurz', laenge=(0.03, 0.06), anzahl=1600, breite=0.016),
+        kleidung='kutte',
+        kutte=dict(saum=0.5, weite=0.1, farbe=(0.45, 0.2, 0.12), saat=113, guertel=(0.2, 0.14, 0.08, 1)),
+        textur=1024,
+        bewegungen=[
+            ('stehen', 'stehen', D2 / 'dataset-2_wave-right-hand_normal_008.bvh'),
+            ('gehen', 'zyklus', D1 / 'dataset-1_walk_normal_001.bvh'),
+            ('winken', 'ganz', D2 / 'dataset-2_wave-right-hand_normal_009.bvh'),
+        ],
+    ),
     # Erlenbach: Jost, der Fischer, wettergegerbt, im kurzen graublauen Kittel
     'jost': dict(
         makro=dict(gender=1.0, age=0.58, muscle=0.62, weight=0.55, height=0.55, proportions=0.75,

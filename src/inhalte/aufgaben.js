@@ -148,6 +148,18 @@ export const AUFGABEN = [
     zuruecksetzen: (s) => s.vergiss('abgegeben-fische'),
   },
   {
+    id: 'bogenprobe',
+    titel: 'Die Bogenprobe',
+    geber: 'Bleda',
+    beschreibung: '„Bei uns zählt nur, wer schießen kann. Stell dich an den Pflock und triff die Scheibe dreimal. Dann reden wir weiter.“',
+    schritte: [
+      { text: 'Besorg dir einen Bogen und Pfeile', fertig: (s) => (s.hat('bogen') || s.hat('reiterbogen')) && s.hat('pfeil') || s.weiss('bogenprobe-geschafft') },
+      { text: 'Triff vom Pflock aus dreimal die Scheibe (Taste R)', fertig: (s) => s.weiss('bogenprobe-geschafft') },
+      { text: 'Sprich mit Bleda', fertig: (s) => s.weiss('bogenprobe-belohnt') },
+    ],
+    belohnung: { erfahrung: 70 },
+  },
+  {
     id: 'auftrag_felle',
     titel: 'Felle für den Winter',
     geber: 'Hrodgar',

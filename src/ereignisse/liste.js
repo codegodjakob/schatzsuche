@@ -15,7 +15,7 @@
 //   beimZeigen(s)– passiert, sobald das Ereignis erscheint (z. B. der Einsiedler winkt)
 //
 // Was s alles kann:
-//   s.gelaufen, s.nahe(x, z, radius), s.nacht, s.stunde, s.stufe, s.werte.saettigung/wasser/waerme/leben
+//   s.gelaufen, s.ort (wo man steht), s.nahe(x, z, radius), s.nacht, s.stunde, s.stufe, s.werte.saettigung/wasser/waerme/leben
 //   s.hat('id', n), s.anzahl('id'), s.gib('id', n), s.nimm('id', n), s.gibMuenzen(n), s.gibErfahrung(n)
 //   s.hergestellt('id'), s.stelleHer('rezept'), s.besiegt('raeuber')
 //   s.erledigt('ereignis'), s.weiss('merker'), s.merke('merker'), s.sage('Text')
@@ -27,7 +27,7 @@
 // (Benutzen in seiner Nähe).
 //
 // Reihenfolge zählt: Treffen mehrere zu, kommt das obere zuerst.
-import { ALTER_BAUM, DORF, GRAUFURT, HRODGARD, LAGER, MOOR, RAEUBERLAGER, TEICH } from '../welt/orte.js';
+import { ALTER_BAUM, DORF, GRAUFURT, HRODGARD, JURTENLAGER, LAGER, MOOR, STEPPE, RAEUBERLAGER, TEICH } from '../welt/orte.js';
 import { BEGEGNUNGEN } from './begegnungen.js';
 
 const beimLager = (s, r = 6) => s.nahe(LAGER.x, LAGER.z, r);
@@ -337,9 +337,74 @@ const DORF_EREIGNISSE = [
       + 'Das ist Hrodgard, das Dorf des Eberstamms.',
     optionen: [{ taste: 'E', text: 'Durch das Tor gehen' }],
   },
+  {
+    id: 'steppe',
+    wann: (s) => s.ort.x > STEPPE.bis && Math.abs(s.ort.z) < STEPPE.zInnen,
+    text: 'Der Wald bleibt zurück. Vor dir öffnet sich das Grasland, so weit das Auge reicht: goldene Halme, die im Wind wogen, '
+      + 'darüber ein riesiger Himmel. In der Ferne steigt Rauch auf, und du hörst Pferde wiehern.',
+    optionen: [{ taste: 'E', text: 'Weitergehen' }],
+  },
+  {
+    id: 'jurtenlager-ankunft',
+    wann: (s) => s.nahe(JURTENLAGER.x, JURTENLAGER.z, JURTENLAGER.radius + 10),
+    text: 'Runde Zelte aus hellem Filz, mit roten Gurten verschnürt, die Türen bunt bemalt. Vor dem größten stehen Stangen mit '
+      + 'schwarzen Pferdeschweifen. Kinder rennen zwischen Wagen umher, es riecht nach Rauch und saurer Milch. Das Lager des Reitervolks.',
+    optionen: [{ taste: 'E', text: 'Ins Lager gehen' }],
+  },
 ];
 
 const GESPRAECHE = [
+  {
+    id: 'gespraech-uldin',
+    wiederholbar: true, sperre: 0,
+    wann: () => false,
+    text: (s) => (s.weiss('bogenprobe-belohnt')
+      ? 'Uldin hebt die Schale. „Der Fremde, der schießen kann! Setz dich, trink.“'
+      : s.weiss('uldin-kennt')
+        ? 'Uldin mustert dich schweigend. „Hast du mit Bleda gesprochen?“'
+        : 'Ein Mann im tiefblauen Mantel, das schwarze Haar zu Zöpfen geflochten, sitzt vor der großen Jurte. „Ich bin Uldin, '
+          + 'Khan der Söhne des Blauen Himmels. Unsere Pferde tragen uns von einem Ende der Welt zum anderen. Was suchst du bei uns, Fußgänger?“'),
+    beimZeigen: (s) => s.merke('uldin-kennt'),
+    optionen: [
+      {
+        taste: 'E', text: 'Wer seid ihr?', bedingung: (s) => !s.weiss('reitervolk-kennt'),
+        folge: (s) => {
+          s.merke('reitervolk-kennt'); s.gibErfahrung(10);
+          s.sage('„Wir bleiben nie lange an einem Ort. Im Sommer ziehen wir mit den Herden nach Norden, im Winter nach Süden. '
+            + 'Wer reiten kann, ist frei. Wer nicht reiten kann, ist ein Stein, der am Weg liegt.“ Er lacht.');
+        },
+      },
+      {
+        taste: 'R', text: 'Kann ich ein Pferd bekommen?', bedingung: (s) => !s.weiss('bogenprobe-belohnt'),
+        folge: (s) => s.sage('„Ein Pferd? Einem, der nicht schießen kann?“ Uldin schüttelt den Kopf. „Geh zu Bleda am Pflock. Zeig ihm, was du kannst.“'),
+      },
+      { taste: 'F', text: 'Handeln', folge: (s) => s.handel('uldin') },
+      { taste: 'Q', text: 'Lebe wohl, Khan' },
+    ],
+  },
+  {
+    id: 'gespraech-bleda',
+    wiederholbar: true, sperre: 0,
+    wann: () => false,
+    text: (s) => (s.weiss('bogenprobe-belohnt')
+      ? 'Bleda grinst. „Na, Schütze? Die Scheibe wartet.“'
+      : s.weiss('bogenprobe-geschafft')
+        ? 'Bleda zieht die Pfeile aus der Scheibe und pfeift. „Nicht schlecht für einen, der zu Fuß geht.“'
+        : 'Ein junger Mann lässt einen Pfeil fliegen, ohne hinzusehen; er steckt mitten in der Scheibe. „Bleda. Ich bringe den Kindern das Schießen bei. '
+          + 'Und den Fremden zeige ich, dass sie es nicht können.“'),
+    optionen: [
+      { taste: 'E', text: 'Ich will die Probe machen', bedingung: (s) => !s.aufgabeAktiv('bogenprobe') && !s.weiss('bogenprobe-belohnt'), folge: (s) => s.starteAufgabe('bogenprobe') },
+      {
+        taste: 'R', text: 'Ich habe dreimal getroffen', bedingung: (s) => s.weiss('bogenprobe-geschafft') && !s.weiss('bogenprobe-belohnt'),
+        folge: (s) => {
+          s.merke('bogenprobe-belohnt'); s.gib('reiterbogen');
+          s.sage('Bleda reicht dir seinen zweiten Bogen, kurz und stark gekrümmt. „Ein Reiterbogen. Er schießt weiter als alles, was ihr im Wald baut. '
+            + 'Und sag dem Khan, dass du schießen kannst. Dann redet er mit dir über Pferde.“');
+        },
+      },
+      { taste: 'Q', text: 'Später' },
+    ],
+  },
   {
     id: 'gespraech-hrodgar',
     wiederholbar: true, sperre: 0,

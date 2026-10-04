@@ -21,6 +21,11 @@ export const HAENDLER = {
     waren: ['wollmantel', 'leinenhemd', 'hose', 'lederstiefel', 'lederwams', 'heilsalbe', 'brot', 'spitzhacke', 'angelrute'],
     kauftGut: (g) => g.art === 'wertvoll' || g.art === 'kraut',
   },
+  uldin: {
+    name: 'Uldin', titel: 'Khan des Reitervolks',
+    waren: ['kumys', 'trockenfleisch', 'filzmantel', 'lederstiefel', 'pfeil'],
+    kauftGut: (g) => g.art === 'wertvoll' || g.name === 'Fuchsfell',
+  },
   hrodgar: {
     name: 'Hrodgar', titel: 'Häuptling des Eberstamms',
     waren: ['kurzschwert', 'eisenaxt', 'bogen', 'pfeil', 'gebratenes_fleisch'],

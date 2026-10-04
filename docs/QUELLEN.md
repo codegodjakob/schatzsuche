@@ -23,7 +23,9 @@ werden. Das Werkzeug `werkzeuge/figuren/` kann dann andere BVH-Dateien verwenden
 | Hrodgard: Langhäuser, Halle, Grubenhaus, Speicher, Palisade, Tor, Thing-Platz, Stammespfahl, Flechtzaun (Formen) | selbst erzeugt im Code (`src/welt/hrodgard.js`) | wie das Projekt |
 | Texturen für Reetdach (reed_roof_04), Wände aus gespaltenen Stämmen (wood_trunk_wall), Kiefernrinde der Palisade (pine_bark), `assets/bauten/` | [Poly Haven](https://polyhaven.com), geladen mit `werkzeuge/polyhaven.mjs` | CC0 |
 | Fässer (wooden_barrels_01), Eimer (wooden_bucket_01), Kiste (wooden_crate_01), Korb (wicker_basket_01), Spinnrad (spinning_wheel_01), Schemel (wooden_stool_01), Axt (wooden_axe), Baumstumpf (tree_stump_01), `assets/requisiten/` | [Poly Haven](https://polyhaven.com), geladen mit `werkzeuge/polyhaven.mjs` | CC0 |
-| Hrodgar und Sigrun (Figuren) | selbst erzeugt mit `werkzeuge/figuren/` (Grundlage MakeHuman, CC0) | wie das Projekt |
+| Hrodgar, Sigrun, Uldin und Bleda (Figuren) | selbst erzeugt mit `werkzeuge/figuren/` (Grundlage MakeHuman, CC0) | wie das Projekt |
+| Filz der Jurten (leather_white) und Leder (brown_leather), `assets/bauten/` | [Poly Haven](https://polyhaven.com), geladen mit `werkzeuge/polyhaven.mjs` | CC0 |
+| Jurtenlager: Jurten, Türbemalung, Standarten mit Pferdeschweif, Kibitka-Wagen, Pferdeleine, Trockengestell, Zielscheibe (Formen und gemalte Bilder) | selbst erzeugt im Code (`src/welt/jurten.js`) | wie das Projekt |
 
 ## Pflanzen, Boden, Felsen
 

@@ -3,7 +3,7 @@
 // Gras, Erde (Pfad, Waldboden), Fels (steil), Ufer.
 import * as THREE from 'three';
 import { ImprovedNoise } from 'three/addons/math/ImprovedNoise.js';
-import { BACH, DORF, HRODGARD, MOOR, PLATZ_HRODGARD, WESTERSTRASSE, GEWAESSER, GRAUFURT, HAEUSER, HAEUSER_GRAUFURT, LAGER, PFAD, RAEUBERLAGER, START, STEG, STRASSE, STRASSE_NORD } from './orte.js';
+import { BACH, DORF, HRODGARD, JURTENLAGER, MOOR, OSTSTRASSE, PLATZ_HRODGARD, STEPPE, WESTERSTRASSE, GEWAESSER, GRAUFURT, HAEUSER, HAEUSER_GRAUFURT, LAGER, PFAD, RAEUBERLAGER, START, STEG, STRASSE, STRASSE_NORD } from './orte.js';
 
 export const WELT_GROESSE = 900;
 export const RASTER = 512;
@@ -22,6 +22,8 @@ function fbm(x, z, oktaven, saat = SAAT) {
   return summe / norm;
 }
 const weich = (a, b, t) => { const x = Math.min(1, Math.max(0, (t - a) / (b - a))); return x * x * (3 - 2 * x); };
+// Wie sehr ein Ort zur Steppe gehört (0 … 1): offenes Grasland im Osten
+export const steppe = (x, z) => weich(STEPPE.von, STEPPE.bis, x) * (1 - weich(STEPPE.zInnen, STEPPE.zAussen, Math.abs(z)));
 
 // Trampelpfade in Erlenbach: vom Rand des Dorfplatzes zu jeder Haustür und zum Steg, leicht geschwungen.
 // bis = wie weit vor dem Ziel der Pfad endet (negativ: darüber hinaus)
@@ -43,7 +45,7 @@ function graufurtWeg(ziel, bis) {
 const GRAUFURT_WEGE = HAEUSER_GRAUFURT.map((h) => graufurtWeg(h, h.tiefe / 2 - 0.2));
 
 // Pfad zum Einsiedler, Straße nach Osten und die Wege im Dorf als dichte Punktfolgen (Catmull-Rom geglättet)
-const wege = [[PFAD, 160], [STRASSE, 140], [STRASSE_NORD, 140], [WESTERSTRASSE, 170], ...DORFWEGE.map((w) => [w, 30]), ...GRAUFURT_WEGE.map((w) => [w, 30])].map(([stuetzen, anzahl]) => {
+const wege = [[PFAD, 160], [STRASSE, 140], [STRASSE_NORD, 140], [WESTERSTRASSE, 170], [OSTSTRASSE, 160], ...DORFWEGE.map((w) => [w, 30]), ...GRAUFURT_WEGE.map((w) => [w, 30])].map(([stuetzen, anzahl]) => {
   const punkte = new THREE.CatmullRomCurve3(stuetzen.map(([x, z]) => new THREE.Vector3(x, 0, z))).getSpacedPoints(anzahl);
   return { punkte, box: new THREE.Box3().setFromPoints(punkte).expandByScalar(12) };
 });
@@ -73,6 +75,7 @@ export function waldDichte(x, z) {
   w *= weich(DORF.radius * 0.9, DORF.radius * 1.3, Math.hypot(x - DORF.x, z - DORF.z));
   w *= weich(GRAUFURT.radius * 0.9, GRAUFURT.radius * 1.4, Math.hypot(x - GRAUFURT.x, z - GRAUFURT.z));
   w *= weich(HRODGARD.radius * 1.05, HRODGARD.radius * 1.5, Math.hypot(x - HRODGARD.x, z - HRODGARD.z)); // Lichtung um die Palisade
+  w *= 1 - steppe(x, z); // in der Steppe wächst kein Wald
   for (const h of HAEUSER_GRAUFURT) w *= weich(h.breite * 0.75, h.breite * 0.75 + 4, Math.hypot(x - h.x, z - h.z));
   // kein Baum in oder dicht an einem Haus am Dorfrand
   for (const h of HAEUSER) w *= weich(h.breite * 0.75, h.breite * 0.75 + 4, Math.hypot(x - h.x, z - h.z));
@@ -114,6 +117,14 @@ function hoeheRoh(x, z) {
   const dl = Math.hypot(x - LAGER.x, z - LAGER.z);
   const lagerHoehe = fbm(LAGER.x * 0.012, LAGER.z * 0.012, 4) * 2.2;
   h += (lagerHoehe - h) * (1 - weich(LAGER.radius, LAGER.radius * 2, dl)) * 0.8;
+  // Die Steppe: sanfte, lange Wellen über dem Wasser; das Lager liegt eben
+  const st = steppe(x, z);
+  if (st > 0) {
+    const welle = fbm(x * 0.007 + 11, z * 0.007 - 4, 3) * 5 + 2.2;
+    h += (welle - h) * st;
+    const dj = Math.hypot(x - JURTENLAGER.x, z - JURTENLAGER.z);
+    h += (2.2 + fbm(JURTENLAGER.x * 0.007 + 11, JURTENLAGER.z * 0.007 - 4, 3) * 5 - h) * (1 - weich(JURTENLAGER.radius, JURTENLAGER.radius * 1.8, dj)) * st;
+  }
   // Hrodgard steht auf einer ebenen Fläche, die weich ins Land übergeht
   if (hrodgardHoehe !== null) {
     const dh = Math.hypot(x - HRODGARD.x, z - HRODGARD.z);
@@ -348,6 +359,9 @@ export function erzeugeGelaende() {
         float fern = smoothstep(25.0, 75.0, distance(vWelt, cameraPosition));
         vec3 grasFern = mix(vec3(0.17, 0.25, 0.06), vec3(0.34, 0.33, 0.13), smoothstep(0.5, 0.9, gross)) * (0.85 + 0.3 * mittel);
         gras = mix(gras, grasFern, fern * 0.8);
+        // Steppe im Osten: trockenes, goldenes Gras
+        float steppeW = smoothstep(${STEPPE.von.toFixed(1)}, ${STEPPE.bis.toFixed(1)}, vWelt.x) * (1.0 - smoothstep(${STEPPE.zInnen.toFixed(1)}, ${STEPPE.zAussen.toFixed(1)}, abs(vWelt.z)));
+        gras = mix(gras, gras * vec3(1.35, 1.12, 0.62) + vec3(0.03, 0.02, 0.0), steppeW * (0.75 + 0.25 * mittel));
         vec3 erde = ohneKacheln(uErdeFarbe, vWelt.xz * 0.33).rgb;
         erde = mix(erde, vec3(dot(erde, vec3(0.33))), 0.35) * vec3(1.0, 0.97, 0.9) * 1.25; // weniger rötlich, etwas heller (Laubstreu)
         vec3 fels = dreiseitig(uFelsFarbe, vWelt, normalize(vWeltNormal), 0.18);

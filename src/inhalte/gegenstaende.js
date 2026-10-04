@@ -56,6 +56,7 @@ export const GEGENSTAENDE = {
   schaufel: { name: 'Holzschaufel', bild: '🪏', art: 'werkzeug', wert: 9, stapel: 1, werkzeug: { art: 'schaufel', stufe: 1 }, beschreibung: 'Damit gräbst du überall Erde aus (Benutzen auf freiem Boden). Am Ufer findest du Lehm.' },
   spitzhacke: { name: 'Spitzhacke', bild: '⛏️', art: 'werkzeug', wert: 18, stapel: 1, werkzeug: { art: 'hacke', stufe: 1 }, waffe: { schaden: 6, reichweite: 1.7, tempo: 1.2 }, beschreibung: 'Bricht Steine aus großen Felsen, manchmal auch Feuerstein.' },
   bogen: { name: 'Jagdbogen', bild: '🏹', art: 'waffe', wert: 20, stapel: 1, fernkampf: { schaden: 12, weite: 45 }, beschreibung: 'Aus Eschenholz, mit Flachsschnur bespannt. Taste R (am Handy „Schießen“) schießt einen Pfeil dorthin, wohin du schaust.' },
+  reiterbogen: { name: 'Reiterbogen', bild: '🏹', art: 'waffe', wert: 60, stapel: 1, fernkampf: { schaden: 22, weite: 65 }, beschreibung: 'Kurz und stark gekrümmt, aus Holz, Horn und Sehne verleimt. Er schießt weiter und härter als jeder Jagdbogen. Ein Geschenk des Reitervolks.' },
   pfeil: { name: 'Pfeil', bild: '🪶', art: 'waffe', wert: 1, stapel: 40, beschreibung: 'Mit Feuersteinspitze. Was trifft, steckt; was danebengeht, ist meist verloren.' },
   eisenaxt: { name: 'Eisenaxt', bild: '🪓', art: 'werkzeug', wert: 45, stapel: 1, werkzeug: { art: 'axt', stufe: 2 }, waffe: { schaden: 11, reichweite: 1.9, tempo: 1.35 }, beschreibung: 'Vom Schmied in Graufurt. Fällt einen Baum in der Hälfte der Hiebe.' },
   eisenmesser: { name: 'Eisenmesser', bild: '🔪', art: 'werkzeug', wert: 30, stapel: 1, werkzeug: { art: 'messer', stufe: 2 }, waffe: { schaden: 8, reichweite: 1.5, tempo: 1.9 }, beschreibung: 'Scharf und handlich. Schneidet Kräuter, Fasern und Felle sauber.' },
@@ -79,6 +80,9 @@ export const GEGENSTAENDE = {
   heilsalbe: { name: 'Heilsalbe', bild: '🧴', art: 'nahrung', wert: 12, essen: { leben: 35 }, beschreibung: 'Aus Johanniskraut. Heilt Wunden.' },
 
   // --- Wertvolles und Aufgaben ---
+  kumys: { name: 'Kumys', bild: '🥛', art: 'nahrung', wert: 4, essen: { wasser: 30, saettigung: 6 }, beschreibung: 'Vergorene Stutenmilch, säuerlich und ein wenig prickelnd. Das Getränk der Steppe.' },
+  trockenfleisch: { name: 'Trockenfleisch', bild: '🥩', art: 'nahrung', wert: 6, essen: { saettigung: 24 }, beschreibung: 'In der Sonne getrocknet, hält wochenlang. Reiter haben es unter dem Sattel.' },
+  filzmantel: { name: 'Filzmantel', bild: '🧥', art: 'kleidung', wert: 34, stapel: 1, kleidung: { teil: 'mantel', warm: 0.42 }, beschreibung: 'Dicker Filz, der Wind und Regen abhält. Damit schlafen die Reiter im Winter unter freiem Himmel.' },
   eberzahn: { name: 'Eberzahn-Amulett', bild: '🦷', art: 'wertvoll', wert: 30, stapel: 1, beschreibung: 'Ein gebogener Eberhauer an einer Lederschnur. Wer ihn trägt, ist ein Freund des Eberstamms.' },
   feentau: { name: 'Feentau', bild: '💧', art: 'nahrung', wert: 15, essen: { wasser: 20, leben: 40 }, beschreibung: 'Ein Fläschchen, das im Dunkeln schwach grün schimmert. Ein Geschenk der Moorfeen; es heilt Wunden.' },
   ring: { name: 'Alter Silberring', bild: '💍', art: 'wertvoll', wert: 40, stapel: 1, beschreibung: 'Fein graviert, mit einem Zeichen, das wie auf deinem Pergament aussieht. Ein Händler zahlt gut dafür.' },

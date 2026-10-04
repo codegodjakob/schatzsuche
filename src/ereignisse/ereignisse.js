@@ -21,6 +21,7 @@ export function erzeugeEreignisse({ steuerung, oberflaeche, welt }) {
     get stunde() { return zeit.stunde; },
     get nacht() { return zeit.hell < 0.3; },
     get stufe() { return welt.fortschritt.stufe; },
+    get ort() { return steuerung.zustand.ort; },
     nahe: (x, z, r) => Math.hypot(steuerung.zustand.ort.x - x, steuerung.zustand.ort.z - z) < r,
     hat: (id, n = 1) => welt.inventar.hat(id, n),
     anzahl: (id) => welt.inventar.anzahl(id),

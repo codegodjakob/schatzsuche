@@ -5,7 +5,7 @@ import { hoeheBei } from '../welt/gelaende.js';
 import { beweglichesHindernis } from '../welt/kollision.js';
 import { DOERFLER, DORF } from '../welt/orte.js';
 
-export const NAMEN = { gerold: 'Gerold', marta: 'Marta', jost: 'Jost', bertram: 'Bertram', ida: 'Ida', hrodgar: 'Hrodgar', sigrun: 'Sigrun' };
+export const NAMEN = { gerold: 'Gerold', marta: 'Marta', jost: 'Jost', bertram: 'Bertram', ida: 'Ida', hrodgar: 'Hrodgar', sigrun: 'Sigrun', uldin: 'Uldin', bleda: 'Bleda' };
 
 // liste: { art: ort } – wer wo steht; mitte: der Dorfplatz, auf den sie schauen
 export async function erzeugeDoerfler(liste = DOERFLER, mitte = DORF) {

@@ -20,11 +20,12 @@ import { AUFWACHSEN, AUSTREIBEN, erzeugeFaellen } from './welt/faellen.js';
 import { erzeugeRaeuberlager } from './welt/raeuberlager.js';
 import { erzeugeDorf, erzeugeGraufurt } from './welt/dorf.js';
 import { erzeugeHrodgard } from './welt/hrodgard.js';
+import { erzeugeJurtenlager } from './welt/jurten.js';
 import { inDieHand } from './welt/waffen.js';
 import { entferneHindernis, hindernis, kreisFrei } from './welt/kollision.js';
 import { wind, windSchritt } from './welt/wind.js';
 import { SEKUNDEN_JE_STUNDE, tageszeitSchritt, uhrzeitText, zeit } from './welt/tageszeit.js';
-import { DOERFLER_GRAUFURT, DOERFLER_HRODGARD, DORF, GRAUFURT, HRODGARD, LAGER, PLATZ_HRODGARD, RAEUBERLAGER, START } from './welt/orte.js';
+import { DOERFLER_GRAUFURT, DOERFLER_HRODGARD, DOERFLER_JURTEN, DORF, FEUER_LAGER, GRAUFURT, HRODGARD, JURTENLAGER, LAGER, PFLOCK, PLATZ_HRODGARD, RAEUBERLAGER, START } from './welt/orte.js';
 import { BAUWERKE } from './inhalte/rezepte.js';
 import { ladeFigur } from './spieler/figur.js';
 import { erzeugeSteuerung } from './spieler/steuerung.js';
@@ -150,11 +151,16 @@ const hrodgard = erzeugeHrodgard();
 szene.add(hrodgard.objekt);
 const herdfeuer = erzeugeFeuer(PLATZ_HRODGARD.x, PLATZ_HRODGARD.z, { felsMaterial: natur.felsMaterial, rindenMaterial: baeume.rinde });
 szene.add(herdfeuer.objekt);
+const jurtenlager = erzeugeJurtenlager();
+szene.add(jurtenlager.objekt);
+const steppenfeuer = erzeugeFeuer(FEUER_LAGER.x, FEUER_LAGER.z, { felsMaterial: natur.felsMaterial, rindenMaterial: baeume.rinde });
+szene.add(steppenfeuer.objekt);
 const feuerstellen = [
   { feuer: lagerfeuer, ort: lagerfeuer.ort, brennt: () => true },
   { feuer: raeuberfeuer, ort: raeuberfeuer.ort, brennt: () => true },
   graufurt.esse,
   { feuer: herdfeuer, ort: herdfeuer.ort, brennt: () => true },
+  { feuer: steppenfeuer, ort: steppenfeuer.ort, brennt: () => true },
 ];
 const feuerlichter = erzeugeFeuerlichter(3);
 szene.add(feuerlichter.objekt);
@@ -188,7 +194,7 @@ let doerfler = null;
 const dorfLeute = [];
 const geladeneDoerfer = new Set();
 function doerflerPruefen(ort) {
-  for (const [name, mitte, liste] of [['erlenbach', DORF, undefined], ['graufurt', GRAUFURT, DOERFLER_GRAUFURT], ['hrodgard', HRODGARD, DOERFLER_HRODGARD]]) {
+  for (const [name, mitte, liste] of [['erlenbach', DORF, undefined], ['graufurt', GRAUFURT, DOERFLER_GRAUFURT], ['hrodgard', HRODGARD, DOERFLER_HRODGARD], ['jurten', JURTENLAGER, DOERFLER_JURTEN]]) {
     if (geladeneDoerfer.has(name) || Math.hypot(ort.x - mitte.x, ort.z - mitte.z) > 160) continue;
     geladeneDoerfer.add(name);
     erzeugeDoerfler(liste, mitte).then((d) => {
@@ -785,7 +791,7 @@ function tippsPruefen() {
 Object.defineProperty(window.spiel, 'aussehen', { get: () => aussehen });
 Object.assign(window.spiel, {
   editor,
-  steuerung, ereignisse, ueberleben, inventar, fortschritt, herstellen, aufgaben, sammeln, benutzen, menue, faellen, baeume, bauen, natur, unterholz, begegnungen, tiere, feen, karte, hrodgard, schiesse, gegner, kampf,
+  steuerung, ereignisse, ueberleben, inventar, fortschritt, herstellen, aufgaben, sammeln, benutzen, menue, faellen, baeume, bauen, natur, unterholz, begegnungen, tiere, feen, karte, hrodgard, jurtenlager, schiesse, gegner, kampf,
   handel, angeln, dorf, wasserspiegel: wasserspiegel(),
   speichere: () => speichereJetzt(),
   fackelBrennt: () => fackelAn,
@@ -994,7 +1000,10 @@ const BOGEN_ARM_L = { oberarm: new THREE.Vector3(0.1, 0.05, 1), unterarm: new TH
 const BOGEN_ARM_R = { oberarm: new THREE.Vector3(-0.3, 0.05, 0.6), unterarm: new THREE.Vector3(0.6, 0.15, 0.1) };
 function schiesse() {
   if (!figur || bogenPause > 0 || !steuerung.zustand.aktiv) return;
-  if (!inventar.hat('bogen')) { nachricht('Du hast keinen Bogen. Bau dir einen (Herstellen).'); return; }
+  // der beste Bogen, den man hat
+  const bogen = ['reiterbogen', 'bogen'].find((id) => inventar.hat(id));
+  if (!bogen) { nachricht('Du hast keinen Bogen. Bau dir einen (Herstellen).'); return; }
+  const { schaden: bogenSchaden, weite } = gegenstand(bogen).fernkampf;
   if (!inventar.hat('pfeil')) { nachricht('Keine Pfeile mehr. Aus zwei Ästen und einem Feuerstein werden fünf (Herstellen).'); return; }
   inventar.nimm('pfeil', 1);
   bogenPause = 1.1;
@@ -1007,7 +1016,6 @@ function schiesse() {
   figur.setzeArm('r', BOGEN_ARM_R);
   setTimeout(() => {
     const start = new THREE.Vector3().copy(steuerung.zustand.ort).add(new THREE.Vector3(0, 1.5, 0)).addScaledVector(blick, 0.6);
-    const weite = 45;
     const tierTreffer = tiere.aufLinie(start, blick, weite);
     let gegnerTreffer = null;
     for (const g of gegner.alle) {
@@ -1016,18 +1024,31 @@ function schiesse() {
       const s = rel.dot(blick);
       if (s > 0 && s < weite && rel.addScaledVector(blick, -s).length() < 0.5 && (!gegnerTreffer || s < gegnerTreffer.abstand)) gegnerTreffer = { g, abstand: s };
     }
-    const treffer = tierTreffer && (!gegnerTreffer || tierTreffer.abstand < gegnerTreffer.abstand) ? tierTreffer : gegnerTreffer;
+    let treffer = tierTreffer && (!gegnerTreffer || tierTreffer.abstand < gegnerTreffer.abstand) ? tierTreffer : gegnerTreffer;
+    const scheibe = jurtenlager.trifftScheibe(start, blick, weite);
+    if (scheibe && (!treffer || scheibe.abstand < treffer.abstand)) treffer = { scheibe: true, ...scheibe };
     const flug = treffer ? treffer.abstand : weite;
     const pfeil = baueForm('pfeil');
     pfeil.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), blick);
     pfeil.position.copy(start);
     szene.add(pfeil);
-    pfeile.push({ pfeil, start, blick: blick.clone(), flug, weg: 0, treffer, alter: 0 });
+    pfeile.push({ pfeil, start, blick: blick.clone(), flug, weg: 0, treffer, alter: 0, bogenSchaden });
     figur.setzeArm('l', null);
     figur.setzeArm('r', null);
     setTimeout(() => { if (!fackelAn) inDieHand(figur, null, 'l'); }, 400);
   }, 450);
 }
+// Bogenprobe bei Bleda: dreimal vom Pflock aus die Scheibe treffen
+let probeTreffer = 0;
+function scheibenTreffer(ring) {
+  nachricht(ring < 0.2 ? 'Mitten ins Gold!' : ring < 0.5 ? 'Getroffen, nah an der Mitte.' : 'Getroffen, am Rand der Scheibe.');
+  const amPflock = Math.hypot(steuerung.zustand.ort.x - PFLOCK.x, steuerung.zustand.ort.z - PFLOCK.z) < 3;
+  if (!aufgaben.istAktiv('bogenprobe') || !amPflock) return;
+  probeTreffer++;
+  if (probeTreffer >= 3) { ereignisse.s.merke('bogenprobe-geschafft'); nachricht('Drei Treffer! Bleda nickt anerkennend.'); }
+  else nachricht(`Treffer ${probeTreffer} von 3`);
+}
+
 function pfeilSchritt(dt) {
   bogenPause = Math.max(0, bogenPause - dt);
   for (let i = pfeile.length - 1; i >= 0; i--) {
@@ -1038,8 +1059,10 @@ function pfeilSchritt(dt) {
       p.pfeil.position.copy(p.start).addScaledVector(p.blick, p.weg);
       p.pfeil.position.y -= 0.002 * p.weg * p.weg / 10; // leichter Bogen nach unten
       if (p.weg >= p.flug && p.treffer) {
-        const schaden = Math.round(12 * fortschritt.wirkung.schlagFaktor() * (0.9 + Math.random() * 0.2));
-        if (p.treffer.tier) {
+        const schaden = Math.round(p.bogenSchaden * fortschritt.wirkung.schlagFaktor() * (0.9 + Math.random() * 0.2));
+        if (p.treffer.scheibe) {
+          scheibenTreffer(p.treffer.ring);
+        } else if (p.treffer.tier) {
           const t = tiere.treffe(p.treffer.tier, schaden);
           if (t?.zustand === 'tot') nachricht(`Getroffen! Der ${t.def.name} ist erlegt.`);
           else nachricht('Getroffen! Das Tier flieht.');
@@ -1165,6 +1188,7 @@ renderer.setAnimationLoop(() => {
   dorf.aktualisiere(dt, wind.richtung.value, zeit.hell);
   graufurt.aktualisiere(dt, wind.richtung.value, zeit.hell);
   hrodgard.aktualisiere(dt, wind.richtung.value, zeit.hell, steuerung.zustand.ort);
+  jurtenlager.aktualisiere(dt, wind.richtung.value, zeit.hell);
   fackelSchritt(dt);
   bauen.schritt(dt, steuerung.zustand.ort, steuerung.zustand.blickSeite + Math.PI); // dorthin, wohin man schaut
   bauen.schrittFackeln();
@@ -1192,7 +1216,7 @@ renderer.setAnimationLoop(() => {
       oberflaeche.zeigeAktion(v);
       markierung.zeige(v?.stelle ?? null);
       document.getElementById('knopf-schlagen').classList.toggle('bereit', gegner.imKampf().length > 0);
-      document.getElementById('knopf-schiessen').hidden = !inventar.hat('bogen');
+      document.getElementById('knopf-schiessen').hidden = !inventar.hat('bogen') && !inventar.hat('reiterbogen');
     }
     anzeigeTakt -= dt;
     if (anzeigeTakt <= 0) {

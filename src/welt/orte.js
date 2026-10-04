@@ -72,6 +72,29 @@ export const DOERFLER_HRODGARD = {
   sigrun: { x: -205, z: 102.5 }, // an ihrem Spinnrad vor dem Nordhaus
 };
 
+// Die Steppe im Osten, hinter Erlenbach: offenes, sanft gewelltes Grasland ohne Wald, das Gras trocken und golden.
+// Hier zieht das Reitervolk mit seinen Jurten umher (ein wenig wie die Hunnen). Die Oststraße führt von Erlenbach hin.
+export const STEPPE = { von: 262, bis: 305, zInnen: 115, zAussen: 165 }; // ab x = von beginnt sie, ab bis ist sie ganz da
+export const JURTENLAGER = { x: 362, z: 8, radius: 28 };
+// r: Radius der Jurte; die Tür zeigt nach Süden (wie bei den Steppenvölkern)
+export const JURTEN = [
+  { name: 'khan', x: 362, z: -6, r: 4.6 },
+  { name: 'j2', x: 348, z: 2, r: 3.4 },
+  { name: 'j3', x: 376, z: 1, r: 3.4 },
+  { name: 'j4', x: 340, z: 16, r: 3.0 },
+  { name: 'j5', x: 384, z: 15, r: 3.1 },
+  { name: 'j6', x: 352, z: 26, r: 2.8 },
+];
+export const FEUER_LAGER = { x: 362, z: 12 };
+export const ZIELSCHEIBE = { x: 392, z: 34, mitte: 1.25 }; // Bogenschießen: die Scheibe, geschossen wird vom Pflock 18 m westlich
+export const PFLOCK = { x: 374, z: 34 };
+export const PFERDELEINE = { x: 338, z: 32, laenge: 14 };
+export const OSTSTRASSE = [[214, 48], [240, 44], [268, 36], [298, 28], [326, 20], [348, 14]];
+export const DOERFLER_JURTEN = {
+  uldin: { x: 362, z: 0.2, reichweite: 3.5 }, // vor seiner Jurte
+  bleda: { x: 372.5, z: 34.5 }, // am Schießpflock
+};
+
 export const LAGER = { x: -58, z: 86, radius: 9 }; // Lichtung des Einsiedlers am Waldrand
 export const BEERENSTRAEUCHER = [
   { x: 24, z: 44 }, { x: 28, z: 47 }, { x: -36, z: 38 }, { x: -40, z: 41 }, { x: 52, z: 6 },

@@ -3,7 +3,7 @@
 // Orte mit ihren Namen. Taste M oder ein Tipp auf die Karte macht sie groß.
 import { hoeheBei, maskeBei, waldDichte, wasserspiegel, wegLinien, WELT_GROESSE } from '../welt/gelaende.js';
 import {
-  DORF, GRAUFURT, HRODGARD, LAGER, MOOR, MOORSEE, RAEUBERLAGER, SCHILFSEE, TEICH, THING, WALDSEE, WEIHER,
+  DORF, GRAUFURT, HRODGARD, JURTENLAGER, LAGER, MOOR, MOORSEE, RAEUBERLAGER, SCHILFSEE, TEICH, THING, WALDSEE, WEIHER,
 } from '../welt/orte.js';
 
 const BILD = 384; // Kantenlänge des gezeichneten Landes in Pixeln
@@ -15,6 +15,8 @@ const ORTE = [
   { name: 'Erlenbach', ...DORF, art: 'dorf' },
   { name: 'Graufurt', ...GRAUFURT, art: 'dorf' },
   { name: 'Hrodgard', ...HRODGARD, art: 'dorf' },
+  { name: 'Jurtenlager', ...JURTENLAGER, art: 'dorf' },
+  { name: 'Die Steppe', x: 380, z: -70, art: 'gebiet' },
   { name: 'Thing-Platz', x: THING.x, z: THING.z + 6, art: 'gebiet' },
   { name: 'Lichtung des Alten', ...LAGER, art: 'lager' },
   { name: 'Räuberlager', ...RAEUBERLAGER, art: 'gefahr' },
@@ -172,8 +174,11 @@ export function erzeugeKarte({ huelle }) {
       k.font = `${o.art === 'dorf' ? 600 : 400} ${gross ? 11 : 26}px "Alegreya Sans", system-ui, sans-serif`;
       if (o.art === 'see' || o.art === 'gebiet') k.font = `italic ${k.font}`;
       const ty = py + (o.art === 'see' || o.art === 'gebiet' ? 4 : 13 * f + 4);
-      k.lineWidth = 3 * f; k.strokeStyle = 'rgba(236,226,200,0.85)'; k.strokeText(o.name, px, ty);
-      k.fillStyle = o.art === 'see' ? '#2c4a5a' : '#2b2015'; k.fillText(o.name, px, ty);
+      // am Rand nicht abschneiden
+      const halb = k.measureText(o.name).width / 2 + 3 * f;
+      const tx = Math.min(BILD - halb, Math.max(halb, px));
+      k.lineWidth = 3 * f; k.strokeStyle = 'rgba(236,226,200,0.85)'; k.strokeText(o.name, tx, ty);
+      k.fillStyle = o.art === 'see' ? '#2c4a5a' : '#2b2015'; k.fillText(o.name, tx, ty);
     }
 
     // Man selbst: ein Pfeil in Blickrichtung

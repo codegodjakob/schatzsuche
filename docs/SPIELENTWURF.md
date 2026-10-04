@@ -529,6 +529,15 @@ Modelle von Poly Haven. **Hrodgar**, der Häuptling, erzählt von der Fehde mit 
 will drei Felle; wer sie bringt, wird Freund des Ebers und bekommt ein Eberzahn-Amulett. **Sigrun**, die Weberin,
 verkauft Kleidung und erzählt vom Reitervolk im Osten.
 
+**Die Steppe und das Reitervolk (gebaut)**: Hinter Erlenbach führt die Oststraße hinaus aus dem Wald in die Steppe:
+offenes, sanft gewelltes Grasland, das Gras höher, trocken und golden. Dort steht das Lager der „Söhne des Blauen
+Himmels“: sechs Jurten aus hellem Filz mit roten Gurten, Rauchring und bemalten Türen, Standarten mit schwarzen
+Pferdeschweifen vor der Jurte des Khans, zwei Kibitka-Wagen mit Filzhütte, eine Pferdeleine, ein Gestell mit
+trocknenden Häuten und ein Lagerfeuer. **Uldin**, der Khan, verkauft Kumys, Trockenfleisch und Filzmäntel; ein Pferd
+gibt er nur dem, der schießen kann. **Bleda** stellt die **Bogenprobe**: vom Pflock aus dreimal die Zielscheibe treffen.
+Wer es schafft, bekommt einen **Reiterbogen** (schießt weiter und härter). Die Pferde selbst kommen, sobald die
+Quaternius-Tiermodelle (CC0) geladen werden können; Google Drive sperrt sie gerade wegen zu vieler Abrufe.
+
 **Nächste Schritte**: Die Welt wird in Reiche aufgeteilt, die man erst lädt, wenn man hinreist (wie die Dorfbewohner).
 Zuerst ein germanisches Langhaus-Dorf, dann die Steppe mit dem Reitervolk und dem eigenen Pferd.
 
