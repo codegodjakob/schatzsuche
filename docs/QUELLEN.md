@@ -31,6 +31,12 @@ werden. Das Werkzeug `werkzeuge/figuren/` kann dann andere BVH-Dateien verwenden
 | Blatttexturen, Bodentexturen (Gras, Erde), Felstextur, Blumenmodelle | aus dem Paket von EZ-Tree | MIT (Paketlizenz) |
 | Felsformen, Gras, Wasser, Himmel, Wolken, Sterne, Feuer | selbst erzeugt im Code | wie das Projekt |
 
+## Tiere
+
+| Was | Quelle | Lizenz |
+|---|---|---|
+| Fuchs mit Bewegungen (Schnuppern, Gehen, Rennen), `assets/tiere/fuchs.glb` | [glTF-Beispielmodelle der Khronos Group](https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/Fox): Modell PixelMannen; Skelett und Bewegungen tomkranis; Umwandlung nach glTF @AsoboStudio und @scurest | Modell CC0; Skelett, Bewegungen und Umwandlung CC-BY 4.0 (Namensnennung, hiermit erfüllt) |
+
 ## Programmbibliotheken
 
 | Was | Quelle | Lizenz |

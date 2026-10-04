@@ -93,9 +93,10 @@ export function erzeugeFaellen({ szene, baeume, holzMaterial }) {
   }
 
   // Ein Axtschlag gegen einen stehenden Baum. von: wo man steht. Ergebnis: { schlaege, noetig, faellt }
-  function hacke(nr, von) {
+  // kraft: wie viel ein Hieb schafft (eine Eisenaxt doppelt so viel wie eine Steinaxt)
+  function hacke(nr, von, kraft = 1) {
     const f = baeume.form(nr);
-    const n = (kerben.get(nr) ?? 0) + 1;
+    const n = (kerben.get(nr) ?? 0) + kraft;
     kerben.set(nr, n);
     const zuMir = new THREE.Vector3(von.x - f.x, 0, von.z - f.z).normalize();
     spaeneFliegen(new THREE.Vector3(f.x, f.y + 0.7, f.z).addScaledVector(zuMir, stammRadius(f)), zuMir);
@@ -242,6 +243,14 @@ export function erzeugeFaellen({ szene, baeume, holzMaterial }) {
   return {
     objekt: gruppe,
     hacke, vorschlag, bearbeite, schritt, wachsen, noetig,
+    // Der Sturm wirft einen Baum um (ohne Axt)
+    stuerzeUm: (nr, richtung) => kippe(nr, richtung),
+    // Wo ein gefällter Baum liegt (für Prüfungen): { liegt, x, z } – eine Stelle neben dem Stamm
+    liegender(nr) {
+      const l = liegend.find((x) => x.nr === nr);
+      if (!l) return null;
+      return { liegt: l.liegt, x: l.form.x + l.richtung.x * 3 - l.richtung.z * 1.2, z: l.form.z + l.richtung.z * 3 + l.richtung.x * 1.2 };
+    },
     istGefaellt: (nr) => stuempfe.has(nr) && baeume.baum(nr).weg,
     // Ein Baum, der gerade nachwächst, ist noch zu jung zum Fällen
     istJung: (nr) => baeume.baum(nr).wuchs < 0.6,

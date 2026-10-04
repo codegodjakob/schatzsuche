@@ -11,7 +11,7 @@ const DURST = 100 / (25 * 60);
 const AUSKUEHLEN = 100 / (6 * 60);
 
 // zehrFaktor / heilFaktor: wie schnell Hunger, Durst und Kälte zehren und das Leben heilt (Ausdauer)
-export function erzeugeUeberleben({ beiTod, beiWarnung, zehrFaktor = () => 1, heilFaktor = () => 1 }) {
+export function erzeugeUeberleben({ beiTod, beiWarnung, zehrFaktor = () => 1, heilFaktor = () => 1, kaelteSchutz = () => 0 }) {
   const w = { ...START_WERTE };
   const warnungen = new Set();
   let waermequellen = [];
@@ -34,7 +34,7 @@ export function erzeugeUeberleben({ beiTod, beiWarnung, zehrFaktor = () => 1, he
     const feuer = amFeuer(ort);
     const nacht = 1 - zeit.hell;
     if (feuer) w.waerme = Math.min(100, w.waerme + 4 * dt);
-    else if (nacht > 0.4) w.waerme = Math.max(0, w.waerme - AUSKUEHLEN * nacht * (tempo > 0.5 ? 0.7 : 1) * zehrFaktor() * dt);
+    else if (nacht > 0.4) w.waerme = Math.max(0, w.waerme - AUSKUEHLEN * nacht * (tempo > 0.5 ? 0.7 : 1) * zehrFaktor() * (1 - kaelteSchutz()) * dt);
     else w.waerme = Math.min(100, w.waerme + 0.6 * dt);
 
     const leer = (w.saettigung <= 0) + (w.wasser <= 0) + (w.waerme <= 0);

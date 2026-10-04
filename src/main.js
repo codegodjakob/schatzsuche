@@ -1,25 +1,28 @@
 // Einstiegspunkt: baut die Welt, wartet auf die Figurenwahl und startet das Spiel.
 import * as THREE from 'three';
 import { erzeugeTempoWaechter, merkeStufe, naechsteStufe, startStufe, STUFEN } from './qualitaet.js';
-import { aendereBoden, erzeugeGelaende, hoeheBei, neigungBei, pfadAbstand, wasserspiegel } from './welt/gelaende.js';
+import { aendereBoden, erzeugeGelaende, hoeheBei, neigungBei, pfadAbstand, waldDichte, wasserspiegel } from './welt/gelaende.js';
 import { erzeugeBauen } from './welt/bauen.js';
 import { druecke } from './welt/bodenspuren.js';
 import { erzeugeHimmel } from './welt/himmel.js';
 import { erzeugeGras } from './welt/gras.js';
 import { erzeugeBaeume } from './welt/baeume.js';
 import { erzeugeNatur } from './welt/natur.js';
+import { erzeugeUnterholz } from './welt/unterholz.js';
+import { erzeugeTiere } from './welt/tiere.js';
+import { baueForm } from './welt/waffen.js';
 import { erzeugeWasser } from './welt/wasser.js';
 import { erzeugeFeuer, erzeugeFeuerlichter, erzeugeFlamme } from './welt/feuer.js';
 import { erzeugeSammeln } from './welt/sammeln.js';
 import { erzeugeMarkierung } from './welt/markierung.js';
 import { AUFWACHSEN, AUSTREIBEN, erzeugeFaellen } from './welt/faellen.js';
 import { erzeugeRaeuberlager } from './welt/raeuberlager.js';
-import { erzeugeDorf } from './welt/dorf.js';
+import { erzeugeDorf, erzeugeGraufurt } from './welt/dorf.js';
 import { inDieHand } from './welt/waffen.js';
 import { entferneHindernis, hindernis, kreisFrei } from './welt/kollision.js';
 import { wind, windSchritt } from './welt/wind.js';
 import { SEKUNDEN_JE_STUNDE, tageszeitSchritt, uhrzeitText, zeit } from './welt/tageszeit.js';
-import { DORF, LAGER, RAEUBERLAGER, START } from './welt/orte.js';
+import { DOERFLER_GRAUFURT, DORF, GRAUFURT, LAGER, RAEUBERLAGER, START } from './welt/orte.js';
 import { BAUWERKE } from './inhalte/rezepte.js';
 import { ladeFigur } from './spieler/figur.js';
 import { erzeugeSteuerung } from './spieler/steuerung.js';
@@ -33,6 +36,7 @@ import { erzeugeEinsiedler } from './figuren/einsiedler.js';
 import { erzeugeDoerfler } from './figuren/doerfler.js';
 import { erzeugeEreignisse } from './ereignisse/ereignisse.js';
 import { erzeugeAufgaben } from './ereignisse/aufgaben.js';
+import { erzeugeBegegnungen } from './ereignisse/begegnungen.js';
 import { erzeugeGegner } from './kampf/gegner.js';
 import { erzeugeKampf } from './kampf/kampf.js';
 import { erzeugeUeberleben } from './ueberleben/werte.js';
@@ -114,6 +118,8 @@ await atmen();
 const natur = await erzeugeNatur(qualitaet, baeume.beerenBusch);
 szene.add(natur.objekt);
 for (const h of natur.hindernisse) h.griff = hindernis(h.x, h.z, h.radius);
+const unterholz = erzeugeUnterholz(qualitaet, { rinde: baeume.rinde, baeume: baeume.hindernisse });
+szene.add(unterholz.objekt);
 const sammeln = erzeugeSammeln({ natur, baeume });
 szene.add(sammeln.objekt);
 const markierung = erzeugeMarkierung();
@@ -135,9 +141,12 @@ oberflaeche.laden('Das Dorf Erlenbach …');
 await atmen();
 const dorf = erzeugeDorf();
 szene.add(dorf.objekt);
+const graufurt = erzeugeGraufurt();
+szene.add(graufurt.objekt);
 const feuerstellen = [
   { feuer: lagerfeuer, ort: lagerfeuer.ort, brennt: () => true },
   { feuer: raeuberfeuer, ort: raeuberfeuer.ort, brennt: () => true },
+  graufurt.esse,
 ];
 const feuerlichter = erzeugeFeuerlichter(3);
 szene.add(feuerlichter.objekt);
@@ -160,19 +169,32 @@ Promise.allSettled([figurenLaden.er, figurenLaden.sie]).then(() => erzeugeEinsie
 }).catch((e) => window.zeigeFehler?.(`Der Einsiedler konnte nicht geladen werden (${e.message})`))
   .then(() => gegner.lade())
   .then(() => window.notiere?.('Räuber geladen'))
+  .then(() => tiere.lade())
+  .then(() => window.notiere?.('Tiere geladen'))
   .catch((e) => window.zeigeFehler?.(`Die Räuber konnten nicht geladen werden (${e.message})`));
 
 // Die Leute von Erlenbach laden erst, wenn man sich dem Dorf nähert: Das spart am Handy
 // Speicher und Datenvolumen. Bis man dort ist, stehen sie längst an ihrem Platz.
-let doerfler = null, doerflerLaden = null;
+// Beide Dörfer laden ihre Leute erst, wenn man in die Nähe kommt; für Benutzen und Anzeigen zählen sie zusammen
+let doerfler = null;
+const dorfLeute = [];
+const geladeneDoerfer = new Set();
 function doerflerPruefen(ort) {
-  if (doerflerLaden || Math.hypot(ort.x - DORF.x, ort.z - DORF.z) > 160) return;
-  doerflerLaden = erzeugeDoerfler().then((d) => {
-    doerfler = d;
-    for (const p of d.leute) szene.add(p.objekt);
-    window.spiel.doerfler = d;
-    window.notiere?.('Dorfbewohner geladen');
-  }).catch((e) => window.zeigeFehler?.(`Die Leute im Dorf konnten nicht geladen werden (${e.message})`));
+  for (const [name, mitte, liste] of [['erlenbach', DORF, undefined], ['graufurt', GRAUFURT, DOERFLER_GRAUFURT]]) {
+    if (geladeneDoerfer.has(name) || Math.hypot(ort.x - mitte.x, ort.z - mitte.z) > 160) continue;
+    geladeneDoerfer.add(name);
+    erzeugeDoerfler(liste, mitte).then((d) => {
+      dorfLeute.push(d);
+      for (const p of d.leute) szene.add(p.objekt);
+      doerfler = {
+        leute: dorfLeute.flatMap((x) => x.leute),
+        aktualisiere: (dt, o) => { for (const x of dorfLeute) x.aktualisiere(dt, o); },
+        naechster: (o) => dorfLeute.map((x) => x.naechster(o)).find(Boolean) ?? null,
+      };
+      window.spiel.doerfler = doerfler;
+      window.notiere?.(`Dorfbewohner geladen (${name})`);
+    }).catch((e) => window.zeigeFehler?.(`Die Leute im Dorf konnten nicht geladen werden (${e.message})`));
+  }
 }
 
 window.spiel.geladen = true;
@@ -206,6 +228,7 @@ const ueberleben = erzeugeUeberleben({
   beiTod: sterben,
   beiWarnung: nachricht,
   zehrFaktor: () => fortschritt.wirkung.zehrFaktor(),
+  kaelteSchutz: () => inventar.kleidungsWaerme(),
   heilFaktor: () => fortschritt.wirkung.heilFaktor(),
 });
 ueberleben.setzeWaermequellen(feuerstellen);
@@ -221,7 +244,7 @@ const herstellen = erzeugeHerstellen({
 const aufgaben = erzeugeAufgaben({
   s: ereignisse.s, inventar, fortschritt, nachricht,
   beiErfuellt: (a, teile) => {
-    oberflaeche.band('Aufgabe erfüllt', `${a.titel}${teile.length ? ` · ${teile.join(', ')}` : ''}`, 'aufgabe');
+    oberflaeche.band('Geschafft', `${a.titel}${teile.length ? ` · ${teile.join(', ')}` : ''}`, 'aufgabe');
     window.notiere?.(`Aufgabe erfüllt: ${a.id}`);
     speichereBald();
   },
@@ -417,7 +440,7 @@ function axthieb(x, z) {
 }
 function faelleSchlag(stelle, nr) {
   axthieb(stelle.x, stelle.z);
-  const r = faellen.hacke(nr, steuerung.zustand.ort);
+  const r = faellen.hacke(nr, steuerung.zustand.ort, inventar.werkzeugStufe('axt'));
   gewinn(`+${fortschritt.gibErfahrung(2, 'holzfaellen')} Erfahrung`, 'erfahrung');
   if (r.faellt) {
     sammeln.nimm(stelle, AUSTREIBEN + AUFWACHSEN * 0.55); // erst ein halbwüchsiger Baum lässt sich wieder nutzen
@@ -448,12 +471,13 @@ let schlaeft = false;
 function kannSchlafen() {
   return istNacht() && !schlaeft && (amFeuer() || !!bauen.unterstandBei(steuerung.zustand.ort)) && !gegner.imKampf().length;
 }
-function schlafe() {
-  if (!kannSchlafen()) return false;
+// imBett: im Gasthaus (dort geht es ohne Feuer)
+function schlafe(imBett = false) {
+  if (imBett !== true && !kannSchlafen()) return false;
   schlaeft = true;
   steuerung.zustand.aktiv = false;
   const vorhang = document.getElementById('schlaf');
-  vorhang.textContent = amFeuer() ? 'Du schläfst am Feuer …' : 'Du schläfst im Unterstand …';
+  vorhang.textContent = imBett === true ? 'Du schläfst in einem weichen Bett …' : amFeuer() ? 'Du schläfst am Feuer …' : 'Du schläfst im Unterstand …';
   vorhang.classList.add('zu');
   setTimeout(() => {
     const stunden = (24 + 6.5 - zeit.stunde) % 24;
@@ -476,6 +500,64 @@ function schlafe() {
   }, 1600);
   return true;
 }
+
+// ---------------------------------------------------------------- Begegnungen unterwegs
+// Wegelagerer, Mitfahren mit einer Karawane, ein Sturm, der einen Baum umwirft (src/ereignisse/begegnungen.js)
+welt.schlafeImBett = () => schlafe(true);
+welt.ueberfall = (n) => gegner.ueberfall(steuerung.zustand.ort, n);
+welt.reise = (x, z, stunden, text) => {
+  steuerung.zustand.aktiv = false;
+  const vorhang = document.getElementById('schlaf');
+  vorhang.textContent = text;
+  vorhang.classList.add('zu');
+  setTimeout(() => {
+    steuerung.setzeOrt(x, z);
+    zeit.stunde += stunden;
+    if (zeit.stunde >= 24) { zeit.stunde -= 24; zeit.tag += 1; }
+    tageszeitSchritt(0);
+    setTimeout(() => { vorhang.classList.remove('zu'); steuerung.zustand.aktiv = !ueberleben.tot; speichereBald(); }, 1400);
+  }, 1800);
+};
+welt.sturm = () => {
+  const o = steuerung.zustand.ort;
+  let beste = -1, d = Infinity;
+  baeume.hindernisse.forEach((h, nr) => {
+    if (h.art !== 'baum' || baeume.baum(nr).weg || baeume.baum(nr).wuchs < 1) return;
+    const e = Math.hypot(h.x - o.x, h.z - o.z);
+    if (e > 9 && e < 30 && e < d) { d = e; beste = nr; }
+  });
+  if (beste < 0) return;
+  const h = baeume.hindernisse[beste];
+  // vom Spieler weg fallen lassen
+  const r = new THREE.Vector3(h.x - o.x, 0, h.z - o.z).normalize();
+  faellen.stuerzeUm(beste, r);
+  const st = sammeln.stelle(`baum-${beste}`);
+  if (st) sammeln.nimm(st, AUSTREIBEN + AUFWACHSEN * 0.55);
+};
+const begegnungen = erzeugeBegegnungen({
+  ereignisse,
+  darf: () => spielLaeuft && !pausiert && !schlaeft && steuerung.zustand.aktiv && !ereignisse.aktuell && !gegner.imKampf().length && !bauen.plan && !angeln.aktiv,
+  lage: () => {
+    const o = steuerung.zustand.ort;
+    return {
+      imDorf: Math.hypot(o.x - DORF.x, o.z - DORF.z) < DORF.radius + 20,
+      anStrasse: pfadAbstand(o.x, o.z) < 6,
+      imWald: waldDichte(o.x, o.z) > 0.4,
+      nacht: zeit.hell < 0.35,
+    };
+  },
+});
+
+// ---------------------------------------------------------------- Tiere
+const tiere = erzeugeTiere({
+  szene,
+  beiErlegt: (t) => {
+    for (const [id, n] of Object.entries(t.def.beute)) if (inventar.gib(id, n, { leise: true })) gewinn(`+${benenne(id, n)}`, id);
+    gewinn(`+${fortschritt.gibErfahrung(t.def.erfahrung, 'jagen')} Erfahrung`, 'erfahrung');
+    ereignisse.merker.add(`erlegt-${t.art}`);
+    speichereBald();
+  },
+});
 
 // ---------------------------------------------------------------- Kampf
 const anzeige = erzeugeKampfanzeige(kamera);
@@ -693,7 +775,7 @@ function tippsPruefen() {
 Object.defineProperty(window.spiel, 'aussehen', { get: () => aussehen });
 Object.assign(window.spiel, {
   editor,
-  steuerung, ereignisse, ueberleben, inventar, fortschritt, herstellen, aufgaben, sammeln, benutzen, menue, faellen, baeume, bauen, natur, gegner, kampf,
+  steuerung, ereignisse, ueberleben, inventar, fortschritt, herstellen, aufgaben, sammeln, benutzen, menue, faellen, baeume, bauen, natur, unterholz, begegnungen, tiere, schiesse, gegner, kampf,
   handel, angeln, dorf, wasserspiegel: wasserspiegel(),
   speichere: () => speichereJetzt(),
   fackelBrennt: () => fackelAn,
@@ -722,6 +804,8 @@ function spielstand() {
     ereignisse: ereignisse.speichern(),
     sammeln: sammeln.speichern(),
     faellen: faellen.speichern(),
+    begegnungen: begegnungen.speichern(),
+    tiere: tiere.speichern(),
     bauwerke: bauen.speichern(),
     gegraben,
     felsen: [...abgebaut],
@@ -753,6 +837,8 @@ function ladeStand(st) {
   aufgaben.laden(st.aufgaben);
   sammeln.laden(st.sammeln);
   faellen.laden(st.faellen);
+  begegnungen.laden(st.begegnungen);
+  tiere.laden(st.tiere);
   bauen.laden(st.bauwerke);
   for (const [x, z] of st.gegraben ?? []) { aendereBoden(x, z, 0.3, 1.6); druecke(x, z, 1.3, 1); gegraben.push([x, z]); }
   for (const [x, z] of gegraben) zeigeGrube(x, z);
@@ -856,6 +942,7 @@ addEventListener('keydown', (e) => {
   if (e.code === 'KeyE' && !ereignisse.aktuell) benutzen.benutze(steuerung.zustand.ort, steuerung.zustand.blickSeite);
   if (e.code === 'KeyF') machFeuer();
   if (e.code === 'KeyT') fackelUmschalten();
+  if (e.code === 'KeyR') schiesse();
   if ((e.code === 'KeyB' || e.code === 'Escape') && bauen.plan) bauen.abbrechen();
   if (e.code === 'KeyX') schlage();
   if (e.code === 'KeyG') {
@@ -871,7 +958,79 @@ flaeche.addEventListener('mousedown', (e) => {
 // Wer zuschlägt, legt vorher die Angel weg
 function schlage() {
   if (angeln.aktiv) angeln.einholen();
-  kampf.schlage();
+  if (!kampf.schlage()) return;
+  // Auch ein Tier in Reichweite kann man mit der Waffe treffen (wenn man so nah herankommt)
+  const w = kampf.waffe();
+  setTimeout(() => {
+    const t = tiere.naechstes(steuerung.zustand.ort, w.reichweite + 0.4);
+    if (t) tiere.treffe(t, w.schaden * 1.5);
+  }, 350);
+}
+
+// ---------------------------------------------------------------- Jagd mit Pfeil und Bogen
+// R (am Handy „Schießen“): ein Pfeil fliegt dorthin, wohin man schaut. Er trifft Tiere und Gegner.
+const pfeile = [];
+let bogenPause = 0;
+const BOGEN_ARM_L = { oberarm: new THREE.Vector3(0.1, 0.05, 1), unterarm: new THREE.Vector3(0.05, 0.08, 1) };
+const BOGEN_ARM_R = { oberarm: new THREE.Vector3(-0.3, 0.05, 0.6), unterarm: new THREE.Vector3(0.6, 0.15, 0.1) };
+function schiesse() {
+  if (!figur || bogenPause > 0 || !steuerung.zustand.aktiv) return;
+  if (!inventar.hat('bogen')) { nachricht('Du hast keinen Bogen. Bau dir einen (Herstellen).'); return; }
+  if (!inventar.hat('pfeil')) { nachricht('Keine Pfeile mehr. Aus zwei Ästen und einem Feuerstein werden fünf (Herstellen).'); return; }
+  inventar.nimm('pfeil', 1);
+  bogenPause = 1.1;
+  // Die Figur hebt den Bogen und zieht die Sehne
+  const blick = new THREE.Vector3();
+  kamera.getWorldDirection(blick);
+  steuerung.dreheZu(Math.atan2(blick.x, blick.z), 0.4);
+  inDieHand(figur, 'bogen', 'l');
+  figur.setzeArm('l', BOGEN_ARM_L);
+  figur.setzeArm('r', BOGEN_ARM_R);
+  setTimeout(() => {
+    const start = new THREE.Vector3().copy(steuerung.zustand.ort).add(new THREE.Vector3(0, 1.5, 0)).addScaledVector(blick, 0.6);
+    const weite = 45;
+    const tierTreffer = tiere.aufLinie(start, blick, weite);
+    let gegnerTreffer = null;
+    for (const g of gegner.alle) {
+      if (g.zustand === 'tot' || !g.objekt.visible) continue;
+      const rel = g.objekt.position.clone().add(new THREE.Vector3(0, 1.1, 0)).sub(start);
+      const s = rel.dot(blick);
+      if (s > 0 && s < weite && rel.addScaledVector(blick, -s).length() < 0.5 && (!gegnerTreffer || s < gegnerTreffer.abstand)) gegnerTreffer = { g, abstand: s };
+    }
+    const treffer = tierTreffer && (!gegnerTreffer || tierTreffer.abstand < gegnerTreffer.abstand) ? tierTreffer : gegnerTreffer;
+    const flug = treffer ? treffer.abstand : weite;
+    const pfeil = baueForm('pfeil');
+    pfeil.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), blick);
+    pfeil.position.copy(start);
+    szene.add(pfeil);
+    pfeile.push({ pfeil, start, blick: blick.clone(), flug, weg: 0, treffer, alter: 0 });
+    figur.setzeArm('l', null);
+    figur.setzeArm('r', null);
+    setTimeout(() => { if (!fackelAn) inDieHand(figur, null, 'l'); }, 400);
+  }, 450);
+}
+function pfeilSchritt(dt) {
+  bogenPause = Math.max(0, bogenPause - dt);
+  for (let i = pfeile.length - 1; i >= 0; i--) {
+    const p = pfeile[i];
+    p.alter += dt;
+    if (p.weg < p.flug) {
+      p.weg = Math.min(p.flug, p.weg + 45 * dt);
+      p.pfeil.position.copy(p.start).addScaledVector(p.blick, p.weg);
+      p.pfeil.position.y -= 0.002 * p.weg * p.weg / 10; // leichter Bogen nach unten
+      if (p.weg >= p.flug && p.treffer) {
+        const schaden = Math.round(12 * fortschritt.wirkung.schlagFaktor() * (0.9 + Math.random() * 0.2));
+        if (p.treffer.tier) {
+          const t = tiere.treffe(p.treffer.tier, schaden);
+          if (t?.zustand === 'tot') nachricht(`Getroffen! Der ${t.def.name} ist erlegt.`);
+          else nachricht('Getroffen! Das Tier flieht.');
+        } else if (p.treffer.g) {
+          gegner.treffe({ ort: p.treffer.g.objekt.position.clone().addScaledVector(p.blick, -0.8), richtung: Math.atan2(p.blick.x, p.blick.z), reichweite: 1.2, schaden, volltreffer: false });
+        }
+      }
+    }
+    if (p.alter > 8) { szene.remove(p.pfeil); pfeile.splice(i, 1); }
+  }
 }
 
 function wechsleGrafik() {
@@ -982,8 +1141,10 @@ renderer.setAnimationLoop(() => {
   himmel.aktualisiere(dt, blickpunkt);
   gras.aktualisiere(blickpunkt, kamera);
   baeume.aktualisiere(dt, blickpunkt, himmel.licht, kamera, zeit.hell);
+  unterholz.aktualisiere(dt, blickpunkt);
   for (const f of feuerstellen) if (f.brennt()) f.feuer.aktualisiere(dt, wind.richtung.value, zeit.hell);
   dorf.aktualisiere(dt, wind.richtung.value, zeit.hell);
+  graufurt.aktualisiere(dt, wind.richtung.value, zeit.hell);
   fackelSchritt(dt);
   bauen.schritt(dt, steuerung.zustand.ort, steuerung.zustand.blickSeite + Math.PI); // dorthin, wohin man schaut
   bauen.schrittFackeln();
@@ -993,6 +1154,8 @@ renderer.setAnimationLoop(() => {
   doerfler?.aktualisiere(dt, blickpunkt);
   markierung.schritt(dt);
   faellen.schritt(pausiert ? 0 : dt);
+  if (!pausiert) { tiere.schritt(dt, steuerung.zustand.ort); pfeilSchritt(dt); }
+  if (spielLaeuft && !pausiert) begegnungen.schritt(dt);
   sammeln.aktualisiere(dt, zeit.hell, renderer.getPixelRatio());
   // Augen gewöhnen sich an die Dunkelheit
   renderer.toneMappingExposure = THREE.MathUtils.lerp(1.05, 0.62, zeit.hell);
@@ -1007,6 +1170,7 @@ renderer.setAnimationLoop(() => {
       oberflaeche.zeigeAktion(v);
       markierung.zeige(v?.stelle ?? null);
       document.getElementById('knopf-schlagen').classList.toggle('bereit', gegner.imKampf().length > 0);
+      document.getElementById('knopf-schiessen').hidden = !inventar.hat('bogen');
     }
     anzeigeTakt -= dt;
     if (anzeigeTakt <= 0) {

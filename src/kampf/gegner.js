@@ -118,7 +118,7 @@ export function erzeugeGegner({ szene, istAktiv = () => true, beiAlarm = () => {
     g.uhr = 0;
     g.umfallen = 0;
     g.leben = 0;
-    tot.set(g.id, jetzt() + g.def.wiederkehr);
+    if (!g.voruebergehend) tot.set(g.id, jetzt() + g.def.wiederkehr);
     if (g.hindernis) { entferneHindernis(g.hindernis); g.hindernis = null; }
     beiSieg(g);
   }
@@ -133,7 +133,7 @@ export function erzeugeGegner({ szene, istAktiv = () => true, beiAlarm = () => {
         o.rotation.x = -(Math.PI / 2) * t * t; // fällt nach hinten
         g.figur.bewege(dt, 0);
       }
-      if (g.uhr > 30) o.visible = false;
+      if (g.uhr > 30) { o.visible = false; if (g.voruebergehend) g.weg = true; }
       if (jetzt() >= (tot.get(g.id) ?? 0) && Math.hypot(sp.ort.x - g.heimat.x, sp.ort.z - g.heimat.z) > 35) {
         tot.delete(g.id);
         aufstellen(g);
@@ -161,7 +161,7 @@ export function erzeugeGegner({ szene, istAktiv = () => true, beiAlarm = () => {
       g.leben = Math.min(def.leben, g.leben + dt * 8);
       ziel = g.heimat;
       tempo = def.tempo.gehen;
-      if (vonHeim < 1) g.zustand = 'warten';
+      if (vonHeim < 1) { g.zustand = 'warten'; if (g.voruebergehend) g.weg = true; } // Wegelagerer verschwinden im Wald
       else if (kann && d < def.sieht && vonHeim < def.folgt * 0.6) g.zustand = 'jagen';
     } else if (g.zustand === 'jagen') {
       if (!kann || vonHeim > def.folgt || d > def.sieht * 3) g.zustand = 'heim';
@@ -214,6 +214,37 @@ export function erzeugeGegner({ szene, istAktiv = () => true, beiAlarm = () => {
     lade,
     schritt(dt, spieler) {
       for (const g of alle) schrittEiner(g, dt, spieler);
+      // Wegelagerer, die fort sind, ganz entfernen
+      for (let i = alle.length - 1; i >= 0; i--) {
+        const g = alle[i];
+        if (!g.weg) continue;
+        szene.remove(g.objekt);
+        if (g.hindernis) entferneHindernis(g.hindernis);
+        alle.splice(i, 1);
+      }
+    },
+    // Ein Überfall unterwegs: anzahl Wegelagerer treten in einiger Entfernung aus dem Wald und greifen an
+    async ueberfall(ort, anzahl = 2) {
+      const vorlage = await ladeVorlage(GEGNER.wegelagerer.figur);
+      const w0 = Math.random() * Math.PI * 2;
+      for (let i = 0; i < anzahl; i++) {
+        const def = GEGNER.wegelagerer;
+        const figur = vorlage.erzeuge();
+        inDieHand(figur, def.waffe);
+        const o = figur.objekt;
+        o.rotation.order = 'YXZ';
+        const w = w0 + (i - (anzahl - 1) / 2) * 0.5;
+        const heimat = { x: ort.x + Math.sin(w) * 16, z: ort.z + Math.cos(w) * 16 };
+        const g = {
+          id: `wegelagerer-${Date.now()}-${i}`, art: 'wegelagerer', def, figur, objekt: o, heimat, voruebergehend: true,
+          leben: def.leben, zustand: 'warten', uhr: 0, pause: zufall(0.8, 1.6), angriffe: 0, tempo: 0, blick: 0, blickZiel: 0, taumelnAb: 0,
+          hindernis: null, umfallen: 0,
+        };
+        aufstellen(g);
+        g.zustand = 'jagen';
+        szene.add(o);
+        alle.push(g);
+      }
     },
     treffe,
     get alle() { return alle; },

@@ -3,7 +3,7 @@
 // Wie bei den Mii-Figuren der Wii: wenige klare Entscheidungen, sofort zu sehen, „Würfeln“ für Unentschlossene.
 // Ziehen im Bild dreht die Figur.
 import * as THREE from 'three';
-import { HAARFARBEN, HAUTTOENE, KOPFFORMEN, REGLER, wendeAn, wuerfle } from '../spieler/aussehen.js';
+import { HAARFARBEN, HAUTTOENE, KOPFFORMEN, REGLER, VOELKER, wendeAn, wuerfle } from '../spieler/aussehen.js';
 import { zeit } from '../welt/tageszeit.js';
 
 // So sehen die Hauttöne im Editor aus (gemalter Grundton mal Faktor)
@@ -105,6 +105,11 @@ export function erzeugeEditor({ kamera, flaeche, beiAenderung = () => {} }) {
       }
       teile.push(el('p', 'editor-tipp', 'Haare und Bart wachsen im Spiel nach. Schneiden kannst du sie mit einem Messer (Menü, Figur).'));
     } else {
+      teile.push(auswahl('Volk', VOELKER, Math.max(0, VOELKER.findIndex((v) => v.id === a.volk)), (i) => {
+        a.volk = VOELKER[i].id;
+        VOELKER[i].setze(a, art);
+        queueMicrotask(zeichne); // Regler zeigen die neuen Werte
+      }));
       teile.push(auswahl('Hautfarbe', HAUTTOENE.map((h) => ({ name: h.name, css: css(HAUT_GRUND[art].map((x, i) => Math.min(1, x * h.faktor[i]))) })), a.haut, (i) => { a.haut = i; }, { farben: true }));
       teile.push(regler({ titel: 'Größe', wert: a.groesse, von: 0.92, bis: 1.08, schritt: 0.01, enden: ['klein', 'groß'], aendere: (v) => { a.groesse = v; } }));
       teile.push(regler({ titel: 'Statur', wert: a.statur, von: 0, bis: 1, enden: ['schmal', 'kräftig'], aendere: (v) => { a.statur = v; } }));

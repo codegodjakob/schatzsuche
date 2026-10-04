@@ -27,7 +27,8 @@
 // (Benutzen in seiner Nähe).
 //
 // Reihenfolge zählt: Treffen mehrere zu, kommt das obere zuerst.
-import { ALTER_BAUM, DORF, LAGER, RAEUBERLAGER, TEICH } from '../welt/orte.js';
+import { ALTER_BAUM, DORF, GRAUFURT, LAGER, RAEUBERLAGER, TEICH } from '../welt/orte.js';
+import { BEGEGNUNGEN } from './begegnungen.js';
 
 const beimLager = (s, r = 6) => s.nahe(LAGER.x, LAGER.z, r);
 const amFeuerDesAlten = (s) => s.erledigt('einsiedler-gruss') && beimLager(s, 7);
@@ -286,9 +287,65 @@ const DORF_EREIGNISSE = [
       { taste: 'E', text: 'Ins Dorf gehen', folge: (s) => s.sage('Sprich die Leute an: geh nah heran und tippe auf „Benutzen“ (E).') },
     ],
   },
+  {
+    id: 'graufurt-ankunft',
+    wann: (s) => s.nahe(GRAUFURT.x, GRAUFURT.z, 32),
+    text: 'Graufurt: graue Steinhäuser, die sich unter Schieferdächer ducken. Hier ist es rauer als im Süden. '
+      + 'Aus der Schmiede klingt der Hammer, vor dem Gasthaus „Zum Krummen Ochsen“ dampft ein Kessel. Im Norden ragen die Graufels-Berge auf.',
+    optionen: [{ taste: 'E', text: 'Ins Dorf gehen' }],
+  },
 ];
 
 const GESPRAECHE = [
+  {
+    id: 'gespraech-bertram',
+    wiederholbar: true, sperre: 0,
+    wann: () => false,
+    text: (s) => (s.weiss('bertram-kennt')
+      ? 'Bertram wischt sich den Ruß von der Stirn. „Wieder da? Was brauchst du?“'
+      : 'Ein Mann wie ein Eichenstamm lässt den Hammer sinken. „Bertram. Schmied. Wenn du Eisen willst statt Stein, bist du hier richtig. Gutes Werkzeug kostet, aber es hält ein Leben lang.“'),
+    beimZeigen: (s) => s.merke('bertram-kennt'),
+    optionen: [
+      { taste: 'E', text: 'Handeln', folge: (s) => s.handel('bertram') },
+      { taste: 'R', text: 'Gibt es Arbeit?', bedingung: (s) => !s.aufgabeAktiv('auftrag_steine'), folge: (s) => s.starteAufgabe('auftrag_steine') },
+      {
+        taste: 'T', text: '12 Steine abgeben', braucht: 'stein', menge: 12, bedingung: (s) => s.aufgabeAktiv('auftrag_steine'),
+        folge: (s) => { s.nimm('stein', 12); s.merke('abgegeben-steine'); s.sage('„Gute Brocken. Daraus mauere ich die neue Esse.“'); },
+      },
+      {
+        taste: 'F', text: 'Nach den Zwergen fragen', bedingung: (s) => s.weiss('geruecht-graufels') && !s.weiss('bertram-zwerge'),
+        folge: (s) => { s.merke('bertram-zwerge'); s.sage('Bertram lacht leise. „Zwerge? Mein Großvater hat einen gesehen, sagt er. Am Eisentor, oben am Pass. Sie handeln nur mit denen, die ihnen etwas Gutes bringen.“'); },
+      },
+      { taste: 'Q', text: 'Bis bald' },
+    ],
+  },
+  {
+    id: 'gespraech-ida',
+    wiederholbar: true, sperre: 0,
+    wann: () => false,
+    text: '„Willkommen im Krummen Ochsen! Eintopf, Brot, ein Bett für die Nacht. Und wer zahlt, bekommt auch die Neuigkeiten.“',
+    optionen: [
+      { taste: 'E', text: 'Etwas kaufen', folge: (s) => s.handel('ida') },
+      {
+        taste: 'R', text: 'Ein Bett für die Nacht (4 Kupfer)', bedingung: (s) => s.nacht && s.muenzen >= 4,
+        folge: (s) => { s.zahle(4); s.schlafeImBett(); },
+      },
+      {
+        taste: 'T', text: 'Neuigkeiten (1 Kupfer)', bedingung: (s) => s.muenzen >= 1,
+        folge: (s) => {
+          s.zahle(1);
+          const neu = [
+            'Auf der Nordstraße treiben sich Wegelagerer herum. Geh lieber bei Tag.',
+            'Eine Karawane aus dem Süden soll diese Woche durchziehen. Die bringen Wollmäntel mit, die brauchst du hier oben.',
+            'Am Moorsee sieht man nachts Lichter tanzen. Die Alten sagen, da liegt ein König begraben.',
+            'Bertram sucht Steine für seine neue Esse. Er zahlt ordentlich.',
+          ];
+          s.sage(`Ida beugt sich vor: „${neu[Math.floor(Math.random() * neu.length)]}“`);
+        },
+      },
+      { taste: 'Q', text: 'Auf Wiedersehen' },
+    ],
+  },
   {
     id: 'gespraech-gerold',
     wiederholbar: true, sperre: 0,
@@ -309,6 +366,16 @@ const GESPRAECHE = [
             + 'und diese Zacken … die Graufels-Berge im Norden. Dort, in einer Höhle, liegt das nächste Stück. Sieben sind es insgesamt.“');
         },
       },
+      {
+        taste: 'R', text: 'Bridas Brief übergeben', braucht: 'brief',
+        folge: (s) => {
+          s.nimm('brief');
+          s.merke('brief-abgegeben');
+          s.merke('geruecht-krone');
+          s.sage('Gerold bricht das Siegel und wird blass. „Brida lebt … Sie schreibt, dass im Osten jemand die Teile der Karte sammelt. '
+            + 'Einer mit einer Krone im Wappen. Sei vorsichtig, wem du dein Pergament zeigst.“');
+        },
+      },
       { taste: 'Q', text: 'Auf Wiedersehen' },
     ],
   },
@@ -323,6 +390,10 @@ const GESPRAECHE = [
       {
         taste: 'T', text: '8 Holzscheite abgeben', braucht: 'holzscheit', menge: 8, bedingung: (s) => s.aufgabeAktiv('auftrag_holz'),
         folge: (s) => { s.nimm('holzscheit', 8); s.merke('abgegeben-holz'); s.sage('„Damit backe ich eine Woche lang. Hier, dein Lohn.“'); },
+      },
+      {
+        taste: 'F', text: '5 Kamille für Hilde abgeben', braucht: 'kamille', menge: 5, bedingung: (s) => s.aufgabeAktiv('kamille_marta'),
+        folge: (s) => { s.nimm('kamille', 5); s.merke('kamille-abgegeben'); s.sage('„Für Hilde? Gott segne dich. Der Fuhrmann bringt sie ihr noch heute. Nimm die Salbe, sie wollte es so.“'); },
       },
       { taste: 'Q', text: 'Tschüss' },
     ],
@@ -347,5 +418,7 @@ const GESPRAECHE = [
 ];
 
 export function alleEreignisse() {
-  return [...GESCHICHTE, ...DORF_EREIGNISSE, ...GESPRAECHE];
+  // Begegnungen kommen nie von selbst über wann(), sondern über src/ereignisse/begegnungen.js
+  const begegnungen = BEGEGNUNGEN.map((b) => ({ wann: () => false, wiederholbar: !b.einmal, sperre: 0, ...b }));
+  return [...GESCHICHTE, ...DORF_EREIGNISSE, ...GESPRAECHE, ...begegnungen];
 }

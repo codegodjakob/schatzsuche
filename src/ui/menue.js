@@ -334,7 +334,7 @@ export function erzeugeMenue({
     const wrap = el('div', 'aufgaben');
     const verfolgt = aufgaben.verfolgt?.id;
     const aktive = aufgaben.aktive().sort((a, b) => b.haupt - a.haupt);
-    if (!aktive.length) wrap.append(el('p', 'leer-hinweis', 'Gerade keine Aufgaben. Sprich mit den Menschen, die du triffst.'));
+    if (!aktive.length) wrap.append(el('p', 'leer-hinweis', 'Gerade hast du nichts vor. Sprich mit den Menschen, die du triffst, und halt die Augen offen: Unterwegs passiert immer wieder etwas.'));
     for (const a of aktive) {
       const karte = el('article', `aufgabe-karte${a.id === verfolgt ? ' verfolgt' : ''}`);
       karte.append(el('h3', '', a.titel), el('p', 'klein', [a.haupt ? 'Hauptgeschichte' : 'Nebenaufgabe', a.geber ? `von ${a.geber}` : ''].filter(Boolean).join(' · ')), el('p', '', a.beschreibung));

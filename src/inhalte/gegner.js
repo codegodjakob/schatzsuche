@@ -25,6 +25,16 @@ export const GEGNER = {
     beute: { muenzen: [3, 9], gegenstaende: [['lederfetzen', 0.55, 1], ['brot', 0.35, 1], ['keule', 0.1, 1]] },
     wiederkehr: 1,
   },
+  // Wegelagerer: tauchen unterwegs auf (Begegnungen), verfolgen weiter, kommen nicht wieder
+  wegelagerer: {
+    name: 'Wegelagerer', figur: 'raeuber', leben: 36, schaden: [5, 9], reichweite: 1.7,
+    tempo: { gehen: 1.4, rennen: 3.4 },
+    angriff: { bewegung: 'hieb', tempo: 1.0, trifft: 0.6, pause: 2.0 },
+    sieht: 30, folgt: 60, waffe: 'keule',
+    erfahrung: 30,
+    beute: { muenzen: [2, 8], gegenstaende: [['lederfetzen', 0.5, 1], ['brot', 0.4, 1], ['schnur', 0.3, 1]] },
+    wiederkehr: 0,
+  },
   hauptmann: {
     name: 'Räuberhauptmann', figur: 'hauptmann', leben: 180, schaden: [12, 17], reichweite: 2.0, boss: true,
     tempo: { gehen: 1.5, rennen: 3.0 },

@@ -44,6 +44,13 @@ export function erzeugeEreignisse({ steuerung, oberflaeche, welt }) {
       }
     },
     handel: (wer) => welt.handel?.(wer),
+    get muenzen() { return welt.inventar.muenzen; },
+    zahle: (n) => welt.inventar.zahle(n),
+    // Für Begegnungen: Wegelagerer, Mitfahren, Sturm (main.js hängt sie an welt)
+    ueberfall: (n) => welt.ueberfall?.(n),
+    reise: (x, z, stunden, text) => welt.reise?.(x, z, stunden, text),
+    sturm: () => welt.sturm?.(),
+    schlafeImBett: () => welt.schlafeImBett?.(),
     sage: (text) => oberflaeche.nachricht(text),
     esse: (n) => welt.ueberleben.esse(n),
     trinke: (n) => welt.ueberleben.trinke(n),

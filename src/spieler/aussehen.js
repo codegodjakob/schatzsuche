@@ -45,6 +45,21 @@ export const HAARFARBEN = [
   { name: 'Grau', farbe: [0.6, 0.58, 0.55] },
 ];
 
+// Völker: Menschen, Elben (groß, schlank, spitze Ohren), Zwerge (klein, breit, mit Bart).
+// hoehe und breite strecken die ganze Figur; setze() stellt beim Wählen passende Anfangswerte ein.
+export const VOELKER = [
+  { id: 'mensch', name: 'Mensch', hoehe: 1, breite: 1, setze: (a) => { a.regler.ohrform = 0; } },
+  {
+    id: 'elb', name: 'Elb', hoehe: 1.08, breite: 0.92,
+    setze: (a) => { a.regler.ohrform = 1; a.gewicht = Math.min(a.gewicht, -0.3); a.statur = Math.min(a.statur, 0.3); },
+  },
+  {
+    id: 'zwerg', name: 'Zwerg', hoehe: 0.8, breite: 1.16,
+    setze: (a, art) => { a.regler.ohrform = 0; a.statur = Math.max(a.statur, 0.7); if (art !== 'sie') a.bartLaenge = Math.max(a.bartLaenge, 0.12); },
+  },
+];
+export const volkVon = (a) => VOELKER.find((v) => v.id === a.volk) ?? VOELKER[0];
+
 // Wie schnell Haare und Bart wachsen (Meter je Spieltag)
 export const WACHSTUM = { haare: 0.012, bart: 0.006 };
 
@@ -57,6 +72,7 @@ export function standard(art) {
     haar: art === 'sie' ? 2 : 1, // Index in HAARFARBEN
     haarLaenge: art === 'sie' ? 0.3 : 0.05, // Meter; 0 = kahl
     bartLaenge: art === 'sie' ? 0 : 0.004, // 0 = glatt rasiert
+    volk: 'mensch', // siehe VOELKER
     groesse: 1, // 0.92 … 1.08
     statur: 0, // im Editor: 0 … 1 (wie kräftig man anfängt); dazu kommen später Muskeln aus Stärke und Arbeit
     gewicht: 0, // −1 (dürr) … 1 (rund), folgt im Spiel dem Essen
@@ -126,7 +142,8 @@ export function wendeAn(figur, a, { staerke = 1, wams = false } = {}) {
   setze('muskeln', muskeln(a, staerke));
   setze('schlank', Math.max(0, -a.gewicht));
   setze('rund', Math.max(0, a.gewicht));
-  wurzel.scale.setScalar(a.groesse);
+  const volk = volkVon(a);
+  wurzel.scale.set(a.groesse * volk.breite, a.groesse * volk.hoehe, a.groesse * volk.breite);
 
   // Kleidung, die man trägt, sieht man
   if (teil.wams) teil.wams.visible = wams;
@@ -139,7 +156,7 @@ export function wendeAn(figur, a, { staerke = 1, wams = false } = {}) {
   if (lang) setze('haar_3', laengenAnteile(Math.min(a.haarLaenge, hmax), [h3, hmax])[0]);
   else laengenAnteile(Math.max(a.haarLaenge, h1), [h1, h2, h3]).forEach((w, i) => setze(`haar_${i + 1}`, w));
   if (teil.bart && info.bart) {
-    teil.bart.visible = a.bartLaenge > 0;
+    teil.bart.visible = a.bartLaenge > 0.008; // darunter nur Bartschatten auf der Haut (Stoppeln als Strähnen sähen aus wie Punkte)
     laengenAnteile(Math.min(Math.max(a.bartLaenge, info.bart[0]), info.bart.at(-1)), info.bart).forEach((w, i) => setze(`bart_${i + 1}`, w));
   }
 

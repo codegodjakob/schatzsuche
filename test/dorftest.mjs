@@ -134,10 +134,10 @@ try {
   }
   pruefe(await spiel((nr) => window.spiel.baeume.baum(nr).weg, baum.nr), 'Mit der Axt gefällt: Der Baum ist umgefallen');
   // Abwarten, bis er aufgeschlagen ist und daliegt (ohne Grafikkarte dauert das Fallen eine Weile)
-  await warte((b) => window.spiel.faellen.vorschlag({ x: b.x - 3, z: b.z + 1.2 }), baum, 180);
+  await warte((nr) => window.spiel.faellen.liegender(nr)?.liegt, baum.nr, 240);
   await foto('dorf-baum-gefaellt');
-  // Zum liegenden Stamm gehen (er fiel vom Spieler weg, also nach Westen)
-  await spiel((b) => window.spiel.teleport(b.x - 3, b.z + 1.2), baum);
+  // Zum liegenden Stamm gehen (er fiel vom Spieler weg)
+  await spiel((nr) => { const l = window.spiel.faellen.liegender(nr); window.spiel.teleport(l.x, l.z); }, baum.nr);
   for (let i = 0; i < 10; i++) {
     await tafelnWeg();
     const v = await warte(() => { const z = window.spiel.steuerung.zustand; const v = window.spiel.benutzen.vorschlag(z.ort, z.blickSeite); return window.spiel.benutzen.bereit && v && ['Abhacken', 'Zerteilen'].includes(v.kurz) ? v.kurz : false; }, null, 30).then((h) => h.jsonValue(), () => null);

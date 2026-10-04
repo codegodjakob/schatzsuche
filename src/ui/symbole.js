@@ -68,6 +68,14 @@ const BILDER = {
   samen: [[22, 30], [32, 24], [42, 30], [28, 40], [38, 40]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="5" ry="3.4" fill="#c8a060" stroke="${K}" stroke-width="2"/>`).join(''),
   laterne: flaeche('M22 18 L42 18 L46 50 L18 50 Z', '#3a3a3a') + flaeche('M24 22 L40 22 L42 46 L22 46 Z', '#ffcf6a', 1.5) + linie('M26 18 Q32 6 38 18', K, 3) + flaeche('M16 50 L48 50 L46 56 L18 56 Z', '#3a3a3a'),
 
+  // Kleidung und Fundstücke
+  leinenhemd: flaeche('M18 10 L28 14 Q32 18 36 14 L46 10 L58 22 L50 30 L46 26 L46 56 L18 56 L18 26 L14 30 L6 22 Z', '#d8ccae') + linie('M28 14 Q32 22 36 14', '#8a7a58', 2),
+  wollmantel: flaeche('M18 8 L28 12 L32 24 L36 12 L46 8 L58 24 L50 30 L50 60 L14 60 L14 30 L6 24 Z', '#6a4a3a') + linie('M32 24 L32 60', '#3a2a1e', 2.5) + [32, 42, 52].map((y) => kreis(36, y, 1.8, '#c9b073', 1)).join(''),
+  lederstiefel: flaeche('M14 8 L30 8 L30 40 L52 46 Q58 50 56 56 L14 56 Z', '#7a4a2a') + linie('M14 48 L56 48', '#4a2a14', 2.5) + linie('M18 16 L26 16 M18 24 L26 24', '#c9b073', 1.8),
+  hose: flaeche('M18 8 L46 8 L50 58 L36 58 L32 26 L28 58 L14 58 Z', '#a8946a') + linie('M18 14 L46 14', '#6a5a3a', 2.5),
+  ring: `<circle cx="32" cy="36" r="16" fill="none" stroke="${K}" stroke-width="8"/><circle cx="32" cy="36" r="16" fill="none" stroke="#c8ccd4" stroke-width="4"/>` + flaeche('M26 14 L32 6 L38 14 L32 20 Z', '#7fb6d8', 2),
+  brief: flaeche('M8 18 L56 18 L56 50 L8 50 Z', '#e8dcc0') + linie('M8 18 L32 36 L56 18', '#8a7a58', 2) + kreis(32, 40, 6, '#9e2a22', 2),
+
   // Bauwerke
   erdwall: flaeche('M4 52 Q14 22 32 20 Q50 22 60 52 Z', '#7a5434') + linie('M14 40 Q24 34 34 36 M30 46 Q42 40 50 44', '#5a3a20', 2) + flaeche('M20 24 q4 -6 8 -2 q4 -6 8 0', '#6f9a4a', 2),
   zaun: [12, 26, 40, 54].map((x) => stiel(x, 56, x, 14, '#8a5a33')).join('') + linie('M8 26 Q32 30 58 26 M8 40 Q32 44 58 40', '#6b4a2a', 3.5),

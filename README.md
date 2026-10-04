@@ -26,10 +26,11 @@ Claude veröffentlicht nach jeder Änderung eine Vorschau als Link. Der steht im
 | `I` | Inventar: 48 Plätze, Essen, Wegwerfen |
 | `K` | Herstellen: das Rezeptbuch |
 | `C` | Figur: Stufe, Werte (Punkte verteilen), Berufe, Einstellungen |
-| `J` | Aufgaben: was zu tun ist, welche Aufgabe am Bildschirmrand steht |
+| `J` | Tagebuch: was man sich vorgenommen hat, was am Bildschirmrand steht |
 | `Esc` | Menü schließen |
 | `F` | Feuer machen (wenn man es gelernt hat) |
 | `B` oder `Esc` | Bauen abbrechen (gebaut wird über Herstellen) |
+| `R` | mit dem Bogen schießen (wenn man einen hat) |
 | `T` | Fackel anzünden oder wegstecken (nachts brennt sie von selbst in der linken Hand) |
 | `G` | Grafikqualität: hoch, mittel, niedrig |
 | `H` oder Knopf `?` oben rechts | Steuerung auf- und zuklappen |

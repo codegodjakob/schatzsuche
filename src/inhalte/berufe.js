@@ -22,5 +22,6 @@ export const BERUFE = {
   holzfaellen: { name: 'Holzfällen', wirkung: 'Mehr Holz pro Baum.' },
   handwerk: { name: 'Handwerk', wirkung: 'Neue Rezepte für Werkzeug und Waffen.' },
   kochen: { name: 'Kochen', wirkung: 'Bessere Mahlzeiten, die länger satt machen.' },
+  jagen: { name: 'Jagen', wirkung: 'Pfeile treffen genauer und härter; Tiere bemerken dich später.' },
   fischen: { name: 'Fischen', wirkung: 'Fische beißen schneller, man hat mehr Zeit zum Anschlagen, und große Fische werden häufiger.' },
 };

@@ -449,6 +449,44 @@ Jagd mit Pfeil und Bogen, 6. mehr mit den Leuten, 7. Graufels-Berge, eine zweite
   (Wasser, zu steil, etwas im Weg). B oder Esc bricht ab, am Handy das Menü.
 - Neue Rezepte: Holzschaufel, Spitzhacke. Alles Gebaute, Gegrabene und Abgebaute steht im Spielstand.
 
+### Was in M2, Schritt 4 gebaut ist
+
+- **Der Wald ist dichter**: mehr Bäume und Büsche, dazu Farne in Gruppen um die Stämme (rund 35 000) und
+  umgestürzte Stämme kreuz und quer. Gezeichnet werden nur die nahen Felder, damit es flüssig bleibt.
+- **Drei neue Seen**: der Waldsee im Westen, der Schilfsee im Norden und der Moorsee dahinter, jeder in
+  einer natürlichen Mulde. Dazu der **Erlbach**, der vom Teich in einem flachen Tal zum Schilfsee fließt.
+  Man kann überall trinken und angeln; im Wasser geht man langsamer.
+- **Schilf** an allen Ufern und am Bach, mit braunen Rohrkolben.
+
+### Was für die lebendige Welt (#21) gebaut ist
+
+- **Keine Questliste mehr**: Das Menü heißt jetzt „Tagebuch“ und zeigt, was man sich vorgenommen hat. Vorhaben
+  entstehen aus Gesprächen und Begegnungen.
+- **Begegnungen unterwegs** (`src/ereignisse/begegnungen.js`): Alle drei bis sechs Minuten passiert etwas,
+  je nach Ort (Straße, Wald, Dorf) und Tageszeit:
+  - Wegelagerer fordern Geld: zahlen, kämpfen oder weglaufen; sie verfolgen einen wirklich.
+  - Ulf, der Hausierer, verkauft Kleidung und Werkzeug und kauft Wertvolles gut.
+  - Brida, die Botin, gibt einem einen Brief für Gerold; was darin steht, bringt die Geschichte weiter.
+  - Eine Karawane nimmt einen gegen sechs Kupfer nach Erlenbach mit (Reisen ohne Laufen).
+  - Ein Sturm wirft im Wald einen Baum um.
+  - Hilde, die Kräuterfrau, bittet um Kamille für einen kranken Jungen.
+  - Ein Rabe lässt einen alten Ring fallen.
+  - Eine Pilgerin erzählt von Ruinen und Zwergen in den Graufels-Bergen.
+- **Kleidung früh und warm**: Leinenhemd, Hose, Stiefel, Woll- und Fellmantel. Je Körperteil zählt das
+  wärmste Stück; zusammen hält Kleidung bis zu 70 % der Nachtkälte ab. Ein Hemd kann man sich aus Flachs selbst
+  nähen. Sichtbar am Körper wird Kleidung in einem späteren Schritt.
+- **Tiere und Jagd**: Füchse streifen durch den Wald und fliehen, wenn man zu nahe kommt. Mit einem selbst
+  gebauten Bogen und Pfeilen (Taste R, am Handy „Schießen“) jagt man sie; Fleisch brät man am Feuer, aus drei
+  Fellen näht man einen Fellmantel. Neuer Beruf: Jagen.
+- **Graufurt**, ein zweites Dorf aus Bruchstein und Schiefer, mit Schmied Bertram (Eisenwerkzeug, Auftrag
+  Steine) und Wirtin Ida (Bett für vier Kupfer, Neuigkeiten). Erlenbach ist Fachwerk mit Schindeln; jedes
+  Haus hat eigene Farben, Läden, Blumenkästen und Anbauten.
+- **Völker** im Charakter-Editor (Reiter „Körper“): Mensch, Elb (größer, schlanker, spitze Ohren) und
+  Zwerg (klein, breit, kräftig, mit Bart).
+- **Noch offen**: Pferd und Karren, Kleidung sichtbar am Körper, Trolle und Fabelwesen, mehr Tiere. Für
+  fertige hochwertige Modelle (Poly Haven, Sketchfab, Quaternius) und KI-3D (fal.ai) müssen diese Seiten
+  in den Einstellungen der Cloud-Umgebung freigegeben werden; bisher sind nur GitHub und npm erreichbar.
+
 ## Offene Fragen für Jakob und Vincenz
 
 - **Mehrspieler**: Auf Roblox spielt man fast immer mit anderen. Soll man später gemeinsam in

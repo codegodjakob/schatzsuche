@@ -1,5 +1,5 @@
-// Alle Aufgaben (Quests). Eine neue Aufgabe ist ein neuer Eintrag hier; gestartet wird sie von
-// einem Ereignis (s.starteAufgabe('id')) oder von einer anderen Aufgabe (danach).
+// Alle Vorhaben. Es gibt keine Liste, die man abarbeitet: Jedes Vorhaben beginnt in einem Gespräch, einer
+// Begegnung oder einem Ereignis (s.starteAufgabe('id')) oder folgt auf ein anderes (danach).
 //
 //   id, titel     – eindeutig / wie sie im Aufgabenbuch heißt
 //   geber         – wer sie gestellt hat (oder leer)
@@ -20,6 +20,28 @@ import { DOERFLER, LAGER, MARKTSTAND, RAEUBERLAGER, STEG, TEICH, WEIHER } from '
 const bis = (n, max) => Math.min(n, max);
 
 export const AUFGABEN = [
+  // Aus Begegnungen unterwegs (src/ereignisse/begegnungen.js)
+  {
+    id: 'brief_gerold',
+    titel: 'Ein Brief für Gerold',
+    geber: 'Brida',
+    beschreibung: 'Brida, eine Reisende mit wundem Fuß, hat dir einen versiegelten Brief für Gerold, den Kartenleser in Erlenbach, mitgegeben. „Er wird wissen, was er bedeutet.“',
+    schritte: [
+      { text: 'Bring den Brief zu Gerold nach Erlenbach', fertig: (s) => s.weiss('brief-abgegeben'), ort: DOERFLER.gerold },
+    ],
+    belohnung: { erfahrung: 40, muenzen: 12 },
+  },
+  {
+    id: 'kamille_marta',
+    titel: 'Kamille für Martas Schwester',
+    geber: 'Hilde',
+    beschreibung: 'Die Kräuterfrau Hilde braucht Kamille für einen fiebernden Jungen. „Gib sie meiner Schwester Marta auf dem Markt von Erlenbach, sie schickt sie mir.“',
+    schritte: [
+      { text: (s) => `Pflücke Kamille (${bis(s.anzahl('kamille'), 5)}/5)`, fertig: (s) => s.anzahl('kamille') >= 5 || s.weiss('kamille-abgegeben') },
+      { text: 'Gib sie Marta auf dem Markt', fertig: (s) => s.weiss('kamille-abgegeben'), ort: MARKTSTAND },
+    ],
+    belohnung: { erfahrung: 35, gegenstaende: { heilsalbe: 2 } },
+  },
   {
     id: 'schatzsuche',
     titel: 'Die Schatzsuche',
@@ -124,6 +146,19 @@ export const AUFGABEN = [
     ],
     belohnung: { erfahrung: 30, muenzen: 20 },
     zuruecksetzen: (s) => s.vergiss('abgegeben-fische'),
+  },
+  {
+    id: 'auftrag_steine',
+    titel: 'Steine für die Esse',
+    geber: 'Bertram',
+    wiederholbar: true,
+    beschreibung: '„Meine Esse bröckelt. Bring mir zwölf ordentliche Steine, dann zahl ich dir fünfundzwanzig Kupfer.“',
+    schritte: [
+      { text: (s) => `Sammle Steine (${bis(s.anzahl('stein'), 12)}/12)`, fertig: (s) => s.anzahl('stein') >= 12 || s.weiss('abgegeben-steine') },
+      { text: 'Bring sie Bertram in Graufurt', fertig: (s) => s.weiss('abgegeben-steine') },
+    ],
+    belohnung: { erfahrung: 30, muenzen: 25 },
+    zuruecksetzen: (s) => s.vergiss('abgegeben-steine'),
   },
   {
     id: 'auftrag_holz',

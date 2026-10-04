@@ -99,6 +99,16 @@ export function erzeugeInventar({ beiAenderung = () => {}, nachricht = () => {} 
     return beste;
   }
 
+  // Wie warm hält die Kleidung? Je Teil (oben, unten, Mantel, Füße) zählt das wärmste Stück, zusammen höchstens 70 %
+  function kleidungsWaerme() {
+    const teile = {};
+    for (const id of dinge.keys()) {
+      const k = GEGENSTAENDE[id]?.kleidung;
+      if (k) teile[k.teil] = Math.max(teile[k.teil] ?? 0, k.warm);
+    }
+    return Math.min(0.7, Object.values(teile).reduce((a, b) => a + b, 0));
+  }
+
   function leeren() {
     dinge.clear();
     inHand = null;
@@ -106,7 +116,7 @@ export function erzeugeInventar({ beiAenderung = () => {}, nachricht = () => {} 
   }
 
   return {
-    gib, nimm, passt, liste, leeren, werkzeugStufe, besteWaffe, schutz, gibMuenzen, zahle, nimmInDieHand,
+    gib, nimm, passt, liste, leeren, werkzeugStufe, besteWaffe, schutz, kleidungsWaerme, gibMuenzen, zahle, nimmInDieHand,
     hat: (id, n = 1) => (dinge.get(id) ?? 0) >= n,
     anzahl: (id) => dinge.get(id) ?? 0,
     get muenzen() { return muenzen; },

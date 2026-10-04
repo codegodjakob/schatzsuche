@@ -5,15 +5,16 @@ import { hoeheBei } from '../welt/gelaende.js';
 import { beweglichesHindernis } from '../welt/kollision.js';
 import { DOERFLER, DORF } from '../welt/orte.js';
 
-export const NAMEN = { gerold: 'Gerold', marta: 'Marta', jost: 'Jost' };
+export const NAMEN = { gerold: 'Gerold', marta: 'Marta', jost: 'Jost', bertram: 'Bertram', ida: 'Ida' };
 
-export async function erzeugeDoerfler() {
+// liste: { art: ort } – wer wo steht; mitte: der Dorfplatz, auf den sie schauen
+export async function erzeugeDoerfler(liste = DOERFLER, mitte = DORF) {
   const leute = [];
-  for (const [art, ort] of Object.entries(DOERFLER)) {
+  for (const [art, ort] of Object.entries(liste)) {
     const figur = await ladeFigur(art);
     const o = figur.objekt;
     o.position.set(ort.x, hoeheBei(ort.x, ort.z), ort.z);
-    const ruhe = Math.atan2(DORF.x - ort.x, DORF.z - ort.z); // schaut auf den Dorfplatz
+    const ruhe = Math.atan2(mitte.x - ort.x, mitte.z - ort.z); // schaut auf den Dorfplatz
     o.rotation.y = ruhe;
     beweglichesHindernis(o, 0.4);
     leute.push({ art, name: NAMEN[art], figur, objekt: o, ruhe, blick: ruhe, gegruesst: false, reichweite: ort.reichweite });

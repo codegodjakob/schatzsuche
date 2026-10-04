@@ -493,9 +493,10 @@ html.beruehrung #aktion { display: none !important; }
     <dt><kbd>X</kbd> / Klick</dt><dd>zuschlagen</dd>
     <dt><kbd>F</kbd></dt><dd>Feuer machen</dd>
     <dt><kbd>B</kbd> / <kbd>Esc</kbd></dt><dd>Bauen abbrechen (gebaut wird über Herstellen)</dd>
+    <dt><kbd>R</kbd></dt><dd>mit dem Bogen schießen (dorthin, wohin du schaust)</dd>
     <dt><kbd>T</kbd></dt><dd>Fackel anzünden oder wegstecken (nachts brennt sie von selbst)</dd>
     <dt><kbd>V</kbd></dt><dd>Blick über die Schulter oder aus den Augen</dd>
-    <dt><kbd>I</kbd> <kbd>K</kbd> <kbd>C</kbd> <kbd>J</kbd></dt><dd>Inventar, Herstellen, Figur, Aufgaben</dd>
+    <dt><kbd>I</kbd> <kbd>K</kbd> <kbd>C</kbd> <kbd>J</kbd></dt><dd>Inventar, Herstellen, Figur, Tagebuch</dd>
     <dt><kbd>G</kbd></dt><dd>Grafik: <b class="qualitaet-name">hoch</b></dd>
     <dt><kbd>H</kbd></dt><dd>diese Hilfe auf und zu</dd>
   </dl>
@@ -504,7 +505,7 @@ html.beruehrung #aktion { display: none !important; }
     <dt>Rechts wischen</dt><dd>umsehen</dd>
     <dt>Großer Knopf</dt><dd>benutzen: zeigt, was gerade geht</dd>
     <dt>Schlagen</dt><dd>leuchtet rot, wenn Gegner da sind</dd>
-    <dt>Menü</dt><dd>Inventar, Herstellen, Figur, Aufgaben</dd>
+    <dt>Menü</dt><dd>Inventar, Herstellen, Figur, Tagebuch</dd>
     <dt>Fackel</dt><dd>nachts von selbst in der Hand, wenn du eine hast</dd>
   </dl>
 </section>
@@ -536,6 +537,7 @@ html.beruehrung #aktion { display: none !important; }
     <button type="button" class="knopf" data-taste="KeyV">Blick</button>
     <button type="button" class="knopf mittel" data-taste="Space">Springen</button>
     <button type="button" class="knopf mittel" id="knopf-schlagen" data-taste="KeyX">Schlagen</button>
+    <button type="button" class="knopf" id="knopf-schiessen" data-taste="KeyR" hidden>Schießen</button>
     <button type="button" class="knopf gross haupt" id="knopf-benutzen" data-taste="KeyE">Benutzen</button>
   </div>
 </div>
@@ -563,7 +565,7 @@ html.beruehrung #aktion { display: none !important; }
       <button type="button" role="tab" data-reiter="inventar"><kbd>I</kbd>Inventar</button>
       <button type="button" role="tab" data-reiter="herstellen"><kbd>K</kbd>Herstellen</button>
       <button type="button" role="tab" data-reiter="figur"><kbd>C</kbd>Figur</button>
-      <button type="button" role="tab" data-reiter="aufgaben"><kbd>J</kbd>Aufgaben</button>
+      <button type="button" role="tab" data-reiter="aufgaben"><kbd>J</kbd>Tagebuch</button>
       <button type="button" role="tab" data-reiter="handel" hidden>Handel</button>
     </nav>
     <button type="button" class="zu" id="menue-zu" aria-label="Menü schließen">✕</button>

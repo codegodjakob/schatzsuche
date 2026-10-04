@@ -10,6 +10,27 @@ export const HAENDLER = {
     name: 'Marta', titel: 'Händlerin',
     waren: ['brot', 'angelrute', 'schnur', 'fackel', 'heilsalbe', 'kamillentee', 'lederwams', 'steinmesser'],
   },
+  // Unterwegs: der Hausierer und die Karawane (Begegnungen, src/ereignisse/begegnungen.js)
+  hausierer: {
+    name: 'Ulf', titel: 'Hausierer',
+    waren: ['leinenhemd', 'hose', 'lederstiefel', 'schnur', 'fackel', 'brot', 'steinmesser', 'schaufel'],
+    kauftGut: (g) => g.art === 'wertvoll',
+  },
+  karawane: {
+    name: 'Ansgar', titel: 'Karawanenführer',
+    waren: ['wollmantel', 'leinenhemd', 'hose', 'lederstiefel', 'lederwams', 'heilsalbe', 'brot', 'spitzhacke', 'angelrute'],
+    kauftGut: (g) => g.art === 'wertvoll' || g.art === 'kraut',
+  },
+  bertram: {
+    name: 'Bertram', titel: 'Schmied',
+    waren: ['eisenaxt', 'eisenmesser', 'kurzschwert', 'spitzhacke', 'schaufel', 'pfeil'],
+    kauftGut: (g) => g.art === 'waffe' || g.art === 'werkzeug',
+  },
+  ida: {
+    name: 'Ida', titel: 'Wirtin',
+    waren: ['brot', 'gebratenes_fleisch', 'kamillentee', 'gebratener_fisch'],
+    kauftGut: (g) => g.art === 'nahrung' || g.art === 'kraut',
+  },
   jost: {
     name: 'Jost', titel: 'Fischer',
     waren: ['angelrute', 'gebratener_fisch'],
