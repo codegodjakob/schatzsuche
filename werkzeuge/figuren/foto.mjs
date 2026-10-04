@@ -10,10 +10,11 @@ const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--ena
 const seite = await browser.newPage({ viewport: { width: 700, height: 900 } });
 seite.on('pageerror', (e) => console.log('Fehler:', e.message));
 for (const auftrag of process.argv.slice(2)) {
-  const [figur, blick = 'vorne', bewegung = '', zeit = '0', nah = '', formen = ''] = auftrag.split(':');
-  await seite.goto(`${url}werkzeuge/figuren/ansicht.html?figur=${figur}&blick=${blick}&bewegung=${bewegung}&zeit=${zeit}&nah=${nah}&formen=${encodeURIComponent(formen)}`);
+  const [figur, blick = 'vorne', bewegung = '', zeit = '0', nah = '', formen = '', extra = ''] = auftrag.split(':');
+  await seite.goto(`${url}werkzeuge/figuren/ansicht.html?figur=${figur}&blick=${blick}&bewegung=${bewegung}&zeit=${zeit}&nah=${nah}&formen=${encodeURIComponent(formen)}${extra ? `&${extra}` : ''}`);
   await seite.waitForFunction(() => window.fertig, null, { timeout: 60000 });
-  const info = await seite.evaluate(() => ({ fehler: window.fehler, clips: window.clips }));
+  const info = await seite.evaluate(() => ({ fehler: window.fehler, clips: window.clips, netze: window.netze }));
+  console.log(JSON.stringify(info.netze));
   if (info.fehler) console.log(auftrag, info.fehler);
   const datei = new URL(`${auftrag.replaceAll(':', '_').replaceAll('+', '_').replaceAll('=', '')}.png`, ORDNER).pathname;
   await seite.screenshot({ path: datei });

@@ -95,3 +95,90 @@ def wicklung_angleichen(punkte, dreiecke, normalen):
     aus = dreiecke.copy()
     aus[falsch] = aus[falsch][:, [0, 2, 1]]
     return aus
+
+
+def unterteile_rund(teil, auswahl, rundung=0.75):
+    """Ausgewählte Dreiecke einmal in vier teilen; die neuen Kantenmitten wölben sich nach den Normalen
+    (Phong-Wölbung), damit grobe Flächen rund werden statt eckig. Nachbardreiecke, die eine geteilte Kante
+    berühren, werden passend in zwei oder drei zerlegt (sonst klafften Risse). Gewichte, Formziele und UV
+    der neuen Punkte sind die Mittel der Kantenenden.
+    teil: dict(pos, normal, uv, gelenke, gewichte, index, ziele?) – wird nicht verändert, ein neues kommt zurück."""
+    pos, nor, uv = teil['pos'], teil['normal'], teil['uv']
+    tri = teil['index']
+    n0 = len(pos)
+    # Welche Kanten werden geteilt?
+    kanten = {}
+    def schluessel(a, b):
+        return (a, b) if a < b else (b, a)
+    for t in tri[auswahl]:
+        for a, b in ((t[0], t[1]), (t[1], t[2]), (t[2], t[0])):
+            kanten.setdefault(schluessel(a, b), None)
+    # Gleiche Lage, andere UV (Nähte): Auch die Gegenkante dort muss geteilt werden, sonst entsteht ein Riss
+    lage = {}
+    for i, p in enumerate(np.round(pos, 6)):
+        lage.setdefault(tuple(p), []).append(i)
+    zwilling = np.arange(n0)
+    for liste in lage.values():
+        for i in liste:
+            zwilling[i] = liste[0]
+    gleich = {}
+    for a, b in list(kanten):
+        gleich.setdefault(schluessel(zwilling[a], zwilling[b]), True)
+    for t in tri:
+        for a, b in ((t[0], t[1]), (t[1], t[2]), (t[2], t[0])):
+            if schluessel(zwilling[a], zwilling[b]) in gleich:
+                kanten.setdefault(schluessel(a, b), None)
+    # Neue Punkte: Mitte, gewölbt
+    neu = []
+    for k, (a, b) in enumerate(kanten):
+        kanten[(a, b)] = n0 + k
+        neu.append((a, b))
+    neu = np.array(neu, dtype=np.int64).reshape(-1, 2)
+    pa, pb, na, nb = pos[neu[:, 0]], pos[neu[:, 1]], nor[neu[:, 0]], nor[neu[:, 1]]
+    m = (pa + pb) / 2
+    proj_a = m - ((m - pa) * na).sum(1, keepdims=True) * na
+    proj_b = m - ((m - pb) * nb).sum(1, keepdims=True) * nb
+    mp = (1 - rundung) * m + rundung * (proj_a + proj_b) / 2
+    mn = na + nb
+    mn /= np.maximum(np.linalg.norm(mn, axis=1, keepdims=True), 1e-9)
+    # Gewichte: beide Enden zusammenlegen, die stärksten vier behalten
+    gel, gew = teil['gelenke'], teil['gewichte']
+    ng = np.zeros((len(neu), 4), gel.dtype)
+    nw = np.zeros((len(neu), 4), np.float32)
+    for i, (a, b) in enumerate(neu):
+        d = {}
+        for j in range(4):
+            d[gel[a, j]] = d.get(gel[a, j], 0) + gew[a, j] / 2
+            d[gel[b, j]] = d.get(gel[b, j], 0) + gew[b, j] / 2
+        beste = sorted(d.items(), key=lambda x: -x[1])[:4]
+        s = sum(w for _, w in beste) or 1
+        for j, (g, w) in enumerate(beste):
+            ng[i, j], nw[i, j] = g, w / s
+    aus = dict(teil)
+    aus['pos'] = np.concatenate([pos, mp])
+    aus['normal'] = np.concatenate([nor, mn])
+    aus['uv'] = np.concatenate([uv, (uv[neu[:, 0]] + uv[neu[:, 1]]) / 2])
+    aus['gelenke'] = np.concatenate([gel, ng])
+    aus['gewichte'] = np.concatenate([gew, nw])
+    if teil.get('ziele'):
+        aus['ziele'] = {n: np.concatenate([d, (d[neu[:, 0]] + d[neu[:, 1]]) / 2]) for n, d in teil['ziele'].items()}
+    # Dreiecke neu zusammensetzen
+    neue_tri = []
+    for t in tri:
+        a, b, c = t
+        mab = kanten.get(schluessel(a, b)); mbc = kanten.get(schluessel(b, c)); mca = kanten.get(schluessel(c, a))
+        geteilt = (mab is not None) + (mbc is not None) + (mca is not None)
+        if geteilt == 0:
+            neue_tri.append((a, b, c))
+        elif geteilt == 3:
+            neue_tri += [(a, mab, mca), (mab, b, mbc), (mca, mbc, c), (mab, mbc, mca)]
+        elif geteilt == 1:
+            if mab is not None: neue_tri += [(a, mab, c), (mab, b, c)]
+            elif mbc is not None: neue_tri += [(a, b, mbc), (a, mbc, c)]
+            else: neue_tri += [(a, b, mca), (mca, b, c)]
+        else:
+            if mab is None: neue_tri += [(a, b, mbc), (a, mbc, mca), (mca, mbc, c)]
+            elif mbc is None: neue_tri += [(a, mab, mca), (mab, b, c), (mca, mab, c)]
+            else: neue_tri += [(a, mab, c), (mab, b, mbc), (mab, mbc, c)]
+    aus['index'] = np.array(neue_tri, dtype=tri.dtype)
+    return aus

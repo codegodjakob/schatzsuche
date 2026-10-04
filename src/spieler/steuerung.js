@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { hoeheBei, wasserspiegel, WELT_GROESSE } from '../welt/gelaende.js';
 import { GEWAESSER } from '../welt/orte.js';
+import { bachAbstand } from '../welt/gelaende.js';
 import { flaecheBei, freieSicht, schiebeHinaus } from '../welt/kollision.js';
 
 const GEHEN = 1.5, RENNEN = 4.6, SPRUNG = 4.2, SCHWERKRAFT = 9.81; // Meter, Sekunden
@@ -100,7 +101,7 @@ export function erzeugeSteuerung({ kamera, flaeche }) {
       bewegung.set(-sinS * vor + cosS * seit, 0, -cosS * vor - sinS * seit).normalize();
     }
     // im Wasser langsamer
-    const amGewaesser = GEWAESSER.some((g) => Math.hypot(z.ort.x - g.x, z.ort.z - g.z) < g.radius * 1.7);
+    const amGewaesser = GEWAESSER.some((g) => Math.hypot(z.ort.x - g.x, z.ort.z - g.z) < g.radius * 1.7) || bachAbstand(z.ort.x, z.ort.z) < 3;
     const imWasser = amGewaesser && z.ort.y < wsp - 0.15;
     let sollTempo = bewegung.lengthSq() ? (rennt ? RENNEN : GEHEN) : 0;
     if (bremsUhr > 0) { bremsUhr -= dt; sollTempo = Math.min(sollTempo, GEHEN * 0.5); }

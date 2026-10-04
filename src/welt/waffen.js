@@ -97,6 +97,30 @@ FORMEN.fackel = () => {
   return g;
 };
 
+// Bogen (in der linken Hand) und Pfeil
+FORMEN.bogen = () => {
+  const g = new THREE.Group();
+  const kurve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(0, -0.62, 0), new THREE.Vector3(0, 0, 0.2), new THREE.Vector3(0, 0.62, 0));
+  g.add(new THREE.Mesh(new THREE.TubeGeometry(kurve, 16, 0.014, 6, false), dunkelHolz));
+  const sehne = new THREE.Mesh(new THREE.CylinderGeometry(0.002, 0.002, 1.24, 3), schnur);
+  g.add(sehne);
+  return g;
+};
+FORMEN.pfeil = () => {
+  const g = new THREE.Group();
+  g.add(stab(-0.35, 0.35, 0.005, 0.005, holz));
+  const spitze = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.05, 4), stein);
+  spitze.position.y = 0.37;
+  g.add(spitze);
+  for (const w of [0, 2.1, 4.2]) {
+    const feder = new THREE.Mesh(new THREE.PlaneGeometry(0.02, 0.07), new THREE.MeshStandardMaterial({ color: 0xd8d0c0, side: THREE.DoubleSide }));
+    feder.position.set(Math.cos(w) * 0.01, -0.3, Math.sin(w) * 0.01);
+    feder.rotation.y = w;
+    g.add(feder);
+  }
+  return g;
+};
+
 export const hatForm = (id) => id in FORMEN;
 
 // Baut eine Form für sich (z. B. die Angelrute, die beim Angeln frei geführt wird)

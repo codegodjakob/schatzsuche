@@ -44,8 +44,8 @@ FIGUREN = {
                    rassen={'caucasian': 0.8, 'african': 0.1, 'asian': 0.1}),
         haut=dict(hautfarbe=(0.70, 0.53, 0.43), haarfarbe=(0.16, 0.11, 0.08), bart=0.8, alter=0.1, schmutz=0.6),
         # Lang gebaut: Im Spiel bestimmt ein Formziel, wie lang Haare und Bart gerade sind (sie wachsen nach)
-        haare=dict(art='lang', laenge=(0.30, 0.40), anzahl=1900, breite=0.013, steife=0.65, bart=True,
-                   bart_laenge=(0.12, 0.17), bart_anzahl=1300),
+        haare=dict(art='lang', laenge=(0.30, 0.40), anzahl=2400, breite=0.024, steife=0.65, bart=True,
+                   bart_laenge=(0.12, 0.17), bart_anzahl=2000),
         # Längen der Formziele in Metern; die letzte Haarlänge ist die Grenze zwischen kurzem und langem Haarnetz
         editor=dict(haare=(0.006, 0.04, 0.12), bart=(0.003, 0.02, 0.06)),
         bewegungen=[
@@ -62,7 +62,7 @@ FIGUREN = {
                    cupsize=0.5, firmness=0.6, rassen={'caucasian': 0.8, 'african': 0.1, 'asian': 0.1}),
         haut=dict(hautfarbe=(0.77, 0.59, 0.49), haarfarbe=(0.30, 0.19, 0.11), bart=0, alter=0.05, weiblich=True,
                   lippen=(0.70, 0.42, 0.42), schmutz=0.5),
-        haare=dict(art='lang', laenge=(0.30, 0.42), anzahl=2300, breite=0.016, steife=0.65),
+        haare=dict(art='lang', laenge=(0.30, 0.42), anzahl=2800, breite=0.026, steife=0.65),
         editor=dict(haare=(0.006, 0.04, 0.12)),
         bewegungen=[
             ('stehen', 'stehen', D2 / 'dataset-2_wave-right-hand_normal_002.bvh'),
@@ -153,6 +153,38 @@ FIGUREN = {
             ('winken', 'ganz', D2 / 'dataset-2_wave-right-hand_normal_007.bvh'),
         ],
     ),
+    # Graufurt: Bertram, der Schmied – breit, kräftig, rußig, Lederschürze
+    'bertram': dict(
+        makro=dict(gender=1.0, age=0.6, muscle=0.85, weight=0.65, height=0.5, proportions=0.7,
+                   rassen={'caucasian': 0.7, 'african': 0.2, 'asian': 0.1}),
+        haut=dict(hautfarbe=(0.62, 0.45, 0.35), haarfarbe=(0.12, 0.09, 0.07), bart=0.95, alter=0.5, schmutz=0.8),
+        haare=dict(art='kurz', laenge=(0.02, 0.04), anzahl=1600, breite=0.016, bart=True,
+                   bart_laenge=(0.08, 0.14), bart_anzahl=1800),
+        kleidung='kutte',
+        kutte=dict(saum=0.45, weite=0.12, farbe=(0.32, 0.22, 0.14), saat=71, guertel=(0.15, 0.1, 0.06, 1)),
+        textur=1024,
+        bewegungen=[
+            ('stehen', 'stehen', D2 / 'dataset-2_wave-right-hand_normal_001.bvh'),
+            ('gehen', 'zyklus', D1 / 'dataset-1_walk_normal_001.bvh'),
+            ('winken', 'ganz', D2 / 'dataset-2_wave-right-hand_normal_002.bvh'),
+        ],
+    ),
+    # Graufurt: Ida, die Wirtin – rundlich, rote Wangen, Schürze über dem Kleid
+    'ida': dict(
+        makro=dict(gender=0.0, age=0.62, muscle=0.4, weight=0.75, height=0.4, proportions=0.6,
+                   cupsize=0.6, firmness=0.4, rassen={'caucasian': 0.85, 'african': 0.05, 'asian': 0.1}),
+        haut=dict(hautfarbe=(0.8, 0.6, 0.5), haarfarbe=(0.55, 0.42, 0.3), bart=0, alter=0.55, weiblich=True,
+                  lippen=(0.7, 0.4, 0.4), schmutz=0.1),
+        haare=dict(art='lang', laenge=(0.14, 0.22), anzahl=2000, breite=0.022),
+        kleidung='kutte',
+        kutte=dict(farbe=(0.42, 0.18, 0.14), saat=83, guertel=(0.85, 0.8, 0.68, 1)),
+        textur=1024,
+        bewegungen=[
+            ('stehen', 'stehen', D2 / 'dataset-2_wave-right-hand_normal_006.bvh'),
+            ('gehen', 'zyklus', D1 / 'dataset-1_walk_feminine_001.bvh'),
+            ('winken', 'ganz', D2 / 'dataset-2_wave-right-hand_normal_007.bvh'),
+        ],
+    ),
     # Erlenbach: Jost, der Fischer, wettergegerbt, im kurzen graublauen Kittel
     'jost': dict(
         makro=dict(gender=1.0, age=0.58, muscle=0.62, weight=0.55, height=0.55, proportions=0.75,
@@ -225,6 +257,17 @@ def baue(name, einstellung):
         koerper_ziele = list(formziele)
         print(f'  {len(formziele)} Formziele in {time.time() - t_f:.1f} s')
     haut_d = {n: d[koerper_idx] for n, d in formziele.items()}
+
+    # Kopf und Hals feiner: Die Dreiecke dort einmal teilen und rund wölben (sonst sieht das Gesicht aus der
+    # Nähe eckig aus). Nur da, wo es auffällt, damit die Datei klein bleibt.
+    kopfteil = np.zeros(len(haut_teil['pos']))
+    for knochen_name in ('head', 'neck_01'):
+        if knochen_name in knochen_index:
+            kopfteil += (haut_teil['gewichte'] * (haut_teil['gelenke'] == knochen_index[knochen_name])).sum(axis=1)
+    auswahl = kopfteil[haut_teil['index']].mean(axis=1) > 0.45
+    vorher = len(haut_teil['pos'])
+    haut_teil = netz.unterteile_rund(haut_teil, auswahl)
+    print(f'  Kopf feiner: {auswahl.sum()} Dreiecke geteilt, {vorher} -> {len(haut_teil["pos"])} Punkte')
 
     glb = Glb()
     t1 = time.time()

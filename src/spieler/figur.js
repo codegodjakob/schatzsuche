@@ -58,7 +58,7 @@ function veredle(wurzel) {
     if (name === 'haut') o.material = hautMaterial(o.material);
     if (name === 'haare') {
       o.material.alphaToCoverage = true;
-      o.material.roughness = 0.5;
+      o.material.roughness = 0.68; // matter: sonst ein heller Glanzfleck auf dem Kopf
     }
     if (name === 'hornhaut') {
       o.material.depthWrite = false;

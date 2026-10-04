@@ -22,7 +22,7 @@ r.shadowMap.enabled = true;
 const s = new THREE.Scene();
 s.background = new THREE.Color(0x8a9aa6);
 s.add(new THREE.HemisphereLight(0xdfe8f0, 0x5a5040, 1.2));
-const sonne = new THREE.DirectionalLight(0xfff2e0, 2.5); sonne.position.set(2, 4, 3); sonne.castShadow = true; s.add(sonne);
+const sonne = new THREE.DirectionalLight(0xfff2e0, 2.5); sonne.position.set(2, 4, 3); sonne.castShadow = true; sonne.shadow.normalBias = 0.02; sonne.shadow.bias = -0.0005; // wie im Spiel: ohne das zeigen sich Schattenflecken auf der Haut s.add(sonne);
 const boden = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshStandardMaterial({ color: 0x6b6a5a }));
 boden.rotation.x = -Math.PI / 2; boden.receiveShadow = true; s.add(boden);
 const k = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 0.05, 50);
@@ -36,9 +36,11 @@ zielen(new THREE.Vector3(0, 0.95, 0), 1);
 new GLTFLoader().load(`../../assets/figuren/${figur}.glb`, (g) => {
   g.scene.traverse((o) => {
     if (aus.includes(o.name)) o.visible = false;
+    if (q.has('nurhaut') && o.isMesh && !['haut', 'auge', 'hornhaut'].includes(o.material.name)) o.visible = false;
+    if (o.isMesh) (window.netze ??= []).push(`${o.name}:${o.material.name}:${o.geometry.attributes.position.count}`);
     if (!o.isMesh) return;
     // Haut: Der B-Kanal des ORM-Bilds ist die Haarfarben-Maske, kein Metall (wie im Spiel, src/spieler/figur.js)
-    if (o.material.name === 'haut') { o.material.metalnessMap = null; o.material.metalness = 0; }
+    if (o.material.name === 'haut') { o.material.metalnessMap = null; o.material.metalness = 0; if (q.has('ohnenormal')) o.material.normalMap = null; if (q.has('flach')) o.material.flatShading = true; if (q.has('ohnefarbe')) { o.material.map = null; } if (q.has('ohneao')) { o.material.aoMap = null; o.material.roughnessMap = null; } if (q.has('neunormal')) { o.geometry.deleteAttribute('normal'); o.geometry.computeVertexNormals(); } }
     o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false;
     for (const [n, w] of Object.entries(formen)) if (o.morphTargetDictionary?.[n] !== undefined) o.morphTargetInfluences[o.morphTargetDictionary[n]] = w;
   });

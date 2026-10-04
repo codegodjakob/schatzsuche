@@ -5,7 +5,14 @@ export const ALTER_BAUM = { x: -18, z: 14 };
 export const TEICH = { x: 34, z: -28, radius: 11, tiefe: 1.6 };
 // Der Weiher am Nordrand von Erlenbach (zum Angeln); alle Gewässer in einer Liste
 export const WEIHER = { x: 196, z: 72, radius: 9, tiefe: 1.6 };
-export const GEWAESSER = [TEICH, WEIHER];
+// Weitere Seen draußen in der Welt. becken: Das Land ringsum senkt sich zu einer Mulde, damit der See auf
+// derselben Höhe liegt wie die anderen (alle Gewässer teilen sich einen Wasserspiegel).
+export const WALDSEE = { x: -112, z: 18, radius: 15, tiefe: 1.6, becken: true };
+export const SCHILFSEE = { x: 74, z: -82, radius: 13, tiefe: 1.6, becken: true };
+export const MOORSEE = { x: -48, z: -114, radius: 10, tiefe: 1.4, becken: true };
+export const GEWAESSER = [TEICH, WEIHER, WALDSEE, SCHILFSEE, MOORSEE];
+// Der Erlbach fließt vom Teich zum Schilfsee (Stützpunkte, wird geglättet)
+export const BACH = [[38, -38], [44, -48], [52, -56], [58, -64], [66, -72], [72, -78]];
 // Das Dorf Erlenbach am Ende der Straße: Dorfplatz in der Mitte, Häuser (Tür zum Platz), Brunnen,
 // Martas Marktstand, Josts Steg am Weiher, und wo die Dörfler stehen
 export const DORF = { x: 200, z: 40, radius: 26 };
@@ -25,6 +32,22 @@ export const DOERFLER = {
   gerold: { x: 188.5, z: 44.5 }, // vor seinem Haus
   marta: { x: 195.2, z: 45.6, reichweite: 3.8 }, // hinter dem Marktstand: man spricht über den Tresen
   jost: { x: 197.6, z: 58.4 }, // am Steg
+};
+// Graufurt: ein Steindorf im Norden, am Weg zu den Graufels-Bergen. Rauer als Erlenbach: Häuser aus
+// Bruchstein mit Schieferdach, eine Schmiede, ein Gasthaus. Die Straße nach Norden führt von der Wiese hin.
+export const GRAUFURT = { x: -15, z: -222, radius: 22 };
+export const HAEUSER_GRAUFURT = [
+  { name: 'schmiede', x: -2, z: -210, breite: 7, tiefe: 6, schornstein: true, schmiede: true },
+  { name: 'gasthaus', x: -32, z: -214, breite: 9, tiefe: 7, schornstein: true },
+  { name: 'gf3', x: -28, z: -236, breite: 6, tiefe: 5 },
+  { name: 'gf4', x: 2, z: -236, breite: 6, tiefe: 5.5, schornstein: true },
+  { name: 'gf5', x: -15, z: -244, breite: 5.5, tiefe: 5 },
+];
+export const ESSE = { x: -2, z: -203 }; // die offene Esse vor der Schmiede
+export const STRASSE_NORD = [[-2, -12], [-6, -60], [-3, -110], [-10, -160], [-14, -200]];
+export const DOERFLER_GRAUFURT = {
+  bertram: { x: -1.5, z: -204.5, reichweite: 3 }, // Schmied, an seiner Esse
+  ida: { x: -30, z: -209.5 }, // Wirtin, vor dem Gasthaus
 };
 export const LAGER = { x: -58, z: 86, radius: 9 }; // Lichtung des Einsiedlers am Waldrand
 export const BEERENSTRAEUCHER = [

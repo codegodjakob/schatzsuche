@@ -3,7 +3,7 @@
 // Gras, Erde (Pfad, Waldboden), Fels (steil), Ufer.
 import * as THREE from 'three';
 import { ImprovedNoise } from 'three/addons/math/ImprovedNoise.js';
-import { DORF, GEWAESSER, HAEUSER, LAGER, PFAD, RAEUBERLAGER, START, STEG, STRASSE } from './orte.js';
+import { BACH, DORF, GEWAESSER, GRAUFURT, HAEUSER, HAEUSER_GRAUFURT, LAGER, PFAD, RAEUBERLAGER, START, STEG, STRASSE, STRASSE_NORD } from './orte.js';
 
 export const WELT_GROESSE = 900;
 export const RASTER = 512;
@@ -33,9 +33,17 @@ function dorfweg(ziel, bis) {
   return [von, [(von[0] + ende[0]) / 2 - uz * 0.8, (von[1] + ende[1]) / 2 + ux * 0.8], ende];
 }
 const DORFWEGE = [...HAEUSER.map((h) => dorfweg(h, h.tiefe / 2 - 0.2)), dorfweg(STEG, -0.5)];
+// In Graufurt: Wege vom Platz zu jeder Tür
+function graufurtWeg(ziel, bis) {
+  const dx = ziel.x - GRAUFURT.x, dz = ziel.z - GRAUFURT.z, l = Math.hypot(dx, dz);
+  const ux = dx / l, uz = dz / l;
+  const von = [GRAUFURT.x + ux * 6, GRAUFURT.z + uz * 6], ende = [ziel.x - ux * bis, ziel.z - uz * bis];
+  return [von, [(von[0] + ende[0]) / 2 + uz * 0.6, (von[1] + ende[1]) / 2 - ux * 0.6], ende];
+}
+const GRAUFURT_WEGE = HAEUSER_GRAUFURT.map((h) => graufurtWeg(h, h.tiefe / 2 - 0.2));
 
 // Pfad zum Einsiedler, Straße nach Osten und die Wege im Dorf als dichte Punktfolgen (Catmull-Rom geglättet)
-const wege = [[PFAD, 160], [STRASSE, 140], ...DORFWEGE.map((w) => [w, 30])].map(([stuetzen, anzahl]) => {
+const wege = [[PFAD, 160], [STRASSE, 140], [STRASSE_NORD, 140], ...DORFWEGE.map((w) => [w, 30]), ...GRAUFURT_WEGE.map((w) => [w, 30])].map(([stuetzen, anzahl]) => {
   const punkte = new THREE.CatmullRomCurve3(stuetzen.map(([x, z]) => new THREE.Vector3(x, 0, z))).getSpacedPoints(anzahl);
   return { punkte, box: new THREE.Box3().setFromPoints(punkte).expandByScalar(12) };
 });
@@ -58,16 +66,41 @@ export function waldDichte(x, z) {
   w *= weich(RAEUBERLAGER.radius * 0.9, RAEUBERLAGER.radius * 1.4, Math.hypot(x - RAEUBERLAGER.x, z - RAEUBERLAGER.z));
   w *= weich(2.5, 6, pfadAbstand(x, z));
   for (const g of GEWAESSER) w *= weich(g.radius * 1.4, g.radius * 2.2, Math.hypot(x - g.x, z - g.z));
+  if (Math.abs(x - 55) < 40 && Math.abs(z + 58) < 40) w *= weich(3, 7, bachAbstand(x, z));
   w *= weich(DORF.radius * 0.9, DORF.radius * 1.3, Math.hypot(x - DORF.x, z - DORF.z));
+  w *= weich(GRAUFURT.radius * 0.9, GRAUFURT.radius * 1.4, Math.hypot(x - GRAUFURT.x, z - GRAUFURT.z));
+  for (const h of HAEUSER_GRAUFURT) w *= weich(h.breite * 0.75, h.breite * 0.75 + 4, Math.hypot(x - h.x, z - h.z));
   // kein Baum in oder dicht an einem Haus am Dorfrand
   for (const h of HAEUSER) w *= weich(h.breite * 0.75, h.breite * 0.75 + 4, Math.hypot(x - h.x, z - h.z));
   return w;
 }
 
+// Der Bach als dichte Punktfolge
+const bachPunkte = new THREE.CatmullRomCurve3(BACH.map(([x, z]) => new THREE.Vector3(x, 0, z))).getSpacedPoints(120);
+export function bachAbstand(x, z) {
+  let best = Infinity;
+  for (const p of bachPunkte) best = Math.min(best, (p.x - x) ** 2 + (p.z - z) ** 2);
+  return Math.sqrt(best);
+}
+export const bachLinie = () => bachPunkte;
+const MULDE = -0.2; // so hoch liegt das Land rund um Becken-Seen und den Bach
+
 function hoeheRoh(x, z) {
   const d = Math.hypot(x, z);
   let h = fbm(x * 0.012, z * 0.012, 4) * 2.2;
   h += Math.max(0, fbm(x * 0.0045 + 3, z * 0.0045, 5) + 0.15) * 70 * weich(70, 320, d);
+  // Mulden um Becken-Seen und ein Tal für den Bach: das Land senkt sich weich auf Seehöhe
+  const rauh = fbm(x * 0.08, z * 0.08, 2) * 0.25;
+  for (const g of GEWAESSER) {
+    if (!g.becken) continue;
+    const dt = Math.hypot(x - g.x, z - g.z);
+    h += (MULDE + rauh - h) * (1 - weich(g.radius * 1.5, g.radius * 3.2, dt));
+  }
+  const db = Math.abs(x - 55) < 40 && Math.abs(z + 58) < 40 ? bachAbstand(x, z) : 99;
+  if (db < 14) {
+    h += (MULDE + rauh - h) * (1 - weich(4, 14, db));
+    h -= 1.1 * (1 - weich(0.6, 2.4, db)); // das Bachbett
+  }
   for (const g of GEWAESSER) {
     const dt = Math.hypot(x - g.x, z - g.z);
     h -= g.tiefe * 1.6 * (1 - weich(g.radius * 0.4, g.radius * 1.5, dt));
@@ -112,7 +145,9 @@ export function wasserspiegel() {
     for (const g of GEWAESSER) {
       for (let a = 0; a < 96; a++) {
         const w = (a / 96) * Math.PI * 2;
-        tiefste = Math.min(tiefste, hoeheRoh(g.x + Math.cos(w) * g.radius * 1.3, g.z + Math.sin(w) * g.radius * 1.3));
+        const x = g.x + Math.cos(w) * g.radius * 1.3, z = g.z + Math.sin(w) * g.radius * 1.3;
+        if (bachAbstand(x, z) < 4) continue; // dort fließt der Bach hinein, das ist gewollt
+        tiefste = Math.min(tiefste, hoeheRoh(x, z));
       }
     }
     spiegel = tiefste - 0.12;
@@ -134,7 +169,8 @@ export const masken = new Uint8Array(RASTER * RASTER * 4);
       const pfad = 1 - weich(0.6, 1.9, pfadAbstand(x, z) + (fbm(x * 0.4, z * 0.4, 2) * 0.8));
       const lager = Math.max(1 - weich(LAGER.radius * 0.35, LAGER.radius * 0.8, Math.hypot(x - LAGER.x, z - LAGER.z)),
         1 - weich(RAEUBERLAGER.radius * 0.3, RAEUBERLAGER.radius * 0.75, Math.hypot(x - RAEUBERLAGER.x, z - RAEUBERLAGER.z)),
-        1 - weich(7, 12, Math.hypot(x - DORF.x, z - DORF.z))); // Dorfplatz
+        1 - weich(7, 12, Math.hypot(x - DORF.x, z - DORF.z)), // Dorfplatz
+        1 - weich(6, 10, Math.hypot(x - GRAUFURT.x, z - GRAUFURT.z)));
       const wald = waldDichte(x, z) * 0.85;
       const flecken = weich(0.66, 0.82, fbm(x * 0.05 + 9, z * 0.05, 3) * 0.5 + 0.5) * 0.3;
       const erde = Math.min(1, Math.max(pfad, lager * 0.9, wald, flecken) * (1 - fels));

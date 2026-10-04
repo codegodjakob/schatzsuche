@@ -1,6 +1,6 @@
 // Teich und Weiher: spiegeln den Himmel, kräuseln sich im Wind, werden zum Ufer hin flach und durchsichtig.
 import * as THREE from 'three';
-import { rasterTexturen, wasserspiegel } from './gelaende.js';
+import { bachLinie, rasterTexturen, wasserspiegel } from './gelaende.js';
 import { GEWAESSER } from './orte.js';
 import { WIND_GLSL, windUniforms } from './wind.js';
 
@@ -52,5 +52,24 @@ export function erzeugeWasser() {
     wasser.name = 'teich';
     gruppe.add(wasser);
   }
+  // Der Bach: ein Band entlang seines Laufs, sieben Meter breit; wo das Ufer höher ist, blendet der Shader es aus
+  const punkte = bachLinie();
+  const pos = [], idx = [];
+  punkte.forEach((p, i) => {
+    const n = punkte[Math.min(i + 1, punkte.length - 1)], v = punkte[Math.max(i - 1, 0)];
+    const dx = n.x - v.x, dz = n.z - v.z, l = Math.hypot(dx, dz) || 1;
+    const qx = -dz / l * 3.5, qz = dx / l * 3.5;
+    pos.push(p.x - qx, 0, p.z - qz, p.x + qx, 0, p.z + qz);
+    if (i < punkte.length - 1) { const a = i * 2; idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
+  });
+  const bandGeo = new THREE.BufferGeometry();
+  bandGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  bandGeo.setIndex(idx);
+  bandGeo.computeVertexNormals();
+  const bach = new THREE.Mesh(bandGeo, mat);
+  bach.position.y = wasserspiegel();
+  bach.renderOrder = 2;
+  bach.name = 'bach';
+  gruppe.add(bach);
   return gruppe;
 }

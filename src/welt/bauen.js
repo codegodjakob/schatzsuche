@@ -20,7 +20,7 @@ function textur(datei, wiederholen = 1) {
 
 // Länge (entlang der Wand), Tiefe, wie weit vor der Figur, Höhe
 export const MASSE = {
-  erdwall: { lang: 2.2, tief: 1.5, vor: 2.2, hoehe: 0.6, stufe: 0.5, max: 1.6 },
+  erdwall: { lang: 2.4, tief: 2.2, vor: 2.4, hoehe: 0.6, stufe: 0.5, max: 1.6 },
   zaun: { lang: 2.0, tief: 0.3, vor: 1.8, hoehe: 1.0 },
   palisade: { lang: 2.0, tief: 0.4, vor: 1.8, hoehe: 2.1 },
   steinmauer: { lang: 2.0, tief: 0.6, vor: 1.9, hoehe: 1.0 },
@@ -51,14 +51,15 @@ export function erzeugeBauen({ szene, rinde, felsMaterial, spielStunde }) {
   // ---------------------------------------------------------------- Formen
   function erdwallForm(h, saat) {
     const m = MASSE.erdwall;
-    const geo = new THREE.BoxGeometry(m.lang, 1, m.tief, 14, 1, 8);
+    const geo = new THREE.BoxGeometry(m.lang, 1, m.tief, 18, 1, 14);
     const pos = geo.attributes.position;
     const z = zufall(saat);
     const rauschen = Array.from({ length: 64 }, () => z());
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i) / (m.lang / 2), q = pos.getZ(i) / (m.tief / 2);
       // Querschnitt: oben gewölbt, an den Enden flach auslaufend
-      const profil = Math.max(0, 1 - q * q) ** 0.6 * (1 - THREE.MathUtils.smoothstep(Math.abs(x), 0.65, 1.05) * 0.75);
+      // Aufgeschüttete Erde: flache Böschung (Glockenform), an den Enden ausgerundet
+      const profil = Math.max(0, 1 - q * q) ** 1.7 * (1 - THREE.MathUtils.smoothstep(Math.abs(x), 0.35, 1.05) * 0.85);
       const r = rauschen[(i * 7) % 64] * 0.08;
       if (pos.getY(i) > 0) pos.setY(i, h * profil + r * h);
       else pos.setY(i, -0.3);

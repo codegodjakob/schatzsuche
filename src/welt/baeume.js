@@ -14,15 +14,20 @@ const MASSSTAB = 0.1; // EZ-Tree rechnet in Dezimetern
 const RASTER = 4.4; // mittlerer Baumabstand im dichten Wald (Meter)
 let NAH = 45, MITTEL = 95;
 
+// Jede Saat ist eine eigene Wuchsform; mehr Saaten = mehr Abwechslung (bis 32 Formen passen in den Bildatlas)
 const ARTEN = [
-  { name: 'eiche', vorlage: 'Oak Medium', saaten: [11, 23, 37], massstab: [0.8, 1.9], gebiet: 'laub' },
-  { name: 'eiche-gross', vorlage: 'Oak Large', saaten: [5], massstab: [1.1, 1.6], gebiet: 'laub' },
-  { name: 'esche', vorlage: 'Ash Medium', saaten: [7, 19], massstab: [0.9, 1.9], gebiet: 'laub' },
+  { name: 'eiche', vorlage: 'Oak Medium', saaten: [11, 23, 37, 41, 58], massstab: [0.8, 1.9], gebiet: 'laub' },
+  { name: 'eiche-jung', vorlage: 'Oak Small', saaten: [4, 15], massstab: [0.9, 1.5], gebiet: 'laub' },
+  { name: 'eiche-gross', vorlage: 'Oak Large', saaten: [5, 29], massstab: [1.1, 1.6], gebiet: 'laub' },
+  { name: 'esche', vorlage: 'Ash Medium', saaten: [7, 19, 31], massstab: [0.9, 1.9], gebiet: 'laub' },
+  { name: 'esche-gross', vorlage: 'Ash Large', saaten: [12, 44], massstab: [0.9, 1.4], gebiet: 'laub' },
+  { name: 'birke', vorlage: 'Aspen Medium', saaten: [8, 21, 33], massstab: [0.9, 1.5], gebiet: 'laub', rinde: 'birch' },
   { name: 'espe', vorlage: 'Aspen Medium', saaten: [3], massstab: [1.0, 1.6], gebiet: 'laub', selten: true },
-  { name: 'kiefer', vorlage: 'Pine Medium', saaten: [2, 13], massstab: [1.8, 3.0], gebiet: 'nadel' },
-  { name: 'kiefer-gross', vorlage: 'Pine Large', saaten: [17], massstab: [1.8, 2.7], gebiet: 'nadel' },
+  { name: 'kiefer', vorlage: 'Pine Medium', saaten: [2, 13, 26], massstab: [1.8, 3.0], gebiet: 'nadel' },
+  { name: 'kiefer-gross', vorlage: 'Pine Large', saaten: [17, 39], massstab: [1.8, 2.7], gebiet: 'nadel' },
   { name: 'busch', vorlage: 'Bush 1', saaten: [4, 8], massstab: [0.5, 0.8], gebiet: 'busch' },
   { name: 'busch2', vorlage: 'Bush 2', saaten: [6], massstab: [0.5, 0.7], gebiet: 'busch' },
+  { name: 'busch3', vorlage: 'Bush 3', saaten: [9], massstab: [0.5, 0.8], gebiet: 'busch' },
 ];
 
 const lader = new THREE.TextureLoader();
@@ -99,6 +104,7 @@ function erzeugeArt(art, saat, grob) {
   const baum = new Tree();
   baum.loadPreset(art.vorlage);
   baum.options.seed = saat;
+  if (art.rinde) baum.options.bark.type = art.rinde;
   if (grob) {
     for (const ebene of Object.keys(baum.options.branch.sections)) {
       baum.options.branch.sections[ebene] = Math.max(3, Math.round(baum.options.branch.sections[ebene] * 0.45));
@@ -254,7 +260,7 @@ function waldPlaetze(z) {
   for (let i = 0; i < versuche; i++) {
     const x = (z() - 0.5) * 2 * rand, zz = (z() - 0.5) * 2 * rand;
     const w = waldDichte(x, zz);
-    if (z() > w * 0.62) continue;
+    if (z() > w * 0.74) continue; // dichter Wald: mehr Bäume als früher (Jakob: „nicht richtig gefüllt“)
     if (!frei(x, zz)) continue;
     if (neigungBei(x, zz) > 0.75) continue;
     const y = hoeheBei(x, zz);
@@ -293,7 +299,12 @@ export async function erzeugeBaeume(qualitaet, renderer) {
   const alle = [];
   const setze = (v, p, s) => {
     // weg: gefällt (nur der Stumpf steht noch); wuchs: wie groß er gerade ist (ein nachwachsender Baum ist erst klein)
-    const baum = { x: p.x, y: p.y, z: p.z, drehung: p.drehung, v, s, nr: alle.length, weg: false, wuchs: 1 };
+    // Jeder Baum ein bisschen anders: Laubfarbe, Wuchs in die Höhe, leichte Neigung (aus dem Ort berechnet,
+    // damit die Zufallsfolge der Plätze gleich bleibt)
+    const h = (k) => { const t = Math.sin(p.x * 12.9898 + p.z * 78.233 + k * 37.719) * 43758.5453; return t - Math.floor(t); };
+    const farbe = new THREE.Color().setHSL(0, 0, 1).offsetHSL((h(1) - 0.5) * 0.05, (h(2) - 0.5) * 0.25, (h(3) - 0.5) * 0.18);
+    const baum = { x: p.x, y: p.y, z: p.z, drehung: p.drehung, v, s, nr: alle.length, weg: false, wuchs: 1,
+      farbe, streck: 0.9 + h(4) * 0.22, neigX: (h(5) - 0.5) * 0.08, neigZ: (h(6) - 0.5) * 0.08 };
     v.plaetze.push(baum);
     alle.push(baum);
   };
@@ -306,7 +317,7 @@ export async function erzeugeBaeume(qualitaet, renderer) {
     const alter = Math.min(1, p.groesse * 0.7 + w * 0.5);
     setze(v, p, (a + (b - a) * alter) * MASSSTAB);
     // Unterholz: Büsche, am Waldrand mehr
-    const buschChance = w < 0.7 ? 0.7 : 0.25;
+    const buschChance = w < 0.7 ? 0.75 : 0.5;
     for (let k = 0; k < 2; k++) {
       if (z() > buschChance) continue;
       const bx = p.x + (z() - 0.5) * 4, bz = p.z + (z() - 0.5) * 4;
@@ -338,6 +349,7 @@ export async function erzeugeBaeume(qualitaet, renderer) {
       const blatt = new THREE.InstancedMesh(form.blaetter, v.mat.blatt, n);
       blatt.customDepthMaterial = v.mat.tiefe;
       for (const mesh of [rinde, blatt]) {
+        mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(n * 3).fill(1), 3);
         mesh.castShadow = name === 'fein';
         mesh.receiveShadow = true;
         mesh.count = 0;
@@ -378,6 +390,7 @@ export async function erzeugeBaeume(qualitaet, renderer) {
 
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3();
   const achse = new THREE.Vector3(0, 1, 0);
+  const neigung = new THREE.Euler(), rindenFarbe = new THREE.Color(), weiss = new THREE.Color(1, 1, 1);
   let uhr = 0;
   const letzter = new THREE.Vector3(1e9, 0, 0);
 
@@ -398,16 +411,20 @@ export async function erzeugeBaeume(qualitaet, renderer) {
           const ziel = d < NAH ? e.fein : e.grob;
           if (ziel.rinde.count >= ziel.max) continue;
           p.set(b.x, b.y - 0.15, b.z);
-          q.setFromAxisAngle(achse, b.drehung);
-          s.setScalar(b.s * b.wuchs);
+          q.setFromEuler(neigung.set(b.neigX, b.drehung, b.neigZ));
+          s.set(b.s * b.wuchs, b.s * b.wuchs * b.streck, b.s * b.wuchs);
           m.compose(p, q, s);
+          ziel.rinde.setColorAt(ziel.rinde.count, rindenFarbe.copy(b.farbe).lerp(weiss, 0.6));
+          ziel.blatt.setColorAt(ziel.blatt.count, b.farbe);
           ziel.rinde.setMatrixAt(ziel.rinde.count++, m);
           ziel.blatt.setMatrixAt(ziel.blatt.count++, m);
         }
       }
     }
     for (const e of stufen.values()) {
-      for (const st of [e.fein, e.grob]) { st.rinde.instanceMatrix.needsUpdate = true; st.blatt.instanceMatrix.needsUpdate = true; }
+      for (const st of [e.fein, e.grob]) {
+        for (const mesh of [st.rinde, st.blatt]) { mesh.instanceMatrix.needsUpdate = true; if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true; }
+      }
     }
   }
 

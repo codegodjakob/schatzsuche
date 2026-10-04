@@ -121,25 +121,37 @@ def karten(ketten, breite_wurzel, mitte, saat=0, spalten_atlas=8):
     return punkte, np.array(tri), uv, normale
 
 
-def haar_textur(farbe, breite=512, hoehe=1024, spalten=8, saat=0):
-    """Strähnen-Atlas: in jeder Spalte viele feine Haare mit Farbschwankung, Spitzen laufen aus."""
+def haar_textur(farbe, breite=1024, hoehe=1024, spalten=8, saat=0):
+    """Strähnen-Atlas: In jeder Spalte eine Strähne aus vielen feinen Haaren. Zur Mitte dicht, zu den Rändern
+    hin lichter (so sieht man die Kante der Karte nicht), zur Spitze hin schmaler und ausgefranst.
+    Haare wellen sich leicht und haben eigene Farbtöne; an der Wurzel etwas dunkler."""
     zufall = np.random.default_rng(saat + 3)
     bild = np.zeros((hoehe, breite, 4), np.float32)
     v = np.linspace(0, 1, hoehe)[:, None]
+    bild[..., :3] = np.array(farbe) * (0.88 + 0.12 * v)[..., None]  # Grundton unter den einzelnen Haaren (Wurzel etwas dunkler)
     x = np.arange(breite)[None, :]
     spalte_b = breite // spalten
     for sp in range(spalten):
-        for _ in range(26):
-            mitte = sp * spalte_b + 4 + zufall.random() * (spalte_b - 8)
-            welle = (zufall.random() * 2 - 1) * 3 * np.sin(v * zufall.uniform(2, 6) + zufall.uniform(0, 6))
-            dicke = zufall.uniform(0.6, 1.4)
-            ende = zufall.uniform(0.75, 1.0)
-            d = np.abs(x - (mitte + welle + (v - 0.5) * zufall.uniform(-4, 4)))
-            deckung = np.clip(1.2 - d / dicke, 0, 1) * (1 - glatt(ende - 0.15, ende, v)) * glatt(0.0, 0.04, v)
-            ton = (np.array(farbe) * zufall.uniform(0.75, 1.25) * (0.85 + 0.25 * (1 - v)))[:, None, :]
+        mitte_sp = sp * spalte_b + spalte_b / 2
+        for _ in range(90):
+            # Lage quer zur Strähne: zur Mitte gehäuft (Gauß), an der Spitze rückt alles zusammen
+            quer = np.clip(zufall.normal(0, 0.24), -0.46, 0.46) * spalte_b
+            zur_spitze = 1 - 0.55 * v ** 1.3
+            welle = zufall.uniform(0.5, 2.5) * np.sin(v * zufall.uniform(4, 11) + zufall.uniform(0, 6.3))
+            mitte = mitte_sp + quer * zur_spitze + welle
+            dicke = zufall.uniform(0.45, 1.0)
+            ende = zufall.uniform(0.62, 1.0)
+            d = np.abs(x - mitte)
+            deckung = np.clip(1.0 - d / dicke, 0, 1) * (1 - glatt(ende - 0.2, ende, v)) * glatt(0.0, 0.03, v)
+            deckung *= zufall.uniform(0.6, 1.0)
+            hell = zufall.uniform(0.78, 1.22)
+            ton = (np.array(farbe) * hell * (0.9 + 0.15 * v))[:, None, :]
             bild[..., :3] = bild[..., :3] * (1 - deckung[..., None]) + ton * deckung[..., None]
             bild[..., 3] = np.maximum(bild[..., 3], deckung)
-    # Farbe auch in durchsichtige Bereiche ziehen (sonst dunkle Säume beim Filtern)
+        # Ein weicher Grundschleier in der Mitte jeder Spalte, damit die Strähne nicht durchsichtig wirkt
+        rel = (x - mitte_sp) / (spalte_b * 0.32 * (1 - 0.5 * v))
+        schleier = np.exp(-rel ** 2) * 0.55 * (1 - glatt(0.55, 0.9, v)) * glatt(0.0, 0.03, v)
+        bild[..., 3] = np.maximum(bild[..., 3], schleier * (np.abs(x - mitte_sp) < spalte_b / 2))
     leer = bild[..., 3] < 0.05
     bild[leer, :3] = np.array(farbe)
     return (np.clip(bild, 0, 1) * 255 + 0.5).astype(np.uint8)
@@ -156,7 +168,10 @@ def straehnen_von(k, punkte, normalen, dreiecke, stil, saat=0):
 
     if stil['art'] != 'keine':
         anteil = kopfhaut_anteil(punkte, augen_mitte, kopf_mitte, stil.get('glatze', False), weich=(0.0, 0.004))
-        w, nrm = wurzeln(punkte, normalen, dreiecke, anteil, stil['anzahl'], saat)
+        # Vorne oben mehr Wurzeln: dort sieht man am ehesten durch die Haare auf die Kopfhaut
+        rel_p = punkte - kopf_mitte
+        vorn_oben = glatt(-0.02, 0.06, rel_p[:, 2]) * glatt(0.02, 0.09, rel_p[:, 1])
+        w, nrm = wurzeln(punkte, normalen, dreiecke, anteil * (1 + 1.5 * vorn_oben), stil['anzahl'], saat)
         zufall = np.random.default_rng(saat)
         lmin, lmax = stil['laenge']
         laengen = lmin + (lmax - lmin) * zufall.random(len(w)) ** 0.7
@@ -165,7 +180,8 @@ def straehnen_von(k, punkte, normalen, dreiecke, stil, saat=0):
         oben_vorn = glatt(-0.04, 0.05, rel[:, 2]) * glatt(0.0, 0.08, rel[:, 1])
         if stil.get('glatze'):
             oben_vorn *= 0
-        kamm = np.array([0, -0.15, -1.0]) * oben_vorn[:, None] + np.array([0, -1.0, -0.25]) * (1 - oben_vorn[:, None])
+        # Vorne ein Seitenscheitel: Die Haare fallen schräg zur Seite und nach hinten, so bleibt keine Lücke in der Mitte
+        kamm = np.array([0.55, -0.15, -0.8]) * oben_vorn[:, None] + np.array([0, -1.0, -0.25]) * (1 - oben_vorn[:, None])
         kamm[:, 0] += np.sign(rel[:, 0]) * 0.25 * (1 - oben_vorn)
         kamm -= (kamm * nrm).sum(axis=1, keepdims=True) * nrm
         kamm /= np.maximum(np.linalg.norm(kamm, axis=1, keepdims=True), 1e-9)
