@@ -787,6 +787,8 @@ Object.assign(window.spiel, {
   // Prüfhilfen (für werkzeuge/foto_spiel.mjs und die Browser-Konsole)
   setzeZeit: (h) => { zeit.stunde = h; tageszeitSchritt(0); },
   teleport: (x, z) => steuerung.setzeOrt(x, z),
+  // Bogen wieder bereit und alle Pfeile angekommen?
+  bogenBereit: () => bogenPause === 0 && pfeile.every((p) => p.weg >= p.flug),
   blick: (seite, hoehe = -0.1) => { steuerung.zustand.blickSeite = seite; steuerung.zustand.blickHoehe = hoehe; },
 });
 

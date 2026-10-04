@@ -14,7 +14,7 @@ import { zufall as saatZufall } from './zufall.js';
 
 export const ARTEN = {
   fuchs: {
-    name: 'Fuchs', datei: 'fuchs.glb', massstab: 0.0105, leben: 14, scheu: 14, tempo: { gehen: 0.9, rennen: 6.5 },
+    name: 'Fuchs', datei: 'fuchs.glb', massstab: 0.0105, leben: 10, scheu: 14, tempo: { gehen: 0.9, rennen: 6.5 },
     bewegungen: { stehen: 'Survey', gehen: 'Walk', rennen: 'Run' },
     beute: { fleisch: 1, fell: 1 }, erfahrung: 15, wiederkehr: 2, anzahl: 18,
   },

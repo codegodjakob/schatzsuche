@@ -86,10 +86,14 @@ try {
       const d = Math.hypot(dx, dz);
       window.spiel.blick(Math.atan2(-dx, -dz), Math.atan2(t.objekt.position.y + 0.3 - (z.ort.y + 1.5), d));
     }, fuchs);
-    await seite.waitForTimeout(800);
+    // die Kamera muss die neue Blickrichtung erst zeichnen
+    const bild = await spiel(() => window.spiel.bilder);
+    await warte((n) => window.spiel.bilder >= n + 2, bild, 120);
     await tafelnWeg();
     await taste('KeyR');
-    await seite.waitForTimeout(3500);
+    // Die Bogenpause läuft in Spielzeit: ohne Grafikkarte dauert sie viele echte Sekunden
+    await seite.waitForTimeout(1000);
+    await warte(() => window.spiel.bogenBereit(), null, 240);
   }
   const erlegt = await spiel((id) => window.spiel.tiere.alle.find((t) => t.id === id).zustand === 'tot', fuchs.id);
   pruefe(erlegt, 'Mit dem Bogen einen Fuchs erlegt');
