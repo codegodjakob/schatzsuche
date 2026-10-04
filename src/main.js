@@ -1167,7 +1167,7 @@ renderer.setAnimationLoop(() => {
   faellen.schritt(pausiert ? 0 : dt);
   if (!pausiert) { tiere.schritt(dt, steuerung.zustand.ort); pfeilSchritt(dt); }
   feen.schritt(pausiert ? 0 : dt, steuerung.zustand.ort);
-  if (spielLaeuft) karte.schritt(dt, steuerung.zustand.ort, steuerung.zustand.blickSeite);
+  if (spielLaeuft) karte.schritt(steuerung.zustand.ort, steuerung.zustand.blickSeite);
   if (spielLaeuft && !pausiert) begegnungen.schritt(dt);
   sammeln.aktualisiere(dt, zeit.hell, renderer.getPixelRatio());
   // Augen gewöhnen sich an die Dunkelheit

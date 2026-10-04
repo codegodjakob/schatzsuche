@@ -1,5 +1,5 @@
 // Fotografiert das Spiel an bestimmten Orten und Uhrzeiten (zur Prüfung der Grafik).
-// node werkzeuge/foto_spiel.mjs hoch "name:x:z:blickSeite:blickHoehe:stunde[:ich[:f]]" (f: mit Fackel) ...
+// node werkzeuge/foto_spiel.mjs hoch "name:x:z:blickSeite:blickHoehe:stunde[:ich[:f]]" (f: mit Fackel, k: Karte groß) ...
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 import { starteServer } from '../scripts/server.mjs';
@@ -35,6 +35,7 @@ for (const auftrag of auftraege) {
       window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyV' }));
       window.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyV' }));
     }
+    window.spiel.karte.schalteGross(extra.includes('k'));
     document.getElementById('ereignis').hidden = true;
     document.getElementById('hinweise').hidden = true;
   }, [x, z, bs, bh, stunde, ich, extra]);

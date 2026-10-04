@@ -8,7 +8,7 @@ import {
 
 const BILD = 384; // Kantenlänge des gezeichneten Landes in Pixeln
 const NEBEL = 96; // Feinheit dessen, was als erkundet gilt (je Zelle gut 9 Meter)
-const SICHT = 55; // so weit um sich herum erkundet man (Meter)
+const SICHT = 75; // so weit um sich herum erkundet man (Meter)
 
 // Orte, die auf der Karte stehen, sobald man sie gesehen hat
 const ORTE = [
@@ -16,7 +16,7 @@ const ORTE = [
   { name: 'Graufurt', ...GRAUFURT, art: 'dorf' },
   { name: 'Lichtung des Alten', ...LAGER, art: 'lager' },
   { name: 'Räuberlager', ...RAEUBERLAGER, art: 'gefahr' },
-  { name: 'Das Moor', x: MOOR.x - 10, z: MOOR.z + 22, art: 'gebiet' },
+  { name: 'Das Moor', x: MOOR.x - 8, z: MOOR.z + 36, art: 'gebiet' },
   { name: 'Waldsee', ...WALDSEE, art: 'see' },
   { name: 'Schilfsee', ...SCHILFSEE, art: 'see' },
   { name: 'Moorsee', ...MOORSEE, art: 'see' },
@@ -109,7 +109,7 @@ export function erzeugeKarte({ huelle }) {
   const misch = document.createElement('canvas');
   misch.width = misch.height = BILD;
   const mk = misch.getContext('2d');
-  let geaendert = true, uhr = 1, gross = false;
+  let geaendert = true, zuletzt = -Infinity, gross = false;
   let spieler = { x: 0, z: 0, blick: 0 };
 
   function erkunde(x, z) {
@@ -198,12 +198,13 @@ export function erzeugeKarte({ huelle }) {
 
   return {
     // ort: { x, z }, blick: Blickrichtung (wie steuerung.zustand.blickSeite)
-    schritt(dt, ort, blick) {
+    schritt(ort, blick) {
       spieler = { x: ort.x, z: ort.z, blick };
       erkunde(ort.x, ort.z);
-      uhr -= dt;
-      if (uhr > 0 || huelle.hidden) return;
-      uhr = 0.25;
+      // höchstens viermal je Sekunde neu zeichnen (nach echter Zeit, damit sie auch bei wenigen Bildern erscheint)
+      const jetzt = performance.now();
+      if (huelle.hidden || jetzt - zuletzt < 250) return;
+      zuletzt = jetzt;
       zeichne();
     },
     schalteGross,

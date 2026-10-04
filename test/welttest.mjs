@@ -4,6 +4,16 @@ import { starteSpiel } from './helfer.mjs';
 
 const { seite, url, pruefe, warte, spiel, taste, foto, ereignis, tafelnWeg, abbruch, ende } = await starteSpiel();
 
+// Eine Begegnung erzwingen: Sie erscheint nur, wenn gerade keine andere Tafel offen ist
+async function erzwinge(id) {
+  for (let i = 0; i < 20; i++) {
+    await tafelnWeg();
+    if (await spiel((b) => window.spiel.begegnungen.erzwinge(b) || window.spiel.ereignisse.aktuell === b, id)) return;
+    await seite.waitForTimeout(500);
+  }
+  throw new Error(`Begegnung ${id} ließ sich nicht zeigen`);
+}
+
 try {
   await seite.goto(url, { timeout: 300000 });
   await warte(() => window.spiel?.geladen && window.spiel?.bereit, null, 600);
@@ -13,13 +23,13 @@ try {
   await tafelnWeg();
 
   // Brida gibt einen Brief: daraus wird ein Vorhaben
-  await spiel(() => window.spiel.begegnungen.erzwinge('b-brida'));
+  await erzwinge('b-brida');
   await ereignis('b-brida', 'KeyE');
   pruefe(await spiel(() => window.spiel.inventar.hat('brief') && window.spiel.aufgaben.istAktiv('brief_gerold')), 'Brida gibt einen Brief, im Tagebuch steht: Bring ihn zu Gerold');
 
   // Mit der Karawane nach Erlenbach
   await spiel(() => { window.spiel.inventar.gibMuenzen(20); window.spiel.teleport(60, -2); });
-  await spiel(() => window.spiel.begegnungen.erzwinge('b-karawane'));
+  await erzwinge('b-karawane');
   const tagVorher = await spiel(() => window.spiel.zeit.tag * 24 + window.spiel.zeit.stunde);
   await ereignis('b-karawane', 'KeyE');
   await warte(() => window.spiel.steuerung.zustand.aktiv && Math.hypot(window.spiel.steuerung.zustand.ort.x - 194, window.spiel.steuerung.zustand.ort.z - 18) < 3, null, 120);
@@ -30,7 +40,7 @@ try {
   // Wegelagerer: Kämpfen ruft zwei Gegner herbei, die einen verfolgen
   await spiel(() => window.spiel.teleport(70, -2));
   const vorher = await spiel(() => window.spiel.gegner.alle.length);
-  await spiel(() => window.spiel.begegnungen.erzwinge('b-wegelagerer'));
+  await erzwinge('b-wegelagerer');
   await ereignis('b-wegelagerer', 'KeyE');
   await warte((n) => window.spiel.gegner.alle.length >= n + 2, vorher, 120);
   pruefe(await spiel(() => window.spiel.gegner.alle.filter((g) => g.art === 'wegelagerer' && g.zustand !== 'tot').length === 2), 'Zwei Wegelagerer greifen an');
@@ -42,7 +52,7 @@ try {
   // Sturm im Wald wirft einen Baum um
   await spiel(() => window.spiel.teleport(-40, 60));
   const vorSturm = await spiel(() => window.spiel.baeume.hindernisse.filter((h, nr) => window.spiel.baeume.baum(nr).weg).length);
-  await spiel(() => window.spiel.begegnungen.erzwinge('b-sturm'));
+  await erzwinge('b-sturm');
   await ereignis('b-sturm', 'KeyE');
   const nachSturm = await spiel(() => window.spiel.baeume.hindernisse.filter((h, nr) => window.spiel.baeume.baum(nr).weg).length);
   pruefe(nachSturm === vorSturm + 1, 'Der Sturm hat einen Baum umgeworfen');
