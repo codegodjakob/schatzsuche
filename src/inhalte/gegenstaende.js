@@ -23,6 +23,8 @@ export const GEGENSTAENDE = {
   schnur: { name: 'Schnur', bild: '🧵', art: 'material', wert: 3, beschreibung: 'Aus Fasern gedreht. Hält Werkzeug zusammen.' },
   holzscheit: { name: 'Holzscheit', bild: '🪵', art: 'material', wert: 2, beschreibung: 'Frisch gehacktes Holz.' },
   baumstamm: { name: 'Baumstamm', bild: '🌲', art: 'material', wert: 12, hoechstens: 3, beschreibung: 'Schwer. Mehr als drei trägt niemand.' },
+  erde: { name: 'Erde', bild: '🟤', art: 'material', wert: 0, stapel: 20, beschreibung: 'Ausgegraben mit der Schaufel. Zu einem Wall aufgeschüttet hält sie Wind und Feinde ab.' },
+  lehm: { name: 'Lehm', bild: '🧱', art: 'material', wert: 2, stapel: 20, beschreibung: 'Zäher, feuchter Boden vom Ufer. Hält Steine in einer Mauer zusammen.' },
   lederfetzen: { name: 'Lederfetzen', bild: '🟫', art: 'material', wert: 3, beschreibung: 'Gegerbtes Leder, abgerissen und fleckig. Taugt noch für Riemen und ein Wams.' },
 
   // --- Kräuter ---
@@ -46,6 +48,8 @@ export const GEGENSTAENDE = {
   speer: { name: 'Einfacher Speer', bild: '🔱', art: 'waffe', wert: 6, stapel: 1, waffe: { schaden: 8, reichweite: 2.3, tempo: 1.35 }, beschreibung: 'Ein angespitzter Ast. Reicht weit, aber trifft nicht hart.' },
   steinmesser: { name: 'Steinmesser', bild: '🔪', art: 'werkzeug', wert: 10, stapel: 1, werkzeug: { art: 'messer', stufe: 1 }, waffe: { schaden: 5, reichweite: 1.5, tempo: 1.8 }, beschreibung: 'Schneidet Fasern und Kräuter sauber ab: mehr Ertrag. Im Kampf schnell, aber kurz.' },
   steinaxt: { name: 'Steinaxt', bild: '🪓', art: 'werkzeug', wert: 16, stapel: 1, werkzeug: { art: 'axt', stufe: 1 }, waffe: { schaden: 7, reichweite: 1.8, tempo: 1.4 }, beschreibung: 'Damit lässt sich Holz von Bäumen hacken.' },
+  schaufel: { name: 'Holzschaufel', bild: '🪏', art: 'werkzeug', wert: 9, stapel: 1, werkzeug: { art: 'schaufel', stufe: 1 }, beschreibung: 'Damit gräbst du überall Erde aus (Benutzen auf freiem Boden). Am Ufer findest du Lehm.' },
+  spitzhacke: { name: 'Spitzhacke', bild: '⛏️', art: 'werkzeug', wert: 18, stapel: 1, werkzeug: { art: 'hacke', stufe: 1 }, waffe: { schaden: 6, reichweite: 1.7, tempo: 1.2 }, beschreibung: 'Bricht Steine aus großen Felsen, manchmal auch Feuerstein.' },
   keule: { name: 'Holzkeule', bild: '🏏', art: 'waffe', wert: 8, stapel: 1, waffe: { schaden: 10, reichweite: 1.8, tempo: 1.3 }, beschreibung: 'Schwer und grob. Wer trifft, hat recht.' },
   eisenkeule: { name: 'Eisenbeschlagene Keule', bild: '🔨', art: 'waffe', wert: 40, stapel: 1, waffe: { schaden: 15, reichweite: 1.9, tempo: 1.15 }, beschreibung: 'Die Keule des Räuberhauptmanns, mit Eisen beschlagen. Langsam, aber verheerend.' },
 

@@ -152,8 +152,14 @@ export function maskeBei(x, z) {
   return { gras: masken[k] / 255, erde: masken[k + 1] / 255, fels: masken[k + 2] / 255, ufer: masken[k + 3] / 255 };
 }
 
-// Texturen für die Shader (Gras und Boden lesen daraus)
+// Texturen für die Shader (Gras, Boden und Wasser lesen daraus). Einmal gebaut und geteilt, damit eine
+// Änderung am Gelände (Graben) überall zugleich ankommt.
+let geteilt = null;
 export function rasterTexturen() {
+  geteilt ??= baueRasterTexturen();
+  return geteilt;
+}
+function baueRasterTexturen() {
   const hoeheHalb = new Uint16Array(RASTER * RASTER);
   for (let k = 0; k < hoehen.length; k++) hoeheHalb[k] = THREE.DataUtils.toHalfFloat(hoehen[k]);
   const hoehe = new THREE.DataTexture(hoeheHalb, RASTER, RASTER, THREE.RedFormat, THREE.HalfFloatType);
@@ -162,7 +168,45 @@ export function rasterTexturen() {
   const maske = new THREE.DataTexture(masken, RASTER, RASTER, THREE.RGBAFormat);
   maske.magFilter = maske.minFilter = THREE.LinearFilter;
   maske.needsUpdate = true;
-  return { hoehe, maske, groesse: WELT_GROESSE, raster: RASTER };
+  return { hoehe, maske, groesse: WELT_GROESSE, raster: RASTER, hoeheHalb };
+}
+
+// --- Das Gelände verändern (Graben) ---
+// Senkt (tiefe > 0) oder hebt (tiefe < 0) den Boden um einen Punkt; die Ränder laufen weich aus.
+// Wo gegraben wurde, liegt Erde frei statt Gras. Gibt zurück, wie weit sich der Boden in der Mitte bewegt hat.
+let netz = null;
+const ursprung = new Float32Array(hoehen); // so tief darf man höchstens graben: einen Meter unter den Anfang
+export function aendereBoden(x, z, tiefe, radius = 1.6) {
+  const fx = (x + HALB) / ZELLE, fz = (z + HALB) / ZELLE;
+  const r = radius / ZELLE;
+  const i0 = Math.max(0, Math.floor(fx - r)), i1 = Math.min(RASTER - 1, Math.ceil(fx + r));
+  const j0 = Math.max(0, Math.floor(fz - r)), j1 = Math.min(RASTER - 1, Math.ceil(fz + r));
+  const tex = rasterTexturen();
+  let mitte = 0;
+  for (let j = j0; j <= j1; j++) {
+    for (let i = i0; i <= i1; i++) {
+      const d = Math.hypot(i - fx, j - fz) / r;
+      if (d >= 1) continue;
+      const w = (1 - d * d) ** 2;
+      const k = j * RASTER + i;
+      const neu = Math.min(ursprung[k] + 1.6, Math.max(ursprung[k] - 1.0, hoehen[k] - tiefe * w));
+      mitte = Math.max(mitte, Math.abs(neu - hoehen[k]));
+      hoehen[k] = neu;
+      tex.hoeheHalb[k] = THREE.DataUtils.toHalfFloat(neu);
+      // Erde liegt frei
+      const m = k * 4, frei = Math.round(255 * Math.min(1, w * 1.4));
+      masken[m + 1] = Math.max(masken[m + 1], frei);
+      masken[m] = Math.min(masken[m], 255 - masken[m + 1]);
+      if (netz) netz.attributes.position.setY(k, neu);
+    }
+  }
+  tex.hoehe.needsUpdate = true;
+  tex.maske.needsUpdate = true;
+  if (netz) {
+    netz.attributes.position.needsUpdate = true;
+    netz.computeVertexNormals();
+  }
+  return mitte;
 }
 
 // --- Geländenetz und Material ---
@@ -213,6 +257,7 @@ export function erzeugeGelaende() {
   const pos = geo.attributes.position;
   for (let k = 0; k < pos.count; k++) pos.setY(k, hoeheBei(pos.getX(k), pos.getZ(k)));
   geo.computeVertexNormals();
+  netz = geo;
 
   const { maske } = rasterTexturen();
   const mat = new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0 });

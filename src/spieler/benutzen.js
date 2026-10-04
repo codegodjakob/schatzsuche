@@ -1,6 +1,7 @@
 // „Benutzen“ (Taste E oder der große Knopf): das Naheliegende tun – jemanden ansprechen, angeln,
 // aufheben, pflücken, Holz hacken, trinken. Was eine Stelle hergibt, steht in src/inhalte/sammelstellen.js.
 // Weitere Möglichkeiten (Gespräche, Angeln) kommen als „zusatz“ herein; sie gehen den Sammelstellen vor.
+// Was überall geht (Graben), kommt als „danach“: nur, wenn sonst nichts in Reichweite ist.
 import { SAMMELSTELLEN } from '../inhalte/sammelstellen.js';
 import { benenne } from '../inhalte/gegenstaende.js';
 import { hoeheBei, wasserspiegel } from '../welt/gelaende.js';
@@ -13,7 +14,7 @@ const kurz = (aktion) => {
   return wort[0].toUpperCase() + wort.slice(1);
 };
 
-export function erzeugeBenutzen({ sammeln, inventar, fortschritt, ueberleben, merke, nachricht = () => {}, gewinn = () => {}, zusatz = [], beiErnte = () => {} }) {
+export function erzeugeBenutzen({ sammeln, inventar, fortschritt, ueberleben, merke, nachricht = () => {}, gewinn = () => {}, zusatz = [], danach = [], beiErnte = () => {} }) {
   const wsp = wasserspiegel();
   let warten = 0;
 
@@ -69,7 +70,14 @@ export function erzeugeBenutzen({ sammeln, inventar, fortschritt, ueberleben, me
     }
     if (amWasser(ort)) return { text: 'Wasser trinken', kurz: 'Trinken', tue: trinke };
     const stelle = sammeln.naechste(ort, blickSeite);
-    if (!stelle) return null;
+    if (!stelle) {
+      // Nichts zum Aufheben in der Nähe: dann das, was überall geht (z. B. graben)
+      for (const quelle of danach) {
+        const v = quelle(ort, blickSeite);
+        if (v) return v;
+      }
+      return null;
+    }
     const r = regel(stelle);
     return { text: r.aktion, kurz: kurz(r.aktion), stelle, tue: () => ernte(stelle) };
   }

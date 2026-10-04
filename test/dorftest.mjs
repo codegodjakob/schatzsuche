@@ -133,7 +133,8 @@ try {
     await seite.waitForTimeout(600);
   }
   pruefe(await spiel((nr) => window.spiel.baeume.baum(nr).weg, baum.nr), 'Mit der Axt gefällt: Der Baum ist umgefallen');
-  await seite.waitForTimeout(2500);
+  // Abwarten, bis er aufgeschlagen ist und daliegt (ohne Grafikkarte dauert das Fallen eine Weile)
+  await warte((b) => window.spiel.faellen.vorschlag({ x: b.x - 3, z: b.z + 1.2 }), baum, 180);
   await foto('dorf-baum-gefaellt');
   // Zum liegenden Stamm gehen (er fiel vom Spieler weg, also nach Westen)
   await spiel((b) => window.spiel.teleport(b.x - 3, b.z + 1.2), baum);
@@ -147,6 +148,29 @@ try {
   const holzNachher = await spiel(() => window.spiel.inventar.anzahl('holzscheit'));
   pruefe(holzNachher - holzVorher === 6, `Stamm zerteilt: ${holzNachher - holzVorher} Holzscheite`);
   pruefe(await spiel(() => !window.spiel.faellen.vorschlag(window.spiel.steuerung.zustand.ort)), 'Vom Baum ist nur der Stumpf geblieben');
+
+  // Graben und einen Erdwall aufschütten (zweimal: Er wird höher)
+  await spiel(() => { window.spiel.inventar.gib('schaufel', 1); window.spiel.teleport(6, -10); window.spiel.blick(Math.PI, -0.3); });
+  const erdeVorher = await spiel(() => window.spiel.inventar.anzahl('erde') + window.spiel.inventar.anzahl('lehm'));
+  for (let i = 0; i < 2; i++) {
+    await tafelnWeg();
+    await warte(() => { const z = window.spiel.steuerung.zustand; return window.spiel.benutzen.bereit && window.spiel.benutzen.vorschlag(z.ort, z.blickSeite)?.text === 'Graben'; }, null, 60);
+    await taste('KeyE');
+    await seite.waitForTimeout(800);
+  }
+  pruefe(await spiel((n) => window.spiel.inventar.anzahl('erde') + window.spiel.inventar.anzahl('lehm') >= n + 2, erdeVorher), 'Mit der Schaufel gegraben: Erde oder Lehm im Inventar');
+  await spiel(() => { window.spiel.inventar.gib('erde', 8); window.spiel.teleport(12, -6); window.spiel.blick(Math.PI / 2, -0.2); });
+  for (let i = 0; i < 2; i++) {
+    await spiel(() => window.spiel.herstellen.stelleHer(window.spiel.herstellen.rezept('erdwall')));
+    await tafelnWeg();
+    await warte(() => { const z = window.spiel.steuerung.zustand; const v = window.spiel.benutzen.vorschlag(z.ort, z.blickSeite); return window.spiel.benutzen.bereit && v?.kurz === 'Bauen'; }, null, 60);
+    await taste('KeyE');
+    await seite.waitForTimeout(800);
+  }
+  await taste('KeyB');
+  const waelle = await spiel(() => window.spiel.bauen.alle().filter((b) => b.art === 'erdwall').map((b) => b.hoehe));
+  pruefe(waelle.length === 1 && waelle[0] > 1, `Erdwall gebaut und höher aufgeschüttet (${waelle.join(', ')} m)`);
+  await foto('dorf-erdwall');
 
   // Angeln vom Steg aus
   await spiel(([s, w]) => {

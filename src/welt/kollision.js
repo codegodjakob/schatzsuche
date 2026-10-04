@@ -92,3 +92,16 @@ export function freieSicht(von, nach) {
   }
   return 1;
 }
+
+// Ist ein Kreis frei von festen Hindernissen? (zum Bauen und Graben)
+export function kreisFrei(x, z, radius) {
+  const ix = Math.floor(x / ZELLE), iz = Math.floor(z / ZELLE);
+  for (let a = -1; a <= 1; a++) {
+    for (let b = -1; b <= 1; b++) {
+      for (const h of raster.get(schluessel(ix + a, iz + b)) ?? []) {
+        if (Math.hypot(h.x - x, h.z - z) < h.radius + radius) return false;
+      }
+    }
+  }
+  return true;
+}

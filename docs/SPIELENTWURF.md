@@ -433,6 +433,22 @@ Jagd mit Pfeil und Bogen, 6. mehr mit den Leuten, 7. Graufels-Berge, eine zweite
 - Die Haltungen (Fackel halten, Bücken) werden über die aufgezeichneten Bewegungen gelegt und passen darum
   zu jeder Figur (`setzeArm`, `buecke` in `src/spieler/figur.js`).
 
+### Was in M2, Schritt 3 gebaut ist
+
+- **Graben**: Mit einer Holzschaufel gräbt man überall auf freiem Boden („Benutzen“, wenn sonst nichts in
+  Reichweite ist). Der Boden senkt sich sichtbar, Gras verschwindet, Erde liegt frei; höchstens einen Meter
+  tief. Man bekommt Erde, am Ufer Lehm, manchmal einen Stein und selten eine alte Kupfermünze. Nicht auf Wegen,
+  im Dorf, in den Lagern und nicht dicht an Bäumen, Felsen oder Gebautem.
+- **Felsen abbauen**: Mit der Spitzhacke bricht man Steine (manchmal Feuerstein) aus großen Felsen. Jeder
+  Schlag macht den Felsen kleiner, bis er fort ist.
+- **Bauen** (im Menü unter Herstellen): Erdwall (aus Erde; auf einen Wall geschüttet wird er höher, bis
+  mannshoch), Zaun, Palisade, Steinmauer (mit Lehm), Standfackel (brennt nachts von selbst, drei Nächte lang) und Unterstand
+  (darunter schläft man auch ohne Feuer). Eine durchscheinende Vorschau steht vor der Figur, quer zur
+  Blickrichtung; „Benutzen“ setzt das Bauwerk, erst dann wird das Material verbraucht. Reicht es für ein
+  weiteres Stück, steht gleich die nächste Vorschau da, so baut man lange Mauern. Rot heißt: geht hier nicht
+  (Wasser, zu steil, etwas im Weg). B oder Esc bricht ab, am Handy das Menü.
+- Neue Rezepte: Holzschaufel, Spitzhacke. Alles Gebaute, Gegrabene und Abgebaute steht im Spielstand.
+
 ## Offene Fragen für Jakob und Vincenz
 
 - **Mehrspieler**: Auf Roblox spielt man fast immer mit anderen. Soll man später gemeinsam in

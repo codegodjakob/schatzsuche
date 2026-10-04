@@ -135,12 +135,14 @@ function erzeugeFelsen(z, qualitaet) {
     plaetze[0].push({ x, y: hoeheBei(x, zz), z: zz, s, dreh: x, kipp: 0.1 });
   }
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), s = new THREE.Vector3(), p = new THREE.Vector3();
-  gruppe.userData.hindernisse = plaetze.flat().filter((f) => f.s > 0.45).map((f) => ({ x: f.x, z: f.z, radius: f.s * 0.95 }));
+  gruppe.userData.hindernisse = plaetze.flat().filter((f) => f.s > 0.45).map((f) => ({ x: f.x, z: f.z, radius: f.s * 0.95, fels: f }));
   gruppe.userData.material = mat;
   formen.forEach((geo, i) => {
     const liste = plaetze[i];
     const mesh = new THREE.InstancedMesh(geo, mat, liste.length);
     liste.forEach((f, k) => {
+      f.mesh = mesh;
+      f.k = k;
       e.set(f.kipp, f.dreh, f.kipp * 0.5);
       q.setFromEuler(e);
       s.setScalar(f.s);
@@ -152,6 +154,18 @@ function erzeugeFelsen(z, qualitaet) {
     mesh.receiveShadow = true;
     gruppe.add(mesh);
   });
+  // Mit der Spitzhacke abgebaut: Der Fels wird kleiner (s = neue Größe, 0 = ganz fort)
+  gruppe.userData.setzeGroesse = (f, groesse) => {
+    f.s = groesse;
+    e.set(f.kipp, f.dreh, f.kipp * 0.5);
+    q.setFromEuler(e);
+    s.setScalar(groesse);
+    p.set(f.x, f.y - groesse * 0.12, f.z);
+    m.compose(p, q, s);
+    f.mesh.setMatrixAt(f.k, m);
+    f.mesh.instanceMatrix.needsUpdate = true;
+  };
+  gruppe.userData.felsen = plaetze.flat();
   return gruppe;
 }
 
@@ -280,5 +294,5 @@ export async function erzeugeNatur(qualitaet, beerenBusch) {
   } catch (e) {
     console.warn('Blumen konnten nicht geladen werden', e);
   }
-  return { objekt: gruppe, beeren, blumen, hindernisse: felsen.userData.hindernisse, felsMaterial: felsen.userData.material };
+  return { objekt: gruppe, beeren, blumen, hindernisse: felsen.userData.hindernisse, felsMaterial: felsen.userData.material, felsen: felsen.userData.felsen, setzeFelsGroesse: felsen.userData.setzeGroesse };
 }

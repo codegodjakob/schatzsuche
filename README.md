@@ -20,7 +20,7 @@ Claude veröffentlicht nach jeder Änderung eine Vorschau als Link. Der steht im
 | `Leertaste` | springen |
 | Maus | umsehen (einmal ins Bild klicken) |
 | `V` | Blick über die Schulter oder aus den eigenen Augen |
-| `E` | benutzen: aufheben, pflücken, mit der Axt Bäume fällen, entästen und zerteilen, trinken, jemanden ansprechen, angeln, nachts am Feuer schlafen (ein goldener Ring zeigt, was gemeint ist) |
+| `E` | benutzen: aufheben, pflücken, mit der Axt Bäume fällen, entästen und zerteilen, mit der Schaufel graben, mit der Spitzhacke Felsen abbauen, Bauwerke setzen, trinken, jemanden ansprechen, angeln, nachts am Feuer schlafen (ein goldener Ring zeigt, was gemeint ist) |
 | Linksklick oder `X` | zuschlagen, mit der stärksten Waffe, die man dabeihat (sonst mit den Fäusten) |
 | `E`, `Q`, `R`, `T` | Entscheidungen, solange eine Erzähltafel offen ist (auch in Gesprächen) |
 | `I` | Inventar: 48 Plätze, Essen, Wegwerfen |
@@ -29,6 +29,7 @@ Claude veröffentlicht nach jeder Änderung eine Vorschau als Link. Der steht im
 | `J` | Aufgaben: was zu tun ist, welche Aufgabe am Bildschirmrand steht |
 | `Esc` | Menü schließen |
 | `F` | Feuer machen (wenn man es gelernt hat) |
+| `B` oder `Esc` | Bauen abbrechen (gebaut wird über Herstellen) |
 | `T` | Fackel anzünden oder wegstecken (nachts brennt sie von selbst in der linken Hand) |
 | `G` | Grafikqualität: hoch, mittel, niedrig |
 | `H` oder Knopf `?` oben rechts | Steuerung auf- und zuklappen |

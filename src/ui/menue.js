@@ -204,8 +204,10 @@ export function erzeugeMenue({
       karte.append(kopf, el('p', 'klein', r.beschreibung), zutaten);
       if (r.fehlt.includes('Platz im Inventar')) karte.append(el('p', 'fehlt-text', 'Kein Platz mehr im Inventar.'));
       const k = knopf(r.bauwerk ? 'Bauen' : 'Herstellen', () => {
-        if (!herstellen.stelleHer(herstellen.rezept(r.id))) return;
-        if (r.bauwerk) schliesse(); else zeichne();
+        const fertig = herstellen.stelleHer(herstellen.rezept(r.id));
+        // Bauwerke zum Setzen: Das Menü geht zu, vor der Figur erscheint die Vorschau
+        if (r.bauwerk && (fertig || r.setzen)) schliesse();
+        else if (fertig) zeichne();
       }, `knopf-text${kann ? ' haupt' : ''}`);
       k.disabled = !kann;
       karte.append(k);

@@ -67,6 +67,14 @@ const BILDER = {
   stroh: [12, 20, 28, 36, 44, 52].map((x, i) => linie(`M${x} 58 Q${32 + (i - 2.5) * 4} 30 ${x - 2} 6`, '#d8b860', 3)).join('') + linie('M14 34 Q32 28 50 34', '#8a6a3c', 4),
   samen: [[22, 30], [32, 24], [42, 30], [28, 40], [38, 40]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="5" ry="3.4" fill="#c8a060" stroke="${K}" stroke-width="2"/>`).join(''),
   laterne: flaeche('M22 18 L42 18 L46 50 L18 50 Z', '#3a3a3a') + flaeche('M24 22 L40 22 L42 46 L22 46 Z', '#ffcf6a', 1.5) + linie('M26 18 Q32 6 38 18', K, 3) + flaeche('M16 50 L48 50 L46 56 L18 56 Z', '#3a3a3a'),
+
+  // Bauwerke
+  erdwall: flaeche('M4 52 Q14 22 32 20 Q50 22 60 52 Z', '#7a5434') + linie('M14 40 Q24 34 34 36 M30 46 Q42 40 50 44', '#5a3a20', 2) + flaeche('M20 24 q4 -6 8 -2 q4 -6 8 0', '#6f9a4a', 2),
+  zaun: [12, 26, 40, 54].map((x) => stiel(x, 56, x, 14, '#8a5a33')).join('') + linie('M8 26 Q32 30 58 26 M8 40 Q32 44 58 40', '#6b4a2a', 3.5),
+  palisade: [10, 22, 34, 46, 58].map((x) => flaeche(`M${x - 5} 58 L${x - 5} 18 L${x} 8 L${x + 5} 18 L${x + 5} 58 Z`, '#9a6a3c', 2)).join('') + linie('M6 30 L60 30', '#c9b073', 3),
+  steinmauer: [[6, 42, 22], [28, 42, 30], [50, 42, 12], [10, 28, 26], [36, 28, 22], [20, 14, 26]].map(([x, y, b]) => `<rect x="${x}" y="${y}" width="${b - 2}" height="13" rx="3" fill="#8d8a80" stroke="${K}" stroke-width="2.5"/>`).join(''),
+  standfackel: stiel(32, 60, 32, 22, '#7a5130') + flaeche('M26 24 L38 24 L36 16 L28 16 Z', '#3a2a1c', 2) + flaeche('M32 18 Q20 8 30 -2 Q32 6 36 6 Q44 12 32 18 Z', '#f08a24', 2) + flaeche('M32 17 Q27 10 31 4 Q33 9 36 10 Q37 14 32 17 Z', '#ffd36a', 1.2),
+  unterstand: flaeche('M6 24 L56 12 L60 22 L10 36 Z', '#9a6a3c') + stiel(14, 58, 12, 32) + stiel(52, 58, 54, 20) + linie('M10 30 L58 18', '#6f9a4a', 3) + linie('M8 58 L60 58', '#5a3a20', 3),
 };
 
 const beutel = flaeche('M16 26 Q14 52 32 56 Q50 52 48 26 Z', '#8a6a3c') + linie('M18 24 Q32 30 46 24', K, 3) + flaeche('M24 22 Q32 10 40 22', '#a8854c');

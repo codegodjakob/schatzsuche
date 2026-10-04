@@ -46,7 +46,7 @@ export function erzeugeHerstellen({ inventar, fortschritt, weiss, amFeuer, baue,
     return REZEPTE.filter(bekannt)
       .map((r) => {
         const was = r.ergebnis ? gegenstand(r.ergebnis) : BAUWERKE[r.bauwerk];
-        return { ...r, name: was.name, bild: was.bild, beschreibung: was.beschreibung, fehlt: fehlt(r), ortName: ORTE[r.ort] };
+        return { ...r, name: was.name, bild: was.bild, beschreibung: was.beschreibung, setzen: !!was.setzen, fehlt: fehlt(r), ortName: ORTE[r.ort] };
       })
       .sort((a, b) => (a.fehlt.length > 0) - (b.fehlt.length > 0) || a.stufe - b.stufe);
   }
