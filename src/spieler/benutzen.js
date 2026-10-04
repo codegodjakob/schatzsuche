@@ -49,7 +49,7 @@ export function erzeugeBenutzen({ sammeln, inventar, fortschritt, ueberleben, me
     for (const [id, k] of bekommen) gewinn(`+${benenne(id, k)}`, id);
     const ep = fortschritt.gibErfahrung(r.erfahrung, r.beruf);
     gewinn(`+${ep} Erfahrung`, 'erfahrung');
-    beiErnte(r);
+    beiErnte(r, stelle);
     return true;
   }
 

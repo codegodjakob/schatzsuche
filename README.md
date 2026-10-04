@@ -20,7 +20,7 @@ Claude veröffentlicht nach jeder Änderung eine Vorschau als Link. Der steht im
 | `Leertaste` | springen |
 | Maus | umsehen (einmal ins Bild klicken) |
 | `V` | Blick über die Schulter oder aus den eigenen Augen |
-| `E` | benutzen: aufheben, pflücken, Holz hacken, trinken, jemanden ansprechen, angeln, nachts am Feuer schlafen (ein goldener Ring zeigt, was gemeint ist) |
+| `E` | benutzen: aufheben, pflücken, mit der Axt Bäume fällen, entästen und zerteilen, trinken, jemanden ansprechen, angeln, nachts am Feuer schlafen (ein goldener Ring zeigt, was gemeint ist) |
 | Linksklick oder `X` | zuschlagen, mit der stärksten Waffe, die man dabeihat (sonst mit den Fäusten) |
 | `E`, `Q`, `R`, `T` | Entscheidungen, solange eine Erzähltafel offen ist (auch in Gesprächen) |
 | `I` | Inventar: 48 Plätze, Essen, Wegwerfen |

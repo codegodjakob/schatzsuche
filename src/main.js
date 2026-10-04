@@ -10,6 +10,7 @@ import { erzeugeWasser } from './welt/wasser.js';
 import { erzeugeFeuer, erzeugeFeuerlichter, erzeugeFlamme } from './welt/feuer.js';
 import { erzeugeSammeln } from './welt/sammeln.js';
 import { erzeugeMarkierung } from './welt/markierung.js';
+import { AUFWACHSEN, AUSTREIBEN, erzeugeFaellen } from './welt/faellen.js';
 import { erzeugeRaeuberlager } from './welt/raeuberlager.js';
 import { erzeugeDorf } from './welt/dorf.js';
 import { inDieHand } from './welt/waffen.js';
@@ -40,7 +41,7 @@ import { erzeugeEditor } from './ui/editor.js';
 import { ergaenze, wachse, wendeAn } from './spieler/aussehen.js';
 import { erzeugeNachbearbeitung } from './nachbearbeitung.js';
 import { BERUFE } from './inhalte/berufe.js';
-import { gegenstand } from './inhalte/gegenstaende.js';
+import { benenne, gegenstand } from './inhalte/gegenstaende.js';
 import { REZEPTE } from './inhalte/rezepte.js';
 import { ladeSpielstand, loescheSpielstand, speichereSpielstand } from './spielstand.js';
 
@@ -114,6 +115,7 @@ const sammeln = erzeugeSammeln({ natur, baeume });
 szene.add(sammeln.objekt);
 const markierung = erzeugeMarkierung();
 szene.add(markierung.objekt);
+const faellen = erzeugeFaellen({ szene, baeume });
 
 oberflaeche.laden('Das Lager am Waldrand …');
 await atmen();
@@ -234,7 +236,14 @@ const DURSTIG = 70;
 const benutzen = erzeugeBenutzen({
   sammeln, inventar, fortschritt, ueberleben, nachricht, gewinn,
   merke: (m) => ereignisse.merker.add(m),
-  beiErnte: (regel) => { if (aussehen && regel.beruf === 'holzfaellen') aussehen.arbeit += 1; },
+  beiErnte: (regel, stelle) => {
+    if (aussehen && regel.beruf === 'holzfaellen') aussehen.arbeit += 1;
+    // Was am Boden liegt oder wächst, hebt man gebückt auf
+    if (stelle && stelle.art !== 'baum' && stelle.art !== 'beeren' && figur) {
+      steuerung.dreheZu(Math.atan2(stelle.x - steuerung.zustand.ort.x, stelle.z - steuerung.zustand.ort.z), 0.6);
+      figur.buecke();
+    }
+  },
   zusatz: [
     // Beim Angeln heißt „Benutzen“: ziehen
     () => (angeln.aktiv
@@ -247,10 +256,59 @@ const benutzen = erzeugeBenutzen({
     },
     // Mit der Angel am Ufer (wer Durst hat, trinkt zuerst)
     () => (ueberleben.werte.wasser >= DURSTIG && angeln.kannWerfen() ? { text: 'Angel auswerfen', kurz: 'Angeln', tue: angeln.wirfAus } : null),
+    // Mit der Axt: einen liegenden Baum entästen und zerteilen …
+    (ort) => {
+      if (inventar.werkzeugStufe('axt') <= 0) return null;
+      const v = faellen.vorschlag(ort);
+      return v ? { ...v, tue: () => arbeiteAmStamm(v.liegend) } : null;
+    },
+    // … oder einen stehenden fällen
+    (ort, blickSeite) => {
+      if (inventar.werkzeugStufe('axt') <= 0) return null;
+      const st = sammeln.naechste(ort, blickSeite);
+      if (st?.art !== 'baum') return null;
+      const nr = Number(st.id.slice(5));
+      if (faellen.istJung(nr)) return { text: 'Der Baum ist noch zu jung', kurz: 'Zu jung', stelle: st, tue: () => { nachricht('Der Baum ist noch zu jung zum Fällen. Lass ihn wachsen.'); return false; } };
+      const k = faellen.kerbe(nr);
+      return { text: k ? `Baum fällen (${k}/${faellen.noetig(nr)})` : 'Baum fällen', kurz: 'Fällen', stelle: st, tue: () => faelleSchlag(st, nr) };
+    },
     // Nachts am Feuer: schlafen bis zum Morgen
     () => (kannSchlafen() ? { text: 'Am Feuer schlafen', kurz: 'Schlafen', tue: schlafe } : null),
   ],
 });
+
+// ---------------------------------------------------------------- Holzfällen
+// Jeder Schlag ist ein sichtbarer Axthieb zum Baum hin. Der letzte lässt ihn fallen.
+function axthieb(x, z) {
+  const o = steuerung.zustand.ort;
+  steuerung.dreheZu(Math.atan2(x - o.x, z - o.z), 0.7);
+  figur?.spiele('hieb', { tempo: 1.1, ein: 0.12, aus: 0.25 });
+  if (aussehen) aussehen.arbeit += 1;
+}
+function faelleSchlag(stelle, nr) {
+  axthieb(stelle.x, stelle.z);
+  const r = faellen.hacke(nr, steuerung.zustand.ort);
+  gewinn(`+${fortschritt.gibErfahrung(2, 'holzfaellen')} Erfahrung`, 'erfahrung');
+  if (r.faellt) {
+    sammeln.nimm(stelle, AUSTREIBEN + AUFWACHSEN * 0.55); // erst ein halbwüchsiger Baum lässt sich wieder nutzen
+    nachricht('Der Baum kippt … und schlägt krachend auf!');
+    gewinn(`+${fortschritt.gibErfahrung(10, 'holzfaellen')} Erfahrung`, 'erfahrung');
+    ereignisse.merker.add('baum-gefaellt');
+    speichereBald();
+  }
+  return true;
+}
+function arbeiteAmStamm(liegend) {
+  const o = steuerung.zustand.ort;
+  axthieb(liegend.form.x + liegend.richtung.x * 3, liegend.form.z + liegend.richtung.z * 3);
+  const beute = faellen.bearbeite(liegend, o);
+  for (const [id, n] of Object.entries(beute)) {
+    const k = inventar.gib(id, n, { leise: true });
+    if (k > 0) gewinn(`+${benenne(id, k)}`, id);
+  }
+  gewinn(`+${fortschritt.gibErfahrung(3, 'holzfaellen')} Erfahrung`, 'erfahrung');
+  return true;
+}
 
 // ---------------------------------------------------------------- Schlafen
 // Nachts an einem brennenden Feuer kann man schlafen. Man wacht bei Sonnenaufgang auf: ausgeruht und
@@ -394,7 +452,7 @@ szene.add(fackelLampe);
 const fackelKopf = new THREE.Vector3();
 // So hält man eine Fackel: Oberarm locker am Körper, Unterarm angewinkelt nach vorn, die Fackel aufrecht
 const FACKEL_ARM = { oberarm: new THREE.Vector3(0.25, -0.85, 0.3), unterarm: new THREE.Vector3(0.18, 0.4, 0.95) };
-const FACKEL_AUFRECHT = new THREE.Vector3(0.1, 1, 0.3).normalize();
+const FACKEL_AUFRECHT = new THREE.Vector3(0.3, 1, 0.25).normalize(); // etwas nach außen, damit sie nicht vors Gesicht kommt
 const _qHand = new THREE.Quaternion(), _qFig = new THREE.Quaternion(), _richtung = new THREE.Vector3();
 function richteFackelAuf() {
   const hand = figur?.linkeHand, fackelForm = hand?.getObjectByName('waffe');
@@ -496,7 +554,7 @@ function tippsPruefen() {
 Object.defineProperty(window.spiel, 'aussehen', { get: () => aussehen });
 Object.assign(window.spiel, {
   editor,
-  steuerung, ereignisse, ueberleben, inventar, fortschritt, herstellen, aufgaben, sammeln, benutzen, menue, gegner, kampf,
+  steuerung, ereignisse, ueberleben, inventar, fortschritt, herstellen, aufgaben, sammeln, benutzen, menue, faellen, baeume, gegner, kampf,
   handel, angeln, dorf, wasserspiegel: wasserspiegel(),
   speichere: () => speichereJetzt(),
   fackelBrennt: () => fackelAn,
@@ -524,6 +582,7 @@ function spielstand() {
     aufgaben: aufgaben.speichern(),
     ereignisse: ereignisse.speichern(),
     sammeln: sammeln.speichern(),
+    faellen: faellen.speichern(),
     gegner: gegner.speichern(),
     feuer: feuerstellen.filter((f) => f.eigenes && f.brennt()).map((f) => ({ x: f.ort.x, z: f.ort.z, bis: f.bis })),
   };
@@ -551,6 +610,7 @@ function ladeStand(st) {
   ereignisse.laden(st.ereignisse);
   aufgaben.laden(st.aufgaben);
   sammeln.laden(st.sammeln);
+  faellen.laden(st.faellen);
   gegner.laden(st.gegner);
   for (const f of st.feuer ?? []) if (f.bis > spielStunde()) entzuende(f.x, f.z, f.bis);
 }
@@ -773,6 +833,7 @@ renderer.setAnimationLoop(() => {
   einsiedler?.aktualisiere(dt, blickpunkt);
   doerfler?.aktualisiere(dt, blickpunkt);
   markierung.schritt(dt);
+  faellen.schritt(pausiert ? 0 : dt);
   sammeln.aktualisiere(dt, zeit.hell, renderer.getPixelRatio());
   // Augen gewöhnen sich an die Dunkelheit
   renderer.toneMappingExposure = THREE.MathUtils.lerp(1.05, 0.62, zeit.hell);
@@ -800,6 +861,7 @@ renderer.setAnimationLoop(() => {
     if (wachsTakt <= 0) {
       wachsTakt = 1;
       sammeln.wachsen();
+      faellen.wachsen();
       loescheAus();
       // Jede Spielstunde: Haare und Bart wachsen, das Gewicht folgt dem Essen, Muskeln der Arbeit
       const jetzt = spielStunde();

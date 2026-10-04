@@ -292,7 +292,8 @@ export async function erzeugeBaeume(qualitaet, renderer) {
 
   const alle = [];
   const setze = (v, p, s) => {
-    const baum = { x: p.x, y: p.y, z: p.z, drehung: p.drehung, v, s };
+    // weg: gefällt (nur der Stumpf steht noch); wuchs: wie groß er gerade ist (ein nachwachsender Baum ist erst klein)
+    const baum = { x: p.x, y: p.y, z: p.z, drehung: p.drehung, v, s, nr: alle.length, weg: false, wuchs: 1 };
     v.plaetze.push(baum);
     alle.push(baum);
   };
@@ -356,6 +357,7 @@ export async function erzeugeBaeume(qualitaet, renderer) {
   quad.setIndex([0, 1, 2, 0, 2, 3]);
   const baumAttr = new Float32Array(ferne.length * 4), bildAttr = new Float32Array(ferne.length * 4), untenAttr = new Float32Array(ferne.length);
   ferne.forEach((b, i) => {
+    b.fernNr = i;
     baumAttr.set([b.x, b.y - 0.15, b.z, b.s], i * 4);
     const bi = b.v.bild;
     bildAttr.set([bi.zelle % ATLAS_SPALTEN, Math.floor(bi.zelle / ATLAS_SPALTEN), bi.breite, bi.hoehe], i * 4);
@@ -391,12 +393,13 @@ export async function erzeugeBaeume(qualitaet, renderer) {
           const d = Math.hypot(b.x - ort.x, b.z - ort.z);
           const istBusch = b.v.art.gebiet === 'busch';
           if (d > (istBusch ? Math.min(35, MITTEL * 0.6) : MITTEL + 8)) continue;
+          if (b.weg) continue;
           const e = stufen.get(b.v);
           const ziel = d < NAH ? e.fein : e.grob;
           if (ziel.rinde.count >= ziel.max) continue;
           p.set(b.x, b.y - 0.15, b.z);
           q.setFromAxisAngle(achse, b.drehung);
-          s.setScalar(b.s);
+          s.setScalar(b.s * b.wuchs);
           m.compose(p, q, s);
           ziel.rinde.setMatrixAt(ziel.rinde.count++, m);
           ziel.blatt.setMatrixAt(ziel.blatt.count++, m);
@@ -432,6 +435,30 @@ export async function erzeugeBaeume(qualitaet, renderer) {
     radius: b.v.art.gebiet === 'busch' ? 0.45 : Math.min(0.6, 0.22 + b.s * 1.6),
   }));
   const beerenBusch = { geometrie: busch[0].fein.blaetter, plaetze: beerenPlaetze };
+
+  // Fällen und Nachwachsen: Ein gefällter Baum verschwindet aus allen drei Entfernungen; ein nachwachsender
+  // steht erst klein da. Die Nummer ist dieselbe wie die der Hindernisse (und der Sammelstellen „baum-…“).
+  const fernBaum = quad.getAttribute('baum');
+  function erneuere(b) {
+    if (b.fernNr !== undefined) {
+      fernBaum.array[b.fernNr * 4 + 3] = b.weg ? 0 : b.s * b.wuchs;
+      fernBaum.needsUpdate = true;
+    }
+    letzter.set(1e9, 0, 0); // beim nächsten Bild neu verteilen
+  }
+  function setzeZustand(nr, { weg = alle[nr].weg, wuchs = alle[nr].wuchs } = {}) {
+    const b = alle[nr];
+    if (b.weg === weg && b.wuchs === wuchs) return;
+    b.weg = weg;
+    b.wuchs = wuchs;
+    erneuere(b);
+  }
+  // Was man braucht, um den Baum als eigenes Netz umfallen zu lassen
+  function form(nr) {
+    const b = alle[nr];
+    return { rinde: b.v.fein.rinde, blaetter: b.v.fein.blaetter, rindenMat: b.v.mat.rinde, blattMat: b.v.mat.blatt, tiefe: b.v.mat.tiefe,
+      x: b.x, y: b.y - 0.15, z: b.z, drehung: b.drehung, s: b.s * b.wuchs, art: b.v.art.name, nadel: b.v.art.gebiet === 'nadel' };
+  }
   const rinde = varianten.find((v) => v.art.name === 'eiche')?.mat.rinde;
-  return { objekt: gruppe, aktualisiere, setzeQualitaet, anzahl: alle.length, beerenBusch, hindernisse, rinde };
+  return { objekt: gruppe, aktualisiere, setzeQualitaet, anzahl: alle.length, beerenBusch, hindernisse, rinde, setzeZustand, form, baum: (nr) => alle[nr] };
 }

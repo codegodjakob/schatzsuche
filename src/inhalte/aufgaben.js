@@ -85,10 +85,10 @@ export const AUFGABEN = [
     id: 'holz',
     titel: 'Holz für den Winter',
     geber: 'Einsiedler',
-    beschreibung: '„Gutes Messer. Jetzt bau dir eine Axt, und hack mir Holz. Der Winter kommt früher, als du denkst.“',
+    beschreibung: '„Gutes Messer. Jetzt bau dir eine Axt, fäll einen Baum und hack mir Holz. Der Winter kommt früher, als du denkst.“',
     schritte: [
       { text: 'Stelle eine Steinaxt her (braucht Handwerk Stufe 2)', fertig: (s) => s.hergestellt('steinaxt') > 0 || s.hat('steinaxt') },
-      { text: (s) => `Hacke Holz an einem Baum (${bis(s.anzahl('holzscheit'), 5)}/5)`, fertig: (s) => s.anzahl('holzscheit') >= 5 || s.weiss('holz-gebracht') },
+      { text: (s) => `Fälle einen Baum und zerteile den Stamm in Holzscheite (${bis(s.anzahl('holzscheit'), 5)}/5)`, fertig: (s) => s.anzahl('holzscheit') >= 5 || s.weiss('holz-gebracht') },
       { text: 'Bring dem Einsiedler fünf Holzscheite', fertig: (s) => s.weiss('holz-gebracht'), ort: LAGER },
     ],
     belohnung: { erfahrung: 70, muenzen: 12 },

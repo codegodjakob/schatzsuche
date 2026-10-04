@@ -115,6 +115,39 @@ try {
   await warte(() => window.spiel.aufgaben.erledigte().some((a) => a.id === 'auftrag_holz'), null, 60);
   pruefe((await kupfer()) === vorHolz + 18 && (await spiel(() => window.spiel.inventar.anzahl('holzscheit'))) === 0, 'Holz abgegeben, 18 Kupfer Lohn');
 
+  // Mit der Axt einen Baum fällen, entästen und zerteilen
+  await spiel(() => window.spiel.inventar.gib('steinaxt', 1));
+  const baum = await spiel(() => {
+    const st = window.spiel.sammeln.findeArt('baum', window.spiel.steuerung.zustand.ort);
+    const nr = Number(st.id.slice(5));
+    const h = window.spiel.baeume.hindernisse[nr];
+    window.spiel.teleport(st.x + h.radius + 0.7, st.z);
+    window.spiel.blick(Math.PI / 2, -0.1); // nach Westen, zum Baum
+    return { nr, x: st.x, z: st.z };
+  });
+  const holzVorher = await spiel(() => window.spiel.inventar.anzahl('holzscheit'));
+  for (let i = 0; i < 12 && !(await spiel((nr) => window.spiel.baeume.baum(nr).weg, baum.nr)); i++) {
+    await tafelnWeg();
+    await warte(() => { const z = window.spiel.steuerung.zustand; return window.spiel.benutzen.bereit && window.spiel.benutzen.vorschlag(z.ort, z.blickSeite)?.kurz === 'Fällen'; }, null, 60);
+    await taste('KeyE');
+    await seite.waitForTimeout(600);
+  }
+  pruefe(await spiel((nr) => window.spiel.baeume.baum(nr).weg, baum.nr), 'Mit der Axt gefällt: Der Baum ist umgefallen');
+  await seite.waitForTimeout(2500);
+  await foto('dorf-baum-gefaellt');
+  // Zum liegenden Stamm gehen (er fiel vom Spieler weg, also nach Westen)
+  await spiel((b) => window.spiel.teleport(b.x - 3, b.z + 1.2), baum);
+  for (let i = 0; i < 10; i++) {
+    await tafelnWeg();
+    const v = await warte(() => { const z = window.spiel.steuerung.zustand; const v = window.spiel.benutzen.vorschlag(z.ort, z.blickSeite); return window.spiel.benutzen.bereit && v && ['Abhacken', 'Zerteilen'].includes(v.kurz) ? v.kurz : false; }, null, 30).then((h) => h.jsonValue(), () => null);
+    if (!v) break;
+    await taste('KeyE');
+    await seite.waitForTimeout(600);
+  }
+  const holzNachher = await spiel(() => window.spiel.inventar.anzahl('holzscheit'));
+  pruefe(holzNachher - holzVorher === 6, `Stamm zerteilt: ${holzNachher - holzVorher} Holzscheite`);
+  pruefe(await spiel(() => !window.spiel.faellen.vorschlag(window.spiel.steuerung.zustand.ort)), 'Vom Baum ist nur der Stumpf geblieben');
+
   // Angeln vom Steg aus
   await spiel(([s, w]) => {
     window.spiel.ueberleben.werte.wasser = 100;

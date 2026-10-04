@@ -421,6 +421,18 @@ Jagd mit Pfeil und Bogen, 6. mehr mit den Leuten, 7. Graufels-Berge, eine zweite
   Sonnenaufgang auf, warm und geheilt, aber hungriger und durstiger. Sind Feinde in der Nähe, findet man
   keine Ruhe.
 
+### Was in M2, Schritt 2 gebaut ist
+
+- **Bäume fällen**: Mit einer Axt fällt man jeden Baum. Jeder Hieb ist zu sehen (die Figur dreht sich zum
+  Stamm und holt aus, Späne fliegen), dicke Bäume brauchen mehr Hiebe (drei bis acht). Dann kippt der Baum
+  vom Spieler weg, erst langsam, dann immer schneller, schlägt auf und federt nach. Am liegenden Baum hackt
+  man erst die Äste ab (je zwei Äste), dann zerteilt man den Stamm (je zwei Holzscheite). Es bleibt ein
+  Stumpf mit Jahresringen. Nach zwei Spieltagen treibt daraus ein junger Baum, der in fünf Tagen groß wird;
+  erst halbwüchsig lässt er sich wieder nutzen.
+- **Aufheben mit Bücken**: Wer einen Ast, Stein, Pilz oder eine Blume aufhebt, dreht sich hin und bückt sich.
+- Die Haltungen (Fackel halten, Bücken) werden über die aufgezeichneten Bewegungen gelegt und passen darum
+  zu jeder Figur (`setzeArm`, `buecke` in `src/spieler/figur.js`).
+
 ## Offene Fragen für Jakob und Vincenz
 
 - **Mehrspieler**: Auf Roblox spielt man fast immer mit anderen. Soll man später gemeinsam in
