@@ -65,6 +65,10 @@ export async function starteSpiel({ handy = false, schritt = 0.15 } = {}) {
     }
   }
 
+  // Klicken (am Handy: tippen) mit viel Geduld: Ohne Grafikkarte entsteht nur etwa ein Bild je Sekunde, und
+  // Playwright wartet, bis ein Knopf über zwei Bilder hinweg ruhig steht
+  const drueck = (wahl, handy = false) => (handy ? seite.tap(wahl, { timeout: 180000 }) : seite.click(wahl, { timeout: 180000 }));
+
   // Bricht die Prüfung nach einem Fehler ab (mit Bildschirmfoto)
   async function abbruch(e, name = 'fehler') {
     pruefe(false, `Abbruch: ${e.message.split('\n')[0]}`);
@@ -80,5 +84,5 @@ export async function starteSpiel({ handy = false, schritt = 0.15 } = {}) {
     process.exit(ok ? 0 : 1);
   }
 
-  return { seite, kontext, url, fehler, pruefe, warte, spiel, taste, foto, ereignis, tafelnWeg, abbruch, ende };
+  return { seite, kontext, url, fehler, pruefe, warte, spiel, taste, foto, ereignis, tafelnWeg, abbruch, ende, drueck };
 }

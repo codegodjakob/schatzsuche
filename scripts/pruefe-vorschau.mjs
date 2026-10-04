@@ -69,6 +69,9 @@ try {
   await seite.waitForFunction(() => window.spiel?.geladen && window.spiel?.bereit, null, { timeout: 600000, polling: 500 });
   pruefe(true, 'Welt lädt');
   await seite.click('#wahl-sie', { timeout: 120000 });
+  // Nach der Wahl kommt der Charakter-Editor; „Los geht's“ startet das Spiel
+  await seite.waitForFunction(() => window.spiel.editor?.aktiv || !document.getElementById('fehler').hidden, null, { timeout: 600000, polling: 500 });
+  if (await seite.evaluate(() => window.spiel.editor?.aktiv)) await seite.click('#editor-fertig', { timeout: 180000 });
   await seite.waitForFunction(() => (window.spiel.figur && window.spiel.steuerung.zustand.aktiv) || !document.getElementById('fehler').hidden,
     null, { timeout: 300000, polling: 500 });
   pruefe(await seite.evaluate(() => !!window.spiel.figur), 'Figur lädt');

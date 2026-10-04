@@ -20,7 +20,21 @@ function hautMaterial(alt) {
   });
   m.name = 'haut';
   m.defines = { HAUT_STREUUNG: '' };
+  // Aufgemalte Haare (Brauen, Haaransatz, Bartschatten) bekommen die Haarfarbe aus dem Editor: Die Maske steht im
+  // B-Kanal des ORM-Bilds (werkzeuge/figuren/haut.py). Ohne Editor sind beide Farben schwarz, dann ändert sich nichts.
+  m.userData.haarAlt = { value: new THREE.Color(0, 0, 0) };
+  m.userData.haarNeu = { value: new THREE.Color(0, 0, 0) };
   m.onBeforeCompile = (shader) => {
+    shader.uniforms.uHaarAlt = m.userData.haarAlt;
+    shader.uniforms.uHaarNeu = m.userData.haarNeu;
+    shader.fragmentShader = 'uniform vec3 uHaarAlt;\nuniform vec3 uHaarNeu;\n' + shader.fragmentShader.replace(
+      '#include <map_fragment>',
+      `#include <map_fragment>
+      #ifdef USE_ROUGHNESSMAP
+        float haarMaske = texture2D( roughnessMap, vRoughnessMapUv ).b;
+        diffuseColor.rgb += haarMaske * ( uHaarNeu - diffuse * uHaarAlt );
+      #endif`,
+    );
     shader.fragmentShader = shader.fragmentShader.replace(
       'vec3 irradiance = dotNL * directLight.color;',
       `vec3 irradiance = dotNL * directLight.color;

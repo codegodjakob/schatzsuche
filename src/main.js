@@ -36,6 +36,8 @@ import { erzeugeOberflaeche } from './ui/oberflaeche.js';
 import { erzeugeBeruehrung } from './ui/beruehrung.js';
 import { erzeugeMenue } from './ui/menue.js';
 import { erzeugeKampfanzeige } from './ui/kampfanzeige.js';
+import { erzeugeEditor } from './ui/editor.js';
+import { ergaenze, wachse, wendeAn } from './spieler/aussehen.js';
 import { erzeugeNachbearbeitung } from './nachbearbeitung.js';
 import { BERUFE } from './inhalte/berufe.js';
 import { gegenstand } from './inhalte/gegenstaende.js';
@@ -173,9 +175,15 @@ oberflaeche.laden('Bereit. Wähle deine Figur.');
 // ---------------------------------------------------------------- Spieler und Regeln
 const steuerung = erzeugeSteuerung({ kamera, flaeche });
 erzeugeBeruehrung({ flaeche, steuerung });
+const editor = erzeugeEditor({ kamera, flaeche });
 let figur = null;
 let figurArt = null;
 let spielLaeuft = false;
+let aussehen = null; // Gesicht, Haare, Körper (src/spieler/aussehen.js); wächst im Spiel mit
+// Das Aussehen auf die eigene Figur (Muskeln hängen auch an der Stärke)
+const zeigeAussehen = () => {
+  if (figur && aussehen) wendeAn(figur, aussehen, { staerke: fortschritt.zustand.werte.staerke, wams: inventar.hat('lederwams') });
+};
 
 const fortschritt = erzeugeFortschritt({
   beiStufe: (stufe) => {
@@ -187,7 +195,7 @@ const fortschritt = erzeugeFortschritt({
   beiBerufsstufe: (beruf, stufe) => nachricht(`${BERUFE[beruf].name}: jetzt Stufe ${stufe}.`),
 });
 let waffeNeu = true; // die Waffe in der Hand muss neu bestimmt werden
-const inventar = erzeugeInventar({ nachricht, beiAenderung: () => { waffeNeu = true; } });
+const inventar = erzeugeInventar({ nachricht, beiAenderung: () => { waffeNeu = true; zeigeAussehen(); } });
 const ueberleben = erzeugeUeberleben({
   beiTod: sterben,
   beiWarnung: nachricht,
@@ -226,6 +234,7 @@ const DURSTIG = 70;
 const benutzen = erzeugeBenutzen({
   sammeln, inventar, fortschritt, ueberleben, nachricht, gewinn,
   merke: (m) => ereignisse.merker.add(m),
+  beiErnte: (regel) => { if (aussehen && regel.beruf === 'holzfaellen') aussehen.arbeit += 1; },
   zusatz: [
     // Beim Angeln heißt „Benutzen“: ziehen
     () => (angeln.aktiv
@@ -263,6 +272,7 @@ const gegner = erzeugeGegner({
     if (ueberleben.werte.leben < 45) tipp('heilen', 'Das Leben wird knapp: Zieh dich zurück und iss etwas, oder trag Heilsalbe auf (Menü, Inventar).');
   },
   beiTreffer: (g, schaden, volltreffer) => {
+    if (aussehen) aussehen.arbeit += 0.5;
     anzeige.zahl(g.objekt.position, volltreffer ? `${schaden}!` : `${schaden}`, volltreffer ? 'voll' : '', anzeige.kopfhoehe(g.art) - 0.2);
   },
   beiSieg: (g) => {
@@ -374,6 +384,7 @@ function iss(id) {
 let neuStarten = false;
 const menue = erzeugeMenue({
   inventar, fortschritt, herstellen, aufgaben, amFeuer, iss, handel,
+  aussehen: () => aussehen, mann: () => figurArt !== 'sie',
   wirfWeg: (id, n) => inventar.nimm(id, n),
   wechsleGrafik: () => { wechsleGrafik(); nach.zeichne(); }, // ein Bild in der neuen Stufe, auch bei offenem Menü
   grafikName: () => qualitaet.name,
@@ -381,6 +392,7 @@ const menue = erzeugeMenue({
   darfOeffnen: () => spielLaeuft && !ueberleben.tot,
   beiOffen: (offen) => {
     pausiert = offen;
+    if (!offen) zeigeAussehen();
     steuerung.zustand.aktiv = !offen && spielLaeuft && !ueberleben.tot;
     // Die Bildratenmessung für den Startbericht beginnt nach dem Menü von vorn
     if (!messung.fertig) { messung.ab = null; messung.bilder = 0; }
@@ -407,7 +419,9 @@ function tippsPruefen() {
   }
 }
 
+Object.defineProperty(window.spiel, 'aussehen', { get: () => aussehen });
 Object.assign(window.spiel, {
+  editor,
   steuerung, ereignisse, ueberleben, inventar, fortschritt, herstellen, aufgaben, sammeln, benutzen, menue, gegner, kampf,
   handel, angeln, dorf, wasserspiegel: wasserspiegel(),
   speichere: () => speichereJetzt(),
@@ -423,7 +437,8 @@ function spielstand() {
   const z = steuerung.zustand;
   return {
     figur: figurArt,
-    kurz: `${figurArt === 'sie' ? 'Sie' : 'Er'} · Stufe ${fortschritt.stufe} · Tag ${zeit.tag}`,
+    kurz: `${aussehen?.name || (figurArt === 'sie' ? 'Sie' : 'Er')} · Stufe ${fortschritt.stufe} · Tag ${zeit.tag}`,
+    aussehen,
     ort: { x: z.ort.x, z: z.ort.z },
     blick: z.blickSeite,
     ichSicht: z.ichSicht,
@@ -473,8 +488,9 @@ wahl.then(async (art) => {
     const wieviel = gesamt && geladen <= gesamt ? ` ${Math.floor((geladen / gesamt) * 100)} %` : geladen ? ` ${(geladen / 1e6).toFixed(1)} MB` : '';
     oberflaeche.laden(`Deine Figur wird geladen …${wieviel}`, false);
   }, 250);
+  let geladen;
   try {
-    figur = await figurenLaden[art];
+    geladen = await figurenLaden[art];
   } catch (e) {
     window.zeigeFehler?.(`Die Figur konnte nicht geladen werden (${e.message})`);
     return;
@@ -483,6 +499,15 @@ wahl.then(async (art) => {
   }
   figurArt = art;
   const stand = window.weiterspielen ? ladeSpielstand() : null;
+  aussehen = ergaenze(stand?.aussehen, art);
+  if (!stand) {
+    // Neues Spiel: Erst sucht man sich das Aussehen aus (Charakter-Editor), dann erwacht man auf der Wiese
+    szene.add(geladen.objekt);
+    window.notiere?.('Editor offen');
+    aussehen = await editor.zeige(geladen, art, aussehen, new THREE.Vector3(START.x, hoeheBei(START.x, START.z), START.z));
+    window.notiere?.('Editor fertig');
+  }
+  figur = geladen;
   if (stand) {
     steuerung.zustand.ichSicht = !!stand.ichSicht;
     ladeStand(stand);
@@ -492,12 +517,14 @@ wahl.then(async (art) => {
   }
   window.notiere?.('Figur geladen, Spiel beginnt');
   szene.add(figur.objekt);
+  zeigeAussehen();
+  letzteStunde = spielStunde();
   steuerung.setzeFigur(figur);
   oberflaeche.spielBeginnt();
   steuerung.zustand.aktiv = true;
   spielLaeuft = true;
   window.spiel.figur = figur;
-  if (stand) nachricht(`Willkommen zurück. ${uhrzeitText()}.`);
+  if (stand) nachricht(`Willkommen zurück${aussehen.name ? `, ${aussehen.name}` : ''}. ${uhrzeitText()}.`);
   if (ereignisse.merker.has('hilfe-aus')) document.getElementById('hinweise').hidden = true;
   speichereJetzt();
 });
@@ -609,7 +636,7 @@ function anzeigen() {
 // ---------------------------------------------------------------- Schleife
 const uhr = new THREE.Clock();
 const blickpunkt = new THREE.Vector3();
-let anzeigeTakt = 0, wachsTakt = 0;
+let anzeigeTakt = 0, wachsTakt = 0, letzteStunde = 0;
 const messung = { ab: null, bilder: 0, fertig: false };
 // Längster Zeitschritt je Bild. Prüfungen im langsamen Test-Browser dürfen ihn vergrößern
 // (window.SCHATZSUCHE_SCHRITT), damit dort die Spielzeit nicht im Schneckentempo vergeht.
@@ -644,6 +671,9 @@ renderer.setAnimationLoop(() => {
     anzeige.aktualisiere(gegner.alle, steuerung.zustand.ort);
     if (waffeNeu) { waffeNeu = false; inDieHand(figur, angeln.haeltRute ? null : inventar.besteWaffe()); }
     blickpunkt.copy(steuerung.zustand.ort);
+  } else if (editor.aktiv) {
+    editor.schritt(dt);
+    blickpunkt.copy(editor.blickpunkt);
   } else {
     // Vor dem Start: langsamer Kameraflug über die Wiese
     const w = wind.zeit.value * 0.04 + 2.2;
@@ -688,6 +718,13 @@ renderer.setAnimationLoop(() => {
       wachsTakt = 1;
       sammeln.wachsen();
       loescheAus();
+      // Jede Spielstunde: Haare und Bart wachsen, das Gewicht folgt dem Essen, Muskeln der Arbeit
+      const jetzt = spielStunde();
+      if (aussehen && jetzt - letzteStunde >= 1) {
+        wachse(aussehen, jetzt - letzteStunde, { satt: ueberleben.werte.saettigung, mann: figurArt !== 'sie' });
+        letzteStunde = jetzt;
+        zeigeAussehen();
+      }
     }
     spielzeit += dt;
     if (spielzeit > 240 && !ereignisse.merker.has('hilfe-aus')) {

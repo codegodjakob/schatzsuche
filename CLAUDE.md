@@ -39,13 +39,13 @@ sich leicht erweitern, nach Roblox übertragen und später per KI variieren lass
 | `src/welt/` | Gelände (`gelaende.js`), Himmel und Tageszeit, Gras (wächst mit dem Spieler mit), Wald (`baeume.js`), Felsen/Blumen/Beeren (`natur.js`), Wasser, Feuer, Zusammenstöße. `sammeln.js` = alles, was man aufheben oder abbauen kann (wächst nach), `markierung.js` = der Ring darunter, `raeuberlager.js` = Zelte und Stämme, `dorf.js` = Erlenbach (Häuser, Brunnen, Marktstand, Steg), `waffen.js` = Waffen und Angelrute in der Hand. `orte.js` = feste Orte (auch Straße, Räuberlager, Dorf, Weiher, wo die Dörfler stehen). `kollision.js` = Hindernisse und begehbare Flächen (der Steg) |
 | `src/inhalte/` | **Inhalte als Listen**: Gegenstände, Rezepte, Berufe und Werte, Aufgaben (auch wiederholbare Jobs), Sammelstellen, Gegner (mit Beute und Besatzung des Räuberlagers), Händler (Waren, Preisregeln). Neues Material, neues Rezept, neue Aufgabe, neuer Gegner, neue Ware = ein neuer Eintrag hier |
 | `src/kampf/` | `gegner.js` = Verhalten der Gegner (warten, jagen, ausholen, getroffen, heimkehren, tot, wiederkommen); `kampf.js` = Zuschlagen des Spielers |
-| `src/spieler/` | Figur (lädt GLB, überblendet Bewegungen), Steuerung (Laufen, Kamera), Inventar, Fortschritt (Stufen, Werte, Berufe), Herstellen, Benutzen (E; Gespräche und Angeln kommen als Zusatz herein), Handel (Preise, Kaufen, Verkaufen), Angeln (Auswerfen, Schwimmer, Biss) |
+| `src/spieler/` | Figur (lädt GLB, überblendet Bewegungen), Steuerung (Laufen, Kamera), Inventar, Fortschritt (Stufen, Werte, Berufe), Herstellen, Benutzen (E; Gespräche und Angeln kommen als Zusatz herein), Handel (Preise, Kaufen, Verkaufen), Angeln (Auswerfen, Schwimmer, Biss), Aussehen (`aussehen.js`: Formziele, Farben, Wachsen) |
 | `src/figuren/` | Andere Figuren: der Einsiedler, die Leute von Erlenbach (`doerfler.js`, laden erst in der Nähe des Dorfs) |
 | `src/ueberleben/werte.js` | Sättigung, Wasser, Wärme, Leben, Tod |
 | `src/ereignisse/liste.js` | **Alle Ereignisse und Entscheidungen.** Hier wächst die Geschichte. Gespräche (`gespraech-…`) erscheinen nicht von selbst, sondern wenn man jemanden anspricht |
 | `src/ereignisse/ereignisse.js` | Die Mechanik dahinter (nur ändern, wenn sie etwas Neues können muss) |
 | `src/ereignisse/aufgaben.js` | Führt die Aufgaben aus `src/inhalte/aufgaben.js`: starten, Schritte abhaken, belohnen |
-| `src/ui/` | Startbildschirm, Ereignis-Tafel, Nachrichten, Anzeigen; `menue.js` = Inventar, Herstellen, Figur, Aufgaben, Handel; `kampfanzeige.js` = Lebensbalken, Schadenszahlen, Boss-Balken; `beruehrung.js` = Fingersteuerung für Handy und Tablet |
+| `src/ui/` | Startbildschirm, Ereignis-Tafel, Nachrichten, Anzeigen; `menue.js` = Inventar, Herstellen, Figur, Aufgaben, Handel; `editor.js` = Charakter-Editor; `kampfanzeige.js` = Lebensbalken, Schadenszahlen, Boss-Balken; `beruehrung.js` = Fingersteuerung für Handy und Tablet |
 | `src/spielstand.js` | Speichern und Laden im Browser (localStorage); das Skript in `index.html` liest ihn für „Weiterspielen“ |
 | `src/modelle.js` | Lädt 3D-Modelle (auch in der Vorschau, wo sie als Text vorliegen) |
 | `src/qualitaet.js`, `src/nachbearbeitung.js` | Grafikstufen (hoch/mittel/niedrig) und Bild-Nachbearbeitung |
@@ -84,7 +84,10 @@ node werkzeuge/figuren/foto.mjs er:vorne sie:seite:gehen:0.3   # Prüfbilder in 
 ```
 
 Aussehen, Körperform, Haare, Kleidung und Bewegungen jeder Figur stehen oben in `baue_figuren.py`
-(`FIGUREN`).
+(`FIGUREN`). Die Spielerfiguren (`editor=…`) bekommen zusätzlich Formziele für den Charakter-Editor
+(`formen.py`: welche MakeHuman-Formen, welche Haar- und Bartlängen) und ein ausblendbares Lederwams.
+Die Daten sind gepackt (KHR_mesh_quantization); three.js entpackt sie selbst. Formziele ausprobieren:
+`node werkzeuge/figuren/foto.mjs "er:vorne::0:kopf:nase_gross=1+haar_2=1+-er-haare_lang"`.
 
 ## Vorschau veröffentlichen
 

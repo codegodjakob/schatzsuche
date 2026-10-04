@@ -5,7 +5,7 @@
 import { starteSpiel } from './helfer.mjs';
 import { DOERFLER } from '../src/welt/orte.js';
 
-const { seite, kontext, url, pruefe, warte, spiel, foto, abbruch, ende } = await starteSpiel({ handy: true, schritt: null });
+const { seite, kontext, url, pruefe, warte, spiel, foto, abbruch, ende, drueck } = await starteSpiel({ handy: true, schritt: null });
 const finger = await kontext.newCDPSession(seite);
 const beruehre = (type, punkte) => finger.send('Input.dispatchTouchEvent', { type, touchPoints: punkte });
 // Ein paar Bilder abwarten (im Test-Browser ohne Grafikkarte dauert ein Bild lange)
@@ -21,8 +21,19 @@ try {
   const frueh = await spiel(() => !window.spiel?.geladen);
   pruefe(await spiel(() => document.documentElement.classList.contains('beruehrung')), 'Handy erkannt: Fingersteuerung eingeschaltet');
   pruefe(await spiel(() => document.getElementById('wahl-sie').classList.contains('gewaehlt')), 'Antippen zeigt sofort die Wahl');
+  // Der Charakter-Editor öffnet sich von selbst, sobald die Figur da ist; er passt aufs Handy und geht mit dem Finger
+  await warte(() => window.spiel?.editor?.aktiv, null, 400);
+  pruefe(true, `Nach der Wahl öffnet sich der Charakter-Editor${frueh ? ' (getippt, bevor die Welt fertig war)' : ''}`);
+  await drueck('[data-editor-reiter="haare"]', true);
+  await seite.locator('#editor-inhalt .farbe').nth(5).tap({ timeout: 180000 });
+  await warte(() => window.spiel.aussehen.haar === 5, null, 30);
+  pruefe(true, 'Im Editor eine Haarfarbe angetippt');
+  await bilder(2);
+  await foto('handy-0-editor');
+  pruefe(await spiel(() => document.documentElement.scrollWidth <= innerWidth && document.getElementById('editor').getBoundingClientRect().bottom <= innerHeight + 1), 'Der Editor passt auf den Bildschirm');
+  await drueck('#editor-fertig', true);
   await warte(() => window.spiel?.ereignisse?.aktuell === 'erwachen', null, 400);
-  pruefe(true, `Spiel beginnt von selbst${frueh ? ' (getippt, bevor die Welt fertig war)' : ''}`);
+  pruefe(true, '„Los geht\'s“ startet das Spiel');
   await foto('handy-1-erwachen');
   await seite.tap('#ereignis-optionen .option', { timeout: 60000 });
   await warte(() => !window.spiel.ereignisse.aktuell, null, 60);
@@ -105,19 +116,19 @@ try {
   await warte(() => window.spiel.doerfler, null, 300);
   let angesprochen = false;
   for (let i = 0; i < 10 && !angesprochen; i++) {
-    if (await spiel(() => window.spiel.ereignisse.aktuell)) await seite.tap('#ereignis-optionen .option:last-child');
+    if (await spiel(() => window.spiel.ereignisse.aktuell)) await drueck('#ereignis-optionen .option:last-child', true);
     if (!await warte(() => document.getElementById('knopf-benutzen').textContent === 'Mit Marta sprechen', null, 15).then(() => true, () => false)) continue;
-    await seite.tap('#knopf-benutzen');
+    await drueck('#knopf-benutzen', true);
     angesprochen = await warte(() => window.spiel.ereignisse.aktuell === 'gespraech-marta', null, 15).then(() => true, () => false);
   }
   pruefe(angesprochen, 'Knopf „Mit Marta sprechen“ beginnt das Gespräch');
-  await seite.locator('#ereignis-optionen .option', { hasText: 'Handeln' }).tap({ timeout: 30000 });
+  await seite.locator('#ereignis-optionen .option', { hasText: 'Handeln' }).tap({ timeout: 180000 });
   await warte(() => window.spiel.menue.reiter === 'handel' && !document.getElementById('menue').hidden, null, 30);
-  await seite.locator('.handel section.karte').nth(0).locator('.handel-zeile', { hasText: 'Angelrute' }).getByRole('button').tap({ timeout: 30000 });
+  await seite.locator('.handel section.karte').nth(0).locator('.handel-zeile', { hasText: 'Angelrute' }).getByRole('button').tap({ timeout: 180000 });
   pruefe(await spiel(() => window.spiel.inventar.hat('angelrute')), 'Im Handel eine Angelrute gekauft');
   await foto('handy-6-handel');
   pruefe(await spiel(() => document.documentElement.scrollWidth <= innerWidth), 'Der Handel passt auf den Bildschirm');
-  await seite.tap('#menue-zu');
+  await drueck('#menue-zu', true);
 } catch (e) {
   await abbruch(e, 'handy-fehler');
 }

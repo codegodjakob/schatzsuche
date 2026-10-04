@@ -26,6 +26,9 @@ hole https://github.com/makehumancommunity/mpfb2 mpfb2 \
   '/src/mpfb/data/rigs/standard/weights.game_engine.json' \
   '/src/mpfb/data/targets/macrodetails/' \
   '/src/mpfb/data/targets/breast/' \
+  '/src/mpfb/data/targets/head/' '/src/mpfb/data/targets/nose/' '/src/mpfb/data/targets/chin/' \
+  '/src/mpfb/data/targets/eyes/' '/src/mpfb/data/targets/mouth/' '/src/mpfb/data/targets/cheek/' \
+  '/src/mpfb/data/targets/ears/' '/src/mpfb/data/targets/eyebrows/' '/src/mpfb/data/targets/forehead/' \
   '/src/mpfb/data/textures/'
 
 hole https://github.com/makehumancommunity/makehuman makehuman \

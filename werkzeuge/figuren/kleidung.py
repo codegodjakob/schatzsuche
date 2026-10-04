@@ -284,10 +284,11 @@ def _glaetten(punkte, dreiecke, schritte=8, staerke=0.5):
     return p
 
 
-def kutte(koerper, normalen_alle, skelett, aermel_bis=0.40, koerper_flaechen=None, saum=None, weite=0.35):
+def kutte(koerper, normalen_alle, skelett, aermel_bis=0.40, koerper_flaechen=None, saum=None, weite=0.35, ohne=None):
     """Wollkutte aus den MakeHuman-Hilfsformen ('helper-tights' oben, 'helper-skirt' unten).
     saum: wo der Stoff endet, als Anteil zwischen Hüfte (0) und Knöchel (1); None = ganz lang.
     weite: wie weit der Rock nach unten auseinandergeht.
+    ohne: Punkte des Grundkörpers, an denen kein Stoff sein soll (z. B. Hals und Arme beim Wams).
     Gibt Punktindizes im Grundkörper (für die Gewichte), neue Punkte, Dreiecke, UV."""
     import netz
     k = {b['name']: b for b in skelett}
@@ -305,6 +306,9 @@ def kutte(koerper, normalen_alle, skelett, aermel_bis=0.40, koerper_flaechen=Non
         if m[1] > rock_oben - 0.14 and abs(m[0]) < aermel_bis:
             behalten.append(f)
     flaechen = behalten + list(rock_f)
+    if ohne is not None:
+        frei = set(int(v) for v in ohne)
+        flaechen = [f for f in flaechen if not any(int(v) in frei for v in f)]
     dreiecke_roh = netz.dreiecke(flaechen)
     benutzt = np.unique(dreiecke_roh)
     neu_index = {v: i for i, v in enumerate(benutzt)}

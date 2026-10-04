@@ -303,7 +303,7 @@ Etappe ein Stück besser.
 
 | Etappe | Inhalt |
 |---|---|
-| **M1 Fundament** (die Grundversion) | 1. RPG-Kern: Werte, Stufen, Statuspunkte, großes Inventar, Sammeln, Rezeptbuch, Aufgabenbuch, Münzen (**fertig**, siehe unten). 2. Kampf (**fertig**, siehe unten): Waffen, Räuber, der Räuberhauptmann als erster Boss, Beute. 3. Dorf Erlenbach (**fertig**, siehe unten): Händler, Fischer mit Angelrute, Angeln, Jobs. 4. Charakter-Editor: Gesicht, Haut, Haare, Bart, Körper; Haare und Bart wachsen; Muskeln wachsen; erste Kleidung sichtbar |
+| **M1 Fundament** (die Grundversion) | 1. RPG-Kern: Werte, Stufen, Statuspunkte, großes Inventar, Sammeln, Rezeptbuch, Aufgabenbuch, Münzen (**fertig**, siehe unten). 2. Kampf (**fertig**, siehe unten): Waffen, Räuber, der Räuberhauptmann als erster Boss, Beute. 3. Dorf Erlenbach (**fertig**, siehe unten): Händler, Fischer mit Angelrute, Angeln, Jobs. 4. Charakter-Editor (**fertig**, siehe unten): Gesicht, Haut, Haare, Bart, Körper; Haare und Bart wachsen; Muskeln wachsen; erste Kleidung sichtbar |
 | **M2 Leben im Dorf** | Weitere Berufe (Bergbau, Schmieden, Kochen, Gerben), Beziehungen, Tagesabläufe, Haus mieten, Truhe, Pferd |
 | **M3 Abenteuer** | Neue Gebiete, Tiere, Höhlen, Bogen, weitere Bosse, Kartenteile 1 bis 3 |
 | **M4 Aufstieg** | Klassen und Fähigkeitsbäume vollständig, Ränge in Militär, Rat und Gilden, Burgstadt Rabenfels |
@@ -380,6 +380,25 @@ Einträge dort; dieselben Listen kann später eine KI für Welt-Varianten fülle
   acht Holzscheite für Martas Ofen (18 Kupfer).
 - **Hauptgeschichte**: Gerold liest Pergament und Kartenteil. Die Schrift der Alten Könige zeigt den
   Weiher, die Straße und die Graufels-Berge im Norden: Dort liegt das nächste Stück.
+
+### Was in M1, Stufe 4 gebaut ist
+
+- **Charakter-Editor** nach der Wahl „Mann“ oder „Frau“: Die Figur steht auf der Wiese, groß im Bild,
+  und lässt sich durch Ziehen drehen. Daneben (am Handy darunter) drei Reiter:
+  - **Gesicht**: Kopfform (normal, rund, eckig, oval) und zehn Regler: Nase, Nasenform (Stupsnase bis
+    Höcker), Augen, Augenbrauen, Mund, Lippen, Wangen, Kinn, Ohren, Ohrform (bis spitz wie ein Elf).
+  - **Haare**: acht Haarfarben, Haarlänge (kahl bis lang), beim Mann der Bart (glatt bis lang).
+    Brauen und Haaransatz bekommen dieselbe Farbe.
+  - **Körper**: sechs Hauttöne, Größe, Statur, Gewicht.
+  - Dazu ein Name und „Würfeln“ für ein zufälliges Aussehen.
+- **Der Körper verändert sich im Spiel**: Haare wachsen gut einen Zentimeter am Spieltag, der Bart
+  halb so schnell. Mit einem Messer schneidet man sie (Menü, Figur). Muskeln kommen mit Stärke, Holz
+  hacken und Kämpfen; wer immer satt ist, wird runder, wer hungert, dünner.
+- **Kleidung sichtbar**: Wer ein Lederwams hat, trägt es sichtbar.
+- Technisch: Die Spielerfiguren bringen 24 Formziele für Gesicht und Körper mit (aus den
+  MakeHuman-Formen), dazu Haar- und Bartlängen in Stufen; das Spiel mischt sie stufenlos.
+  Haare sind zwei Netze (kurz am Kopf, lang auf Nacken und Rücken), damit beide sich richtig bewegen.
+  Alles steht im Spielstand.
 
 ## Offene Fragen für Jakob und Vincenz
 

@@ -5,7 +5,7 @@
 // Bildschirmfotos landen in test-ergebnisse/ (nicht im Projekt gespeichert).
 import { starteSpiel } from './helfer.mjs';
 
-const { seite, url, pruefe, warte, spiel, taste, foto, ereignis, tafelnWeg, abbruch, ende } = await starteSpiel();
+const { seite, url, pruefe, warte, spiel, taste, foto, ereignis, tafelnWeg, abbruch, ende, drueck } = await starteSpiel();
 const anzahl = (id) => spiel((i) => window.spiel.inventar.anzahl(i), id);
 
 // Geht zur nächsten freien Stelle einer Art (Ast, Stein, Flachs …) und nimmt sie mit „Benutzen“ (E).
@@ -51,7 +51,21 @@ try {
     `Überall liegt etwas zum Sammeln (${Object.entries(stellen).map(([a, n]) => `${n} ${a}`).join(', ')})`);
 
   await seite.click('#wahl-er', { timeout: 120000 });
+  // Charakter-Editor: würfeln, einen Regler verschieben, dann los
+  await warte(() => window.spiel.editor?.aktiv, null, 300);
+  pruefe(true, 'Nach der Wahl öffnet sich der Charakter-Editor');
+  await drueck('#editor-wuerfeln');
+  await drueck('[data-editor-reiter="haare"]');
+  await seite.locator('#editor-inhalt input[type="range"]').first().fill('0.2');
+  await seite.fill('#editor-name', 'Rauch');
+  await seite.waitForTimeout(1500);
+  await foto('1b-editor');
+  const gewaehlt = await spiel(() => ({ ...window.spiel.aussehen }));
+  pruefe(gewaehlt.haarLaenge === 0.2 && gewaehlt.name === 'Rauch', `Editor: Name und Haarlänge eingestellt (${gewaehlt.haarLaenge * 100} cm)`);
+  await drueck('#editor-fertig');
   await warte(() => window.spiel.ereignisse?.aktuell === 'erwachen', null, 120);
+  const lang = await spiel(() => { let v = null; window.spiel.figur.objekt.traverse((o) => { if (o.name.endsWith('-haare_lang')) v = o.visible; }); return v; });
+  pruefe(lang === true, 'Die Figur im Spiel hat die gewählten langen Haare');
   pruefe(true, 'Erstes Ereignis „erwachen“ erscheint');
   await foto('2-erwachen');
   await taste('KeyE');
@@ -192,6 +206,8 @@ try {
   await warte(() => window.spiel.figur && window.spiel.steuerung.zustand.aktiv, null, 300);
   const geladen = await spiel(() => ({ stufe: window.spiel.fortschritt.stufe, messer: window.spiel.inventar.hat('steinmesser'), holz: window.spiel.aufgaben.istAktiv('holz') }));
   pruefe(geladen.stufe === stand.stufe && geladen.messer && geladen.holz, 'Spielstand geladen: Stufe, Inventar und Aufgaben sind wieder da');
+  const nachLaden = await spiel(() => ({ ...window.spiel.aussehen }));
+  pruefe(nachLaden.name === 'Rauch' && nachLaden.haarLaenge >= 0.2 && nachLaden.kopf === gewaehlt.kopf, `Das Aussehen ist nach dem Neuladen dasselbe (Haare ${Math.round(nachLaden.haarLaenge * 100)} cm, sie wachsen)`);
   await seite.waitForTimeout(3000);
   pruefe(await spiel(() => window.spiel.ereignisse.aktuell !== 'erwachen'), 'Beim Weiterspielen beginnt die Geschichte nicht von vorn');
   await warte(() => window.spiel.gegner.alle.length === 5, null, 300);

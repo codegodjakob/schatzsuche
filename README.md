@@ -65,4 +65,5 @@ Neu dabei? → [EINSTIEG.md](EINSTIEG.md). Kurzfassung — die Einzelheiten steh
 | Rollenspiel-Kern: Stufen, Werte, Berufe, Inventar, Sammeln, Herstellen, Aufgaben, Münzen, Spielstand | Jakob | fertig (Etappe M1, Stufe 1) |
 | Kampf: Waffen in der Hand, Räuberlager an der Straße nach Osten, der Räuberhauptmann als erster Boss, Beute, Lederwams, erstes Kartenteil | Jakob | fertig (Etappe M1, Stufe 2) |
 | Dorf Erlenbach: Gerold, Marta und Jost, Handel, Angeln vom Steg, Fische braten, Jobs, Gerold liest die Karte | Jakob | fertig (Etappe M1, Stufe 3) |
-| Charakter-Editor: Gesicht, Haare, Bart, Körper; Haare und Bart wachsen, Muskeln wachsen | – | nächste Stufe, siehe [docs/SPIELENTWURF.md](docs/SPIELENTWURF.md) |
+| Charakter-Editor: Gesicht, Haare, Bart, Haut, Körper, Name; Haare und Bart wachsen und lassen sich schneiden, Muskeln und Gewicht verändern sich, Lederwams sichtbar | Jakob | fertig (Etappe M1, Stufe 4) |
+| Leben im Dorf: weitere Berufe, Beziehungen, Tagesabläufe, Haus, Pferd | – | nächste Etappe (M2), siehe [docs/SPIELENTWURF.md](docs/SPIELENTWURF.md) |

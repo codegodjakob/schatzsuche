@@ -5,7 +5,7 @@
 import { starteSpiel } from './helfer.mjs';
 import { DORF, STEG, WEIHER } from '../src/welt/orte.js';
 
-const { seite, url, pruefe, warte, spiel, taste, foto, ereignis, tafelnWeg, abbruch, ende } = await starteSpiel();
+const { seite, url, pruefe, warte, spiel, taste, foto, ereignis, tafelnWeg, abbruch, ende, drueck } = await starteSpiel();
 const kupfer = () => spiel(() => window.spiel.inventar.muenzen);
 
 // Drückt „Benutzen“ (E), sobald es das Erwartete anbietet, bis „fertig“ eintritt. Erzähltafeln, die
@@ -48,7 +48,13 @@ try {
   await seite.goto(url, { timeout: 300000 });
   await warte(() => window.spiel?.geladen && window.spiel?.bereit, null, 300);
   await seite.click('#wahl-sie', { timeout: 120000 });
+  await warte(() => window.spiel.editor?.aktiv, null, 300);
+  await drueck('#editor-fertig');
   await warte(() => window.spiel.ereignisse?.aktuell === 'erwachen', null, 300);
+  // Ein Lederwams im Gepäck: Die Figur trägt es sichtbar
+  await spiel(() => window.spiel.inventar.gib('lederwams', 1));
+  const wams = await warte(() => { let v = false; window.spiel.figur.objekt.traverse((o) => { if (o.name.endsWith('-wams')) v = o.visible; }); return v; }, null, 30).then(() => true, () => false);
+  pruefe(wams, 'Ein Lederwams im Inventar sieht man an der Figur');
   await taste('KeyE');
   await warte(() => window.spiel.inventar.hat('pergament'), null, 30);
   // Wie nach dem Sieg über den Räuberhauptmann: Stufe 3, das erste Kartenteil ist dabei, der Einsiedler

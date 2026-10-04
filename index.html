@@ -359,8 +359,48 @@ html.beruehrung .option kbd, html.beruehrung #aktion kbd, html.beruehrung .reite
 /* Auf dem Handy steht die Aktion direkt auf dem großen Knopf */
 html.beruehrung #aktion { display: none !important; }
 
+/* Charakter-Editor: rechts eine Tafel (am Handy unten), die Figur steht frei im Bild */
+#editor {
+  position: fixed; z-index: 4; box-sizing: border-box; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto;
+  top: calc(16px + env(safe-area-inset-top, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); right: 16px;
+  width: min(25rem, calc(100% - 32px)); background: rgba(14, 18, 12, 0.9);
+}
+.editor-kopf { display: grid; gap: 0.55rem; padding: 0.9rem 1rem 0.4rem; }
+.editor-kopf h2 { margin: 0; font: 400 1.7rem/1.1 var(--schrift-titel); }
+.editor-kopf label { display: grid; gap: 0.25rem; font-size: 0.85rem; color: var(--gedaempft); }
+.editor-kopf input {
+  font: 500 1rem/1.2 var(--schrift-text); color: var(--pergament); background: rgba(236, 229, 210, 0.06);
+  border: 1px solid var(--kante); border-radius: 4px; padding: 0.55rem 0.7rem;
+}
+.editor-kopf input:focus-visible { outline: none; border-color: var(--moos); }
+#editor .reiter { padding: 0 0.6rem; border-bottom: 1px solid var(--kante); }
+#editor-inhalt { overflow-y: auto; overscroll-behavior: contain; padding: 0.9rem 1rem 1rem; display: grid; gap: 1rem; align-content: start; }
+.regler { display: grid; gap: 0.2rem; }
+.regler-kopf { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.92rem; }
+.regler-kopf b { font-weight: 500; }
+.regler-kopf span { color: var(--glut); font-variant-numeric: tabular-nums; font-size: 0.85rem; }
+.regler input[type="range"] { width: 100%; margin: 0.2rem 0; accent-color: var(--glut); min-height: 1.6rem; }
+.regler-enden { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--gedaempft); }
+.auswahl { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.auswahl button {
+  font: 500 0.9rem/1 var(--schrift-text); color: var(--pergament); background: rgba(236, 229, 210, 0.06);
+  border: 1px solid var(--kante); border-radius: 4px; padding: 0.55rem 0.75rem; cursor: pointer;
+}
+.auswahl button[aria-pressed="true"] { border-color: var(--glut); color: var(--glut); }
+.auswahl .farbe { width: 2.3rem; height: 2.3rem; padding: 0; border-radius: 50%; border-width: 2px; }
+.auswahl .farbe[aria-pressed="true"] { border-color: var(--pergament); box-shadow: 0 0 0 2px var(--glut); }
+.feld-titel { margin: 0 0 0.4rem; font-size: 0.92rem; }
+.editor-fuss { display: flex; gap: 0.6rem; padding: 0.8rem 1rem calc(0.8rem); border-top: 1px solid var(--kante); }
+.editor-fuss .haupt { flex: 1; font-size: 1.05rem; padding: 0.8rem; }
+.editor-tipp { margin: 0; font-size: 0.82rem; color: var(--gedaempft); }
+
 @media (max-width: 900px) { #hinweise { display: none; } }
 @media (max-width: 1100px) { html:not(.beruehrung) #boss { top: calc(16px + 6.5rem + env(safe-area-inset-top, 0px)); } }
+@media (max-width: 640px), (max-height: 520px) and (orientation: portrait) {
+  #editor { top: auto; left: 0; right: 0; bottom: 0; width: 100%; height: 56%; border-radius: 12px 12px 0 0; border-bottom: 0; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .editor-kopf { grid-template-columns: auto minmax(0, 1fr); align-items: end; padding: 0.7rem 0.9rem 0.3rem; }
+  .editor-kopf h2 { font-size: 1.3rem; }
+}
 @media (max-width: 640px) {
   #werte { width: 10rem; }
   #menue { width: 100%; height: 100%; border: 0; border-radius: 0; background: var(--nacht); padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
@@ -393,6 +433,23 @@ html.beruehrung #aktion { display: none !important; }
     <p class="unterzeile klein-start" id="neu-hinweis" hidden>Ein neues Spiel ersetzt den gespeicherten Spielstand.</p>
     <p class="laden" id="laden" aria-live="polite">Die Welt entsteht …</p>
     <p class="unterzeile nur-beruehrung">Daumen links: laufen (ganz ausgelenkt rennen). Rechts wischen: umsehen.</p>
+  </div>
+</section>
+
+<section id="editor" class="tafel" hidden aria-labelledby="editor-titel">
+  <div class="editor-kopf">
+    <h2 id="editor-titel">Wer bist du?</h2>
+    <label>Dein Name <input id="editor-name" maxlength="20" autocomplete="off" placeholder="Ohne Namen"></label>
+  </div>
+  <div class="reiter" role="tablist">
+    <button type="button" role="tab" data-editor-reiter="gesicht" aria-selected="true">Gesicht</button>
+    <button type="button" role="tab" data-editor-reiter="haare" aria-selected="false">Haare</button>
+    <button type="button" role="tab" data-editor-reiter="koerper" aria-selected="false">Körper</button>
+  </div>
+  <div id="editor-inhalt"></div>
+  <div class="editor-fuss">
+    <button type="button" class="knopf-text" id="editor-wuerfeln">Würfeln</button>
+    <button type="button" class="knopf-text haupt" id="editor-fertig">Los geht's</button>
   </div>
 </section>
 

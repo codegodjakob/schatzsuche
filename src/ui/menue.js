@@ -58,7 +58,7 @@ function belohnungText(id) {
 
 export function erzeugeMenue({
   inventar, fortschritt, herstellen, aufgaben, amFeuer, iss, wirfWeg, wechsleGrafik, grafikName, neuBeginnen, handel,
-  darfOeffnen = () => true, beiOffen = () => {},
+  darfOeffnen = () => true, beiOffen = () => {}, aussehen = () => null, mann = () => true,
 }) {
   const menue = document.getElementById('menue');
   const inhalt = document.getElementById('menue-inhalt');
@@ -243,6 +243,30 @@ export function erzeugeMenue({
       berufe.append(zeile);
     }
 
+    // Aussehen: Haare und Bart wachsen; mit einem Messer schneidet man sie (zottelig, aber kurz)
+    const a = aussehen();
+    const koerper = el('section', 'karte');
+    if (a) {
+      const cm = (m) => (m <= 0 ? (m === 0 ? 'keine' : '') : m < 0.012 ? 'Stoppeln' : `${Math.round(m * 100)} cm`);
+      koerper.append(el('h3', '', a.name || 'Aussehen'), el('p', 'klein', `Haare: ${a.haarLaenge <= 0 ? 'kahl' : cm(a.haarLaenge)}${mann() ? ` · Bart: ${a.bartLaenge <= 0 ? 'glatt rasiert' : cm(a.bartLaenge)}` : ''}`));
+      const messer = inventar.werkzeugStufe('messer') > 0;
+      if (!messer) koerper.append(el('p', 'klein', 'Haare und Bart wachsen jeden Tag. Zum Schneiden brauchst du ein Messer.'));
+      else {
+        const schnitte = [
+          ['Haare', 'haarLaenge', [['ganz kurz', 0.006], ['kurz', 0.03], ['halblang', 0.1], ['schulterlang', 0.25]]],
+          ...(mann() ? [['Bart', 'bartLaenge', [['ab', 0], ['Stoppeln', 0.004], ['kurz', 0.015], ['gestutzt', 0.04]]]] : []),
+        ];
+        for (const [titel, feld, laengen] of schnitte) {
+          const moeglich = laengen.filter(([, l]) => l < a[feld] - 0.004);
+          if (!moeglich.length) continue;
+          const z = el('div', 'knoepfe-zeile');
+          z.append(el('span', 'klein', `${titel} schneiden:`));
+          for (const [name, l] of moeglich) z.append(knopf(name, () => { a[feld] = l; zeichne(); }, 'knopf-text klein'));
+          koerper.append(z);
+        }
+      }
+    }
+
     const einstellungen = el('section', 'karte');
     einstellungen.append(el('h3', '', 'Einstellungen'));
     const zeile = el('div', 'knoepfe-zeile');
@@ -256,7 +280,7 @@ export function erzeugeMenue({
       frage.append(knopf('Ja, neu beginnen', () => neuBeginnen(), 'knopf-text gefahr'), knopf('Abbrechen', () => { neuFragen = false; zeichne(); }));
       einstellungen.append(frage);
     }
-    wrap.append(stufe, werte, berufe, einstellungen);
+    wrap.append(stufe, werte, ...(a ? [koerper] : []), berufe, einstellungen);
     return wrap;
   }
 

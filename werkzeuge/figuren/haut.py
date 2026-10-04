@@ -237,11 +237,15 @@ def male_haut(k, skelett, punkte, normalen, uv, dreiecke, art, groesse=2048, saa
         dichte = rand * (0.55 + 0.45 * glatt(0.3, 0.7, haare))
         braue = np.maximum(braue, vorne * enden * dichte)
     toene(braue, haar, 0.85)
+    # Wo die Haarfarbe aufgemalt ist (Brauen, Haaransatz, Bartschatten): Das Spiel färbt diese Stellen mit, wenn
+    # man im Editor eine andere Haarfarbe wählt. Steht im sonst leeren B-Kanal des ORM-Bilds.
+    haar_maske = np.clip(braue * 0.85, 0, 1)
 
     # Haaransatz (unter den Haarsträhnen) und Bartschatten
     kopfhaut = kopfhaut_anteil(p, augen_mitte, kopf_mitte, art.get('glatze', False)) * (1 - maske('ears'))
     stoppeln = glatt(0.3, 0.7, rauschen(p, 1400, saat + 30))
     toene(kopfhaut * (0.55 + 0.4 * stoppeln), haar, 0.95)
+    haar_maske = np.maximum(haar_maske, np.clip(kopfhaut * (0.55 + 0.4 * stoppeln) * 0.95, 0, 1))
 
     if art.get('bart', 0) > 0:
         mund_y = augen_mitte[1] - 0.072
@@ -255,6 +259,7 @@ def male_haut(k, skelett, punkte, normalen, uv, dreiecke, art, groesse=2048, saa
         gewicht = oben_weich * unten_weich * seite_weich * vorne * (1 - maske('lips'))
         punkte_bart = glatt(0.4, 0.65, rauschen(p, 2600, saat + 40))
         toene(gewicht * (0.35 + 0.65 * punkte_bart), haar * 0.85 + 0.04, 0.42 * art['bart'])
+        haar_maske = np.maximum(haar_maske, np.clip(gewicht * (0.35 + 0.65 * punkte_bart) * 0.42 * art['bart'], 0, 1))
 
     # Erde: Fußsohlen, Füße, Unterschenkel, Knie, Hände
     erde_farbe = np.array([0.30, 0.23, 0.16])
@@ -305,7 +310,7 @@ def male_haut(k, skelett, punkte, normalen, uv, dreiecke, art, groesse=2048, saa
 
     farbe = ausdehnen(bild(farbe, 3), belegt)
     normal = ausdehnen(normal, belegt)
-    orm = ausdehnen(bild(np.stack([verdeckung, rauh, np.zeros_like(rauh)], -1), 3), belegt)
+    orm = ausdehnen(bild(np.stack([verdeckung, rauh, haar_maske], -1), 3), belegt)
 
     def acht_bit(x):
         return (np.clip(x, 0, 1) * 255 + 0.5).astype(np.uint8)
