@@ -174,7 +174,9 @@ export const masken = new Uint8Array(RASTER * RASTER * 4);
       const wald = waldDichte(x, z) * 0.85;
       const flecken = weich(0.66, 0.82, fbm(x * 0.05 + 9, z * 0.05, 3) * 0.5 + 0.5) * 0.3;
       const erde = Math.min(1, Math.max(pfad, lager * 0.9, wald, flecken) * (1 - fels));
-      const gras = Math.max(0, 1 - fels - erde - ufer);
+      // Im Moor wächst kaum Gras: Torf, Moos und Pfützen sollen zu sehen sein
+      const moor = weich(MOOR.radius * 0.5, MOOR.radius, Math.hypot(x - MOOR.x, z - MOOR.z));
+      const gras = Math.max(0, 1 - fels - erde - ufer) * (0.22 + 0.78 * moor);
       const k = (j * RASTER + i) * 4;
       masken[k] = gras * 255; masken[k + 1] = erde * 255; masken[k + 2] = fels * 255; masken[k + 3] = ufer * 255;
     }
@@ -342,9 +344,9 @@ export function erzeugeGelaende() {
         farbe = mix(farbe, fels, felsW);
         // Moor: dunkler Torf mit olivgrünem Moos, dazwischen stehendes Wasser (glänzt)
         float moorW = (1.0 - smoothstep(uMoor.z * 0.55, uMoor.z, distance(vWelt.xz, uMoor.xy) + (gross - 0.5) * 14.0)) * (1.0 - felsW);
-        float pfuetze = moorW * smoothstep(0.62, 0.7, mittel);
-        vec3 torf = mix(vec3(0.11, 0.09, 0.06), vec3(0.26, 0.27, 0.11), smoothstep(0.3, 0.7, gross)) * (0.8 + 0.4 * mittel);
-        farbe = mix(farbe, torf, moorW * 0.85);
+        float pfuetze = moorW * smoothstep(0.56, 0.62, mittel) * smoothstep(0.35, 0.6, gross);
+        vec3 torf = mix(vec3(0.075, 0.058, 0.04), vec3(0.17, 0.16, 0.07), smoothstep(0.35, 0.75, gross)) * (0.75 + 0.5 * mittel);
+        farbe = mix(farbe, torf, moorW * 0.92);
         farbe = mix(farbe, vec3(0.05, 0.05, 0.04), pfuetze);
         // nasser, dunkler Rand am Wasser
         float nass = 1.0 - smoothstep(uWasserspiegel, uWasserspiegel + 0.35, vWelt.y);
