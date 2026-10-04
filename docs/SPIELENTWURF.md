@@ -400,6 +400,27 @@ Einträge dort; dieselben Listen kann später eine KI für Welt-Varianten fülle
   Haare sind zwei Netze (kurz am Kopf, lang auf Nacken und Rücken), damit beide sich richtig bewegen.
   Alles steht im Spielstand.
 
+### Was in M2, Schritt 1 gebaut ist
+
+Jakobs Wünsche nach M1 (#20) kommen in sieben Schritten: 1. Oberfläche und Nacht, 2. Bäume fällen und
+Werkzeug-Bewegungen, 3. Graben, Aufschütten und Bauen, 4. dichterer Wald, mehr Seen, ein Bach, 5. Tiere und
+Jagd mit Pfeil und Bogen, 6. mehr mit den Leuten, 7. Graufels-Berge, eine zweite Stadt, Entdeckungen.
+
+- **Menü und Inventar** in Leder und Messing statt grauer Kästen. Jeder Gegenstand hat ein eigenes,
+  gezeichnetes Bild (statt Emojis), auch im Rezeptbuch und beim Handel.
+- **Die Steuerung steht nicht mehr ständig im Bild**: Ein Knopf „?“ (am Rechner oben rechts, am Handy über
+  den Knöpfen) oder die Taste H klappt sie auf und zu.
+- **Fundstücke sieht man**: Äste, Steine und Steinpilze sind größer, das Gras um sie herum steht niedrig,
+  und ab und zu blitzt es kurz über ihnen auf, wie Sonne auf nasser Rinde (nur bis etwa 30 Meter).
+- **Die Nacht**: Die Fackel trägt man sichtbar in der linken Hand, mit echter Flamme; sie leuchtet etwa
+  25 Meter weit. Nachts zündet man sie von selbst an, mit T steckt man sie weg oder zündet sie an. Sie ist
+  leicht zu bekommen: Der Einsiedler gibt zwei mit, wenn er das Feuermachen zeigt, und aus einem Ast und
+  zwei Flachsfasern macht man überall zwei neue. Jede brennt drei Stunden. Mondnächte sind heller, und
+  auch ohne Mond ist es nie ganz finster.
+- **Schlafen**: Nachts (20 bis 5 Uhr) an einem brennenden Feuer heißt „Benutzen“: schlafen. Man wacht bei
+  Sonnenaufgang auf, warm und geheilt, aber hungriger und durstiger. Sind Feinde in der Nähe, findet man
+  keine Ruhe.
+
 ## Offene Fragen für Jakob und Vincenz
 
 - **Mehrspieler**: Auf Roblox spielt man fast immer mit anderen. Soll man später gemeinsam in

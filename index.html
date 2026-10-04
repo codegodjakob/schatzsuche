@@ -17,6 +17,9 @@
   --gedaempft: #b8b4a3;
   --moos: #a8bc84;
   --glut: #e0ac55;
+  --messing: rgba(196, 156, 84, 0.5);
+  --messing-hell: #d9b46a;
+  --leder: #22180f;
   --schrift-titel: "IM Fell English SC", "Iowan Old Style", Georgia, serif;
   --schrift-text: "Alegreya Sans", "Gill Sans", "Segoe UI", system-ui, sans-serif;
   color-scheme: dark;
@@ -28,8 +31,10 @@ body {
   font: 16px/1.5 var(--schrift-text);
 }
 #welt { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none; }
+/* Tafeln: dunkles Leder mit Messingkante */
 .tafel {
-  background: var(--tafel); border: 1px solid var(--kante); border-radius: 6px;
+  background: linear-gradient(180deg, rgba(44, 33, 22, 0.86), rgba(24, 18, 12, 0.88)); border: 1px solid var(--messing); border-radius: 6px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 220, 160, 0.08), 0 6px 18px rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
 kbd {
@@ -122,16 +127,22 @@ h1 {
 #band-titel { margin: 0; font: 400 clamp(1.8rem, 6vw, 2.6rem)/1 var(--schrift-titel); color: var(--glut); text-shadow: 0 0 18px rgba(224, 172, 85, 0.45); text-wrap: balance; }
 #band-text { margin: 0.45rem 0 0; text-wrap: balance; }
 
-/* Steuerungshinweise */
-#hinweise {
-  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-  display: flex; flex-wrap: wrap; justify-content: center; gap: 0.35rem 1rem; padding: 0.5rem 0.9rem;
-  /* Platz lassen für die Anzeigen links und die Uhr rechts */
-  box-sizing: border-box; width: max-content; max-width: calc(100% - 2 * (14.2rem + 28px)); font-size: 0.85rem; color: var(--gedaempft);
+/* Steuerung: ein kleiner „?“-Knopf oben rechts klappt die Hilfe auf (oder Taste H) */
+#hilfe-knopf {
+  position: fixed; right: 16px; top: calc(16px + env(safe-area-inset-top, 0px)); z-index: 3; width: 2.6rem; height: 2.6rem; border-radius: 50%;
+  font: 400 1.4rem/1 var(--schrift-titel); color: var(--messing-hell); cursor: pointer; padding: 0;
 }
-#hinweise span { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+#hilfe-knopf[aria-expanded="true"] { color: var(--nacht); background: var(--glut); }
+#hinweise {
+  position: fixed; right: 16px; top: calc(16px + 3.2rem + env(safe-area-inset-top, 0px)); z-index: 3; box-sizing: border-box;
+  width: min(22rem, calc(100% - 32px)); max-height: calc(100% - 7rem); overflow-y: auto; padding: 0.8rem 1rem 1rem; font-size: 0.88rem;
+}
+#hinweise h2 { margin: 0 0 0.5rem; font: 400 1.35rem/1.1 var(--schrift-titel); color: var(--messing-hell); }
+#hinweise dl { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.4rem 0.8rem; align-items: center; }
+#hinweise dt { white-space: nowrap; color: var(--pergament); font-weight: 500; }
+#hinweise dd { margin: 0; color: var(--gedaempft); }
 #hinweise kbd { background: var(--pergament); }
-.tafel-offen #hinweise { visibility: hidden; }
+html.beruehrung #hinweise .nur-tasten, html:not(.beruehrung) #hinweise .nur-finger { display: none; }
 
 /* Laden */
 .laden { margin: 0; min-height: 1.5em; font-size: 0.9rem; color: var(--gedaempft); font-variant-numeric: tabular-nums; }
@@ -197,16 +208,18 @@ h1 {
   position: fixed; inset: 0; margin: auto; z-index: 5; box-sizing: border-box;
   width: min(60rem, calc(100% - 32px));
   height: min(42rem, calc(100% - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)));
-  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); background: rgba(14, 18, 12, 0.96);
+  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr);
+  background: radial-gradient(ellipse at 50% 0%, rgba(120, 84, 44, 0.22), transparent 60%), linear-gradient(180deg, #2a1f15, #1a130c);
+  border: 2px solid rgba(196, 156, 84, 0.55); box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.5), inset 0 0 0 4px rgba(196, 156, 84, 0.25), 0 10px 40px rgba(0, 0, 0, 0.6);
   backdrop-filter: none; -webkit-backdrop-filter: none; /* fast deckend: Unschärfe dahinter kostet nur Rechenzeit */
 }
 .menue-kopf { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.6rem 0 0.7rem; border-bottom: 1px solid var(--kante); }
 .reiter { display: flex; gap: 0.15rem; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
 .reiter button {
   display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.6rem 0.75rem; white-space: nowrap; cursor: pointer;
-  border: 0; border-bottom: 2px solid transparent; background: none; color: var(--gedaempft); font: 500 0.98rem/1 var(--schrift-text);
+  border: 0; border-bottom: 2px solid transparent; background: none; color: var(--gedaempft); font: 400 1.12rem/1 var(--schrift-titel);
 }
-.reiter button[aria-selected="true"] { color: var(--pergament); border-bottom-color: var(--glut); }
+.reiter button[aria-selected="true"] { color: var(--messing-hell); border-bottom-color: var(--glut); text-shadow: 0 0 12px rgba(224, 172, 85, 0.35); }
 .reiter button:focus-visible { outline: 2px solid var(--moos); outline-offset: -2px; }
 button { -webkit-tap-highlight-color: transparent; }
 .reiter kbd { background: var(--pergament); }
@@ -239,21 +252,28 @@ button { -webkit-tap-highlight-color: transparent; }
 .inv-kopf { grid-area: kopf; display: flex; justify-content: space-between; gap: 1rem; font-size: 0.9rem; color: var(--gedaempft); }
 .inv-kopf .geld { color: var(--glut); font-variant-numeric: tabular-nums; }
 .faecher { grid-area: faecher; display: grid; grid-template-columns: repeat(auto-fill, minmax(3.5rem, 1fr)); gap: 0.4rem; }
+/* Fächer wie kleine Holzkästchen; darin das gezeichnete Symbol */
 .fach {
   position: relative; aspect-ratio: 1; display: grid; place-items: center; padding: 0; cursor: pointer; color: inherit;
-  border: 1px solid var(--kante); border-radius: 6px; background: rgba(236, 229, 210, 0.05); font-size: 1.65rem; line-height: 1;
+  border: 1px solid rgba(196, 156, 84, 0.28); border-radius: 7px; line-height: 1;
+  background: radial-gradient(circle at 50% 38%, #3d2e1f, #1d150d 75%); box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6), inset 0 -1px 0 rgba(255, 220, 160, 0.06);
 }
-.fach.leer { cursor: default; background: rgba(236, 229, 210, 0.02); border: 1px dashed rgba(233, 226, 207, 0.08); }
-.fach.gewaehlt { border-color: var(--glut); background: rgba(224, 172, 85, 0.15); }
+.fach .bild { width: 74%; height: 74%; display: block; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5)); }
+.fach:hover:not(.leer) { border-color: rgba(217, 180, 106, 0.7); }
+.bild svg, .detail-bild svg, .rezept-bild svg, .zutat-bild svg { width: 100%; height: 100%; display: block; }
+.fach.leer { cursor: default; background: radial-gradient(circle at 50% 38%, #261c12, #160f09 75%); border: 1px solid rgba(196, 156, 84, 0.1); }
+.fach.gewaehlt { border-color: var(--messing-hell); box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(224, 172, 85, 0.35), 0 0 14px rgba(224, 172, 85, 0.3); }
 .fach .n { position: absolute; right: 0.25rem; bottom: 0.2rem; font: 700 0.72rem/1 var(--schrift-text); font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px #000; }
-.inv-detail { grid-area: detail; position: sticky; top: 0; display: grid; gap: 0.5rem; padding: 0.9rem; border: 1px solid var(--kante); border-radius: 6px; }
-.detail-bild { font-size: 2.6rem; line-height: 1; }
+.inv-detail { grid-area: detail; position: sticky; top: 0; display: grid; gap: 0.5rem; padding: 0.9rem; border: 1px solid var(--kante); border-radius: 6px; background: linear-gradient(180deg, rgba(60, 45, 30, 0.35), rgba(30, 22, 14, 0.25)); border-color: rgba(196, 156, 84, 0.22); }
+.detail-bild { display: block; width: 5.5rem; height: 5.5rem; padding: 0.4rem; border-radius: 10px; background: radial-gradient(circle at 50% 40%, #46351f, #1d150d 78%); border: 1px solid var(--messing); filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5)); }
 
 .rezepte { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: 0.7rem; }
-.rezept { display: grid; gap: 0.45rem; align-content: start; padding: 0.8rem 0.9rem; border: 1px solid var(--kante); border-radius: 6px; }
+.rezept { display: grid; gap: 0.45rem; align-content: start; padding: 0.8rem 0.9rem; border: 1px solid var(--kante); border-radius: 6px; background: linear-gradient(180deg, rgba(60, 45, 30, 0.35), rgba(30, 22, 14, 0.25)); border-color: rgba(196, 156, 84, 0.22); }
 .rezept.kann { border-color: rgba(168, 188, 132, 0.6); background: rgba(168, 188, 132, 0.06); }
 .rezept-kopf { display: flex; align-items: center; gap: 0.5rem; }
-.rezept-bild { font-size: 1.6rem; line-height: 1; }
+.rezept-bild { display: block; flex: none; width: 2.6rem; height: 2.6rem; }
+.zutat-bild { display: inline-block; width: 1.15rem; height: 1.15rem; vertical-align: -0.25rem; margin-right: 0.15rem; }
+.zutat { display: inline-flex; align-items: center; gap: 0.2rem; }
 .rezept-beruf { margin-left: auto; font-size: 0.78rem; color: var(--gedaempft); white-space: nowrap; }
 .zutaten { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .rezept .knopf-text { justify-self: start; }
@@ -262,7 +282,7 @@ button { -webkit-tap-highlight-color: transparent; }
 /* Spalten wie in einer Zeitung: Die Karten füllen erst die linke, dann die rechte Spalte, ohne Lücken */
 .figur { columns: 2 22rem; column-gap: 0.8rem; }
 .figur > .karte { break-inside: avoid; margin-bottom: 0.8rem; }
-.karte { display: grid; gap: 0.5rem; padding: 0.9rem 1rem; border: 1px solid var(--kante); border-radius: 6px; }
+.karte { display: grid; gap: 0.5rem; padding: 0.9rem 1rem; border: 1px solid var(--kante); border-radius: 6px; background: linear-gradient(180deg, rgba(60, 45, 30, 0.35), rgba(30, 22, 14, 0.25)); border-color: rgba(196, 156, 84, 0.22); }
 .wert-zeile, .beruf-zeile {
   display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 0.25rem 0.6rem;
   padding-top: 0.45rem; border-top: 1px solid rgba(233, 226, 207, 0.08);
@@ -292,7 +312,7 @@ button { -webkit-tap-highlight-color: transparent; }
   display: grid; grid-template-columns: 1.9rem minmax(0, 1fr) auto auto; align-items: center; gap: 0.5rem;
   padding-top: 0.4rem; border-top: 1px solid rgba(233, 226, 207, 0.08);
 }
-.handel-zeile .bild { font-size: 1.35rem; line-height: 1; }
+.handel-zeile .bild { display: block; width: 1.9rem; height: 1.9rem; }
 .preis { color: var(--glut); font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 0.9rem; }
 .handel-knoepfe { display: flex; gap: 0.3rem; }
 .knopf-text.klein { padding: 0.45rem 0.6rem; font-size: 0.85rem; }
@@ -304,6 +324,14 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 #tod h2 { margin: 0 0 0.6rem; font: 400 clamp(2rem, 7vw, 3.6rem)/1 var(--schrift-titel); }
 #tod p { margin: 0; color: var(--gedaempft); }
+
+/* Schlafen: Das Bild wird langsam schwarz und am Morgen wieder hell */
+#schlaf {
+  position: fixed; inset: 0; z-index: 7; display: grid; place-items: center; padding: 16px; text-align: center;
+  background: #000; opacity: 0; pointer-events: none; transition: opacity 1.4s;
+  font: 400 clamp(1.4rem, 5vw, 2.2rem)/1.2 var(--schrift-titel); color: var(--gedaempft);
+}
+#schlaf.zu { opacity: 1; pointer-events: auto; }
 
 /* Fehler: lieber eine klare Meldung als ein Spiel, das still hängen bleibt */
 #fehler {
@@ -342,13 +370,15 @@ html:not(.beruehrung) #beruehrung { display: none !important; }
 .knopf.haupt.bereit { background: rgba(224, 172, 85, 0.92); color: var(--nacht); border-color: var(--glut); }
 .knopf:active { background: rgba(60, 76, 44, 0.92); border-color: var(--moos); }
 html.beruehrung .nur-beruehrung { display: block; }
-html.beruehrung #hinweise { display: none !important; }
 html.beruehrung #oben-links { width: auto; max-width: calc(100% - 32px - 10.2rem - 12px); }
 html.beruehrung #uhr { position: static; padding: 0.3rem 0.6rem; font-size: 0.78rem; }
 html.beruehrung #nachrichten { font-size: 0.9rem; }
 html.beruehrung #ziel { padding: 0.4rem 0.6rem 0.4rem 0.45rem; }
 html.beruehrung #ziel-titel { font-size: 0.95rem; }
 html.beruehrung #ziel-schritt { font-size: 0.8rem; }
+/* Am Handy sind oben links die Aufgabe und oben rechts die Werte; die Hilfe sitzt über den Knöpfen */
+html.beruehrung #hilfe-knopf { top: auto; bottom: calc(16px + 11.2rem + env(safe-area-inset-bottom, 0px)); right: calc(16px + env(safe-area-inset-right, 0px)); }
+html.beruehrung #hinweise { top: auto; bottom: calc(16px + 14.4rem + env(safe-area-inset-bottom, 0px)); max-height: calc(100% - 16rem - 9rem); }
 html.beruehrung #werte { top: calc(16px + env(safe-area-inset-top, 0px)); bottom: auto; left: auto; right: 16px; width: 10.2rem; padding: 0.5rem 0.65rem; gap: 0.25rem; box-sizing: border-box; }
 html.beruehrung .wert { grid-template-columns: 4rem 1fr; font-size: 0.72rem; }
 html.beruehrung .stufe-zeile { font-size: 0.75rem; gap: 0.3rem; }
@@ -394,7 +424,6 @@ html.beruehrung #aktion { display: none !important; }
 .editor-fuss .haupt { flex: 1; font-size: 1.05rem; padding: 0.8rem; }
 .editor-tipp { margin: 0; font-size: 0.82rem; color: var(--gedaempft); }
 
-@media (max-width: 900px) { #hinweise { display: none; } }
 @media (max-width: 1100px) { html:not(.beruehrung) #boss { top: calc(16px + 6.5rem + env(safe-area-inset-top, 0px)); } }
 @media (max-width: 640px), (max-height: 520px) and (orientation: portrait) {
   #editor { top: auto; left: 0; right: 0; bottom: 0; width: 100%; height: 56%; border-radius: 12px 12px 0 0; border-bottom: 0; padding-bottom: env(safe-area-inset-bottom, 0px); }
@@ -453,22 +482,31 @@ html.beruehrung #aktion { display: none !important; }
   </div>
 </section>
 
-<div id="hinweise" class="tafel" hidden>
-  <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> laufen</span>
-  <span><kbd>⇧</kbd> rennen</span>
-  <span><kbd>␣</kbd> springen</span>
-  <span><kbd>E</kbd> benutzen</span>
-  <span><kbd>X</kbd> oder Klick: schlagen</span>
-  <span><kbd>V</kbd> Blickwinkel</span>
-  <span><kbd>I</kbd> Inventar</span>
-  <span><kbd>K</kbd> Herstellen</span>
-  <span><kbd>C</kbd> Figur</span>
-  <span><kbd>J</kbd> Aufgaben</span>
-  <span><kbd>F</kbd> Feuer</span>
-  <span><kbd>G</kbd> Grafik: <b class="qualitaet-name">hoch</b></span>
-  <span>Maus: umsehen</span>
-  <span><kbd>H</kbd> Hilfe aus</span>
-</div>
+<button type="button" id="hilfe-knopf" class="tafel" hidden aria-expanded="false" aria-controls="hinweise" title="Steuerung (H)">?</button>
+<section id="hinweise" class="tafel" hidden aria-labelledby="hilfe-titel">
+  <h2 id="hilfe-titel">Steuerung</h2>
+  <dl class="nur-tasten">
+    <dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>laufen, mit <kbd>⇧</kbd> rennen</dd>
+    <dt>Maus</dt><dd>umsehen (einmal ins Bild klicken)</dd>
+    <dt><kbd>␣</kbd></dt><dd>springen</dd>
+    <dt><kbd>E</kbd></dt><dd>benutzen: aufheben, ernten, sprechen, angeln, schlafen</dd>
+    <dt><kbd>X</kbd> / Klick</dt><dd>zuschlagen</dd>
+    <dt><kbd>F</kbd></dt><dd>Feuer machen</dd>
+    <dt><kbd>T</kbd></dt><dd>Fackel anzünden oder wegstecken (nachts brennt sie von selbst)</dd>
+    <dt><kbd>V</kbd></dt><dd>Blick über die Schulter oder aus den Augen</dd>
+    <dt><kbd>I</kbd> <kbd>K</kbd> <kbd>C</kbd> <kbd>J</kbd></dt><dd>Inventar, Herstellen, Figur, Aufgaben</dd>
+    <dt><kbd>G</kbd></dt><dd>Grafik: <b class="qualitaet-name">hoch</b></dd>
+    <dt><kbd>H</kbd></dt><dd>diese Hilfe auf und zu</dd>
+  </dl>
+  <dl class="nur-finger">
+    <dt>Daumen links</dt><dd>laufen, ganz ausgelenkt rennen</dd>
+    <dt>Rechts wischen</dt><dd>umsehen</dd>
+    <dt>Großer Knopf</dt><dd>benutzen: zeigt, was gerade geht</dd>
+    <dt>Schlagen</dt><dd>leuchtet rot, wenn Gegner da sind</dd>
+    <dt>Menü</dt><dd>Inventar, Herstellen, Figur, Aufgaben</dd>
+    <dt>Fackel</dt><dd>nachts von selbst in der Hand, wenn du eine hast</dd>
+  </dl>
+</section>
 
 <section id="werte" class="tafel" hidden aria-label="Zustand">
   <div class="stufe-zeile"><b id="hud-stufe">Stufe 1</b><button type="button" id="hud-punkte" hidden aria-label="Punkte verteilen">+3</button><span id="hud-muenzen">0 Kupfer</span></div>
@@ -501,6 +539,7 @@ html.beruehrung #aktion { display: none !important; }
   </div>
 </div>
 
+<div id="schlaf" aria-live="polite"></div>
 <section id="tod" hidden>
   <div>
     <h2 id="tod-titel">Du bist gestorben</h2>

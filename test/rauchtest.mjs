@@ -219,6 +219,20 @@ try {
   await foto('12-nacht');
   pruefe(await spiel(() => window.spiel.zeit.hell < 0.2), 'Es wird Nacht');
   pruefe(await warte(() => window.spiel.fackelBrennt(), null, 60).then(() => true, () => false), 'Nachts brennt die Fackel von selbst');
+  pruefe(await spiel(() => !!window.spiel.figur.linkeHand?.getObjectByName('fackelkopf')), 'Die Fackel ist in der linken Hand zu sehen');
+  await taste('KeyT');
+  pruefe(await warte(() => !window.spiel.fackelBrennt(), null, 30).then(() => true, () => false), 'Mit T steckt man die Fackel weg');
+  await taste('KeyT');
+  pruefe(await warte(() => window.spiel.fackelBrennt(), null, 30).then(() => true, () => false), 'Mit T zündet man sie wieder an');
+
+  // Am Feuer des Einsiedlers schlafen bis zum Morgen
+  await tafelnWeg();
+  await spiel(() => { window.spiel.teleport(-56, 83.5); window.spiel.setzeZeit(22); });
+  await warte(() => window.spiel.benutzen.vorschlag(window.spiel.steuerung.zustand.ort)?.kurz === 'Schlafen', null, 60);
+  pruefe(true, 'Nachts am Feuer: „Schlafen“');
+  await taste('KeyE');
+  await warte(() => !window.spiel.schlaeft() && window.spiel.zeit.stunde > 6 && window.spiel.zeit.stunde < 8, null, 120);
+  pruefe(true, 'Nach dem Schlafen ist Morgen');
 
   // Sterben und wieder aufwachen: Sachen weg, Gelerntes und das Pergament bleiben
   await spiel(() => { window.spiel.setzeZeit(12); const w = window.spiel.ueberleben.werte; w.wasser = 0; w.leben = 0.02; });

@@ -20,7 +20,7 @@ Claude veröffentlicht nach jeder Änderung eine Vorschau als Link. Der steht im
 | `Leertaste` | springen |
 | Maus | umsehen (einmal ins Bild klicken) |
 | `V` | Blick über die Schulter oder aus den eigenen Augen |
-| `E` | benutzen: aufheben, pflücken, Holz hacken, trinken, jemanden ansprechen, angeln (ein goldener Ring zeigt, was gemeint ist) |
+| `E` | benutzen: aufheben, pflücken, Holz hacken, trinken, jemanden ansprechen, angeln, nachts am Feuer schlafen (ein goldener Ring zeigt, was gemeint ist) |
 | Linksklick oder `X` | zuschlagen, mit der stärksten Waffe, die man dabeihat (sonst mit den Fäusten) |
 | `E`, `Q`, `R`, `T` | Entscheidungen, solange eine Erzähltafel offen ist (auch in Gesprächen) |
 | `I` | Inventar: 48 Plätze, Essen, Wegwerfen |
@@ -29,8 +29,9 @@ Claude veröffentlicht nach jeder Änderung eine Vorschau als Link. Der steht im
 | `J` | Aufgaben: was zu tun ist, welche Aufgabe am Bildschirmrand steht |
 | `Esc` | Menü schließen |
 | `F` | Feuer machen (wenn man es gelernt hat) |
+| `T` | Fackel anzünden oder wegstecken (nachts brennt sie von selbst in der linken Hand) |
 | `G` | Grafikqualität: hoch, mittel, niedrig |
-| `H` | Tastenhilfe aus- und einblenden |
+| `H` oder Knopf `?` oben rechts | Steuerung auf- und zuklappen |
 
 Das Spiel speichert sich von selbst. Beim nächsten Öffnen steht oben „Weiterspielen“.
 
@@ -43,6 +44,7 @@ Auf Handy und Tablet erscheint eine Fingersteuerung:
 | Großer Knopf unten rechts | benutzen; er zeigt an, was gerade geht („Ast aufheben“) |
 | Knöpfe darüber | springen, schlagen (leuchtet rot, wenn Gegner da sind), Blickwinkel, Menü |
 | Menü | Inventar, Herstellen, Figur (auch die Grafik), Aufgaben; beim Händler auch Handel |
+| Knopf `?` über den Knöpfen | Steuerung auf- und zuklappen |
 | Ereignis antippen | Entscheidung treffen |
 
 ## Wie wir zusammenarbeiten

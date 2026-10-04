@@ -189,6 +189,7 @@ export function erzeugeHimmel(szene, renderer, qualitaet) {
   const licht = { farbe: new THREE.Color(), staerke: 1, richtung: new THREE.Vector3() };
   const himmelFarbe = new THREE.Color(), nebel = new THREE.Color();
   const TAG_NEBEL = new THREE.Color(0xb4c6d2), ABEND_NEBEL = new THREE.Color(0xd8a684), NACHT_NEBEL = new THREE.Color(0x0e1424);
+  const MONDSCHEIN = new THREE.Color(0.32, 0.4, 0.62);
   const raster = new THREE.Vector3();
 
   function aktualisiere(dt, ort) {
@@ -213,9 +214,10 @@ export function erzeugeHimmel(szene, renderer, qualitaet) {
     wu.uHelligkeit.value = 0.25 + 0.75 * zeit.hell;
     wu.uWind.value.copy(wind.richtung.value);
 
-    fuellLicht.color.copy(nebel);
+    // Nachts füllt bläuliches Mond- und Sternenlicht die Schatten, damit man die Welt noch erkennt
+    fuellLicht.color.copy(nebel).lerp(MONDSCHEIN, 1 - zeit.hell);
     fuellLicht.groundColor.setRGB(0.12, 0.13, 0.07).multiplyScalar(0.3 + zeit.hell);
-    fuellLicht.intensity = 0.08 + 0.12 * zeit.hell;
+    fuellLicht.intensity = 0.2 + 0.25 * (1 - zeit.hell);
     bodenMat.color.setRGB(0.10, 0.12, 0.05).multiplyScalar(0.15 + 0.85 * zeit.hell);
 
     // Sonne/Mond als ein Schattenlicht, das mit dem Spieler wandert (auf Schatten-Texel eingerastet)

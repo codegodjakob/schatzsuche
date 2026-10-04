@@ -7,6 +7,8 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { SAMMELSTELLEN } from '../inhalte/sammelstellen.js';
 import { hoeheBei, maskeBei, neigungBei, waldDichte, wasserspiegel } from './gelaende.js';
 import { felsForm } from './natur.js';
+import { druecke } from './bodenspuren.js';
+import { erzeugeFunkeln } from './funkeln.js';
 import { ALTER_BAUM, BEERENSTRAEUCHER, GEWAESSER, LAGER, START } from './orte.js';
 import { zeit } from './tageszeit.js';
 import { zufall } from './zufall.js';
@@ -18,6 +20,8 @@ const REICHWEITE = { ast: 1.5, stein: 1.4, pilz: 1.4, kamille: 1.3, johanniskrau
 // Äste, die schon immer am Weg zum Lager lagen (die ersten drei braucht man für den Einsiedler)
 const ALTE_AESTE = [[-30, 58], [-46, 70], [-66, 74], [-20, 47], [18, 38], [-48, 98], [40, 30]];
 
+const AM_BODEN = new Set(['ast', 'stein', 'pilz']);
+
 const jetzt = () => zeit.tag + zeit.stunde / 24;
 
 // ---------------------------------------------------------------- Aussehen
@@ -28,11 +32,11 @@ function astGeometrie(z) {
     new THREE.Vector3(-0.55, 0.03, 0), new THREE.Vector3(-0.2, 0.05, (z() - 0.5) * 0.1),
     new THREE.Vector3(0.15, 0.04, (z() - 0.5) * 0.12), new THREE.Vector3(0.55, 0.03, 0.02),
   ]);
-  const teile = [new THREE.TubeGeometry(kurve, 12, 0.025, 6, false)];
+  const teile = [new THREE.TubeGeometry(kurve, 12, 0.032, 6, false)];
   for (const t of [0.3, 0.65]) {
     const a = kurve.getPoint(t);
     const b = a.clone().add(new THREE.Vector3(0.12, 0.02, (z() - 0.5) * 0.3 + 0.12));
-    teile.push(new THREE.TubeGeometry(new THREE.LineCurve3(a, b), 2, 0.012, 5, false));
+    teile.push(new THREE.TubeGeometry(new THREE.LineCurve3(a, b), 2, 0.016, 5, false));
   }
   return mergeGeometries(teile);
 }
@@ -160,7 +164,17 @@ export function erzeugeSammeln({ natur, baeume }) {
   const raster = new Map();
   const genommen = new Map(); // Stelle -> Spielzeit, ab der sie wieder da ist
 
+  // Was am Boden liegt, soll man sehen: Dort steht das Gras niedrig, und ab und zu blitzt es auf
+  const funkelPunkte = [];
+  let funkeln = null;
   function neueStelle(id, art, x, z, zeige = null, reichweite = REICHWEITE[art]) {
+    if (AM_BODEN.has(art)) {
+      druecke(x, z, art === 'ast' ? 0.9 : 0.55);
+      const i = funkelPunkte.length;
+      funkelPunkte.push({ x, y: hoeheBei(x, z) + 0.12, z });
+      const nurZeigen = zeige;
+      zeige = (ja) => { nurZeigen?.(ja); funkeln?.zeige(i, ja); };
+    }
     const stelle = { id, art, x, z, reichweite, zeige };
     stellen.push(stelle);
     nachName.set(id, stelle);
@@ -182,7 +196,7 @@ export function erzeugeSammeln({ natur, baeume }) {
     const zuordnung = astPlaetze(frei).map((pl, i) => {
       const f = i % formen.length;
       e.set(0, z() * Math.PI * 2, (z() - 0.5) * 0.1);
-      m.compose(p.set(pl.x, hoeheBei(pl.x, pl.z), pl.z), q.setFromEuler(e), s.setScalar(0.85 + z() * 0.3));
+      m.compose(p.set(pl.x, hoeheBei(pl.x, pl.z), pl.z), q.setFromEuler(e), s.setScalar(1.15 + z() * 0.35));
       proForm[f].push(m.clone());
       return { pl, f, k: proForm[f].length - 1 };
     });
@@ -197,7 +211,7 @@ export function erzeugeSammeln({ natur, baeume }) {
     const proForm = formen.map(() => []);
     const zuordnung = steinPlaetze(frei).map((pl, i) => {
       const f = i % formen.length;
-      const groesse = 0.08 + z() * 0.06;
+      const groesse = 0.11 + z() * 0.06;
       e.set((z() - 0.5) * 0.5, z() * Math.PI * 2, (z() - 0.5) * 0.5);
       m.compose(p.set(pl.x, hoeheBei(pl.x, pl.z) + groesse * 0.05, pl.z), q.setFromEuler(e), s.setScalar(groesse));
       proForm[f].push(m.clone());
@@ -214,7 +228,7 @@ export function erzeugeSammeln({ natur, baeume }) {
     const plaetze = pilzPlaetze(frei);
     for (const pl of plaetze) {
       e.set((z() - 0.5) * 0.25, z() * Math.PI * 2, (z() - 0.5) * 0.25);
-      m.compose(p.set(pl.x, hoeheBei(pl.x, pl.z) - 0.01, pl.z), q.setFromEuler(e), s.setScalar(0.9 + z() * 0.6));
+      m.compose(p.set(pl.x, hoeheBei(pl.x, pl.z) - 0.01, pl.z), q.setFromEuler(e), s.setScalar(1.3 + z() * 0.7));
       matrizen.push(m.clone());
     }
     const netz = instanzen(pilzGeometrie(), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6 }), matrizen);
@@ -238,6 +252,9 @@ export function erzeugeSammeln({ natur, baeume }) {
   baeume.hindernisse.forEach((h, i) => {
     if (h.art === 'baum') neueStelle(`baum-${i}`, 'baum', h.x, h.z, null, h.radius + 1.0);
   });
+
+  funkeln = erzeugeFunkeln(funkelPunkte);
+  gruppe.add(funkeln.objekt);
 
   // Die nächste freie Stelle in Reichweite; was vor einem liegt, zählt etwas mehr
   function naechste(ort, blickSeite = null) {
@@ -286,6 +303,7 @@ export function erzeugeSammeln({ natur, baeume }) {
   return {
     objekt: gruppe,
     stellen,
+    aktualisiere: (dt, hell, pixel) => funkeln.aktualisiere(dt, hell, pixel),
     naechste, nimm, wachsen, findeArt,
     stelle: (id) => nachName.get(id),
     istDa: (stelle) => !genommen.has(stelle),

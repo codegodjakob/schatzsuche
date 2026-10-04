@@ -100,6 +100,70 @@ function belebe(wurzel, animationen, art) {
   const kopf = wurzel.getObjectByName('head');
   const hals = wurzel.getObjectByName('neck_01');
 
+  // Arme in eine Haltung bringen (über die Bewegungen gelegt), z. B. eine Fackel vor sich halten.
+  // Richtungen im Raum der Figur: x = links, y = oben, z = vorn. Wirkt im Raum, nicht über Knochenachsen,
+  // darum passt es zu jeder Figur mit diesem Skelett.
+  const arme = {};
+  for (const seite of ['l', 'r']) {
+    const ober = wurzel.getObjectByName(`upperarm_${seite}`), unter = wurzel.getObjectByName(`lowerarm_${seite}`), hand = wurzel.getObjectByName(`hand_${seite}`);
+    if (ober && unter && hand) arme[seite] = { ober, unter, hand, ziel: null, letztes: null, w: 0 };
+  }
+  const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _d = new THREE.Vector3();
+  const _qd = new THREE.Quaternion(), _qb = new THREE.Quaternion(), _qp = new THREE.Quaternion(), _qw = new THREE.Quaternion();
+  function richte(knochen, kind, richtung, w) {
+    knochen.updateWorldMatrix(true, true);
+    knochen.getWorldPosition(_a);
+    kind.getWorldPosition(_b);
+    _b.sub(_a).normalize();
+    _d.copy(richtung).applyQuaternion(wurzel.getWorldQuaternion(_qw)).normalize();
+    _qd.setFromUnitVectors(_b, _d);
+    knochen.getWorldQuaternion(_qb);
+    knochen.parent.getWorldQuaternion(_qp);
+    const neu = _qp.invert().multiply(_qd).multiply(_qb);
+    knochen.quaternion.slerp(neu, w);
+  }
+  function haltungAnwenden(dt) {
+    for (const arm of Object.values(arme)) {
+      arm.w = THREE.MathUtils.damp(arm.w, arm.ziel ? 1 : 0, 6, dt);
+      const z = arm.ziel ?? arm.letztes;
+      if (!z || arm.w < 0.005) continue;
+      richte(arm.ober, arm.unter, z.oberarm, arm.w);
+      richte(arm.unter, arm.hand, z.unterarm, arm.w);
+    }
+  }
+  // Bücken (zum Aufheben): Der Rücken neigt sich nach vorn, der rechte Arm greift zum Boden. Ein kurzer
+  // Ablauf von dauer Sekunden: hinunter, kurz unten, wieder hoch.
+  const ruecken = ['spine_01', 'spine_02', 'spine_03'].map((n) => wurzel.getObjectByName(n)).filter(Boolean);
+  const _quer = new THREE.Vector3(), _qa = new THREE.Quaternion();
+  let buecken = null;
+  const GREIFEN = { oberarm: new THREE.Vector3(-0.1, -0.75, 0.65), unterarm: new THREE.Vector3(-0.05, -0.8, 0.6) };
+  function neige(knochen, winkel) {
+    knochen.updateWorldMatrix(true, false);
+    _quer.set(1, 0, 0).applyQuaternion(wurzel.getWorldQuaternion(_qw)); // Achse quer durch die Figur
+    _qa.setFromAxisAngle(_quer, winkel);
+    knochen.getWorldQuaternion(_qb);
+    knochen.parent.getWorldQuaternion(_qp);
+    knochen.quaternion.copy(_qp.invert().multiply(_qa).multiply(_qb));
+  }
+  function bueckenAnwenden(dt) {
+    if (!buecken) return;
+    buecken.zeit += dt;
+    const t = buecken.zeit / buecken.dauer;
+    if (t >= 1) { buecken = null; return; }
+    const w = Math.sin(Math.min(1, t * 1.15) * Math.PI) ** 0.7; // schnell hinunter, kurz halten, hoch
+    for (const k of ruecken) neige(k, (0.45 / ruecken.length) * 1.6 * w);
+    if (arme.r) { richte(arme.r.ober, arme.r.unter, GREIFEN.oberarm, w); richte(arme.r.unter, arme.r.hand, GREIFEN.unterarm, w); }
+  }
+  function buecke(dauer = 0.9) { buecken = { zeit: 0, dauer }; }
+
+  // seite 'l' oder 'r'; ziel { oberarm: Vector3, unterarm: Vector3 } oder null (Arm wieder frei)
+  function setzeArm(seite, ziel) {
+    const arm = arme[seite];
+    if (!arm) return;
+    arm.ziel = ziel;
+    if (ziel) arm.letztes = ziel;
+  }
+
   // Gewichte der Gangarten je nach Tempo
   let phase = 0, stehZeit = 0, einmal = null;
   const gewicht = {};
@@ -144,6 +208,8 @@ function belebe(wurzel, animationen, art) {
       if (einmal.zeit >= a.dauer) einmal = null;
     }
     mischer.update(0);
+    bueckenAnwenden(dt);
+    haltungAnwenden(dt);
   }
 
   // Eine Bewegung einmal abspielen; tempo > 1 = schneller, ein/aus = Überblendzeit (in Clip-Sekunden)
@@ -165,6 +231,8 @@ function belebe(wurzel, animationen, art) {
   return {
     objekt: wurzel, bewege, spiele, kopfSichtbar, augenOrt, tempo, art,
     rechteHand: wurzel.getObjectByName('hand_r'),
+    linkeHand: wurzel.getObjectByName('hand_l'),
+    setzeArm, buecke,
     hat: (name) => !!aktionen[name],
     dauer: (name) => aktionen[name]?.dauer ?? 0,
     get spielt() { return einmal?.name ?? null; },

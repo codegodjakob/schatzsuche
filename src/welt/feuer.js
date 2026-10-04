@@ -34,6 +34,44 @@ function rauchTextur() {
 
 let geteilteTexturen = null;
 
+// Kleine Flamme für Fackeln: Sie steht in der Welt (nicht an der Hand), damit sie immer nach oben
+// brennt, egal wie die Fackel gerade gehalten wird. ort: wo der Fackelkopf gerade ist.
+export function erzeugeFlamme() {
+  geteilteTexturen ??= { flamme: flammenTextur(), rauch: rauchTextur() };
+  const gruppe = new THREE.Group();
+  gruppe.name = 'flamme';
+  const mat = new THREE.SpriteMaterial({ map: geteilteTexturen.flamme, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false });
+  const teile = Array.from({ length: 14 }, (_, i) => {
+    const sp = new THREE.Sprite(mat.clone());
+    sp.userData = { alter: i / 14, x: 0, z: 0 };
+    gruppe.add(sp);
+    return sp;
+  });
+  const z = zufall(77);
+  const vorher = new THREE.Vector3();
+  const zug = new THREE.Vector3();
+  return {
+    objekt: gruppe,
+    aktualisiere(dt, ort, windRichtung) {
+      // Wer läuft, zieht die Flamme hinter sich her
+      if (dt > 0) zug.subVectors(ort, vorher).divideScalar(dt).clampLength(0, 6).multiplyScalar(-0.02);
+      vorher.copy(ort);
+      gruppe.position.copy(ort);
+      for (const f of teile) {
+        const d = f.userData;
+        d.alter += dt * 2.6;
+        if (d.alter > 1) { d.alter -= 1; d.x = (z() - 0.5) * 0.05; d.z = (z() - 0.5) * 0.05; }
+        const a = d.alter;
+        f.position.set(d.x + (windRichtung.x * 0.04 + zug.x) * a, a * 0.26, d.z + (windRichtung.y * 0.04 + zug.z) * a);
+        const g = (1 - a) * 0.17 + 0.04;
+        f.scale.set(g * 0.8, g * 1.3, 1);
+        f.material.opacity = Math.sin(a * Math.PI) * 0.9;
+        f.material.rotation = a * 2 + d.x * 30;
+      }
+    },
+  };
+}
+
 // Das Rauchbild teilen sich alle Feuer und Kamine
 export function rauchBild() {
   geteilteTexturen ??= { flamme: flammenTextur(), rauch: rauchTextur() };

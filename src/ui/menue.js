@@ -6,6 +6,7 @@ import { aufgabe } from '../inhalte/aufgaben.js';
 import { BERUFE, WERTE } from '../inhalte/berufe.js';
 import { berufsErfahrungFuer, erfahrungFuer } from '../spieler/fortschritt.js';
 import { PLAETZE } from '../spieler/inventar.js';
+import { symbol } from './symbole.js';
 
 const REITER = [
   { id: 'inventar', taste: 'KeyI' },
@@ -23,6 +24,13 @@ function el(tag, klasse = '', text = null) {
   if (text != null) e.textContent = text;
   return e;
 }
+// Gezeichnetes Symbol eines Gegenstands (src/ui/symbole.js)
+function bild(id, klasse = 'bild') {
+  const e = el('span', klasse);
+  e.innerHTML = symbol(id);
+  return e;
+}
+
 function knopf(text, beiKlick, klasse = 'knopf-text') {
   const k = el('button', klasse, text);
   k.type = 'button';
@@ -134,7 +142,7 @@ export function erzeugeMenue({
         const f = knopf('', () => { auswahl = d.id; zeichne(); }, `fach${auswahl === d.id ? ' gewaehlt' : ''}`);
         f.title = d.name;
         f.setAttribute('aria-label', `${d.name}, ${k} Stück`);
-        f.append(el('span', 'bild', d.bild ?? '•'));
+        f.append(bild(d.id));
         if (k > 1) f.append(el('span', 'n', String(k)));
         faecher.append(f);
         n += 1;
@@ -146,7 +154,7 @@ export function erzeugeMenue({
     if (auswahl) {
       const g = gegenstand(auswahl);
       const anzahl = inventar.anzahl(auswahl);
-      detail.append(el('div', 'detail-bild', g.bild ?? ''), el('h3', '', anzahl > 1 ? `${g.name} (${anzahl})` : g.name), el('p', 'klein', ARTEN[g.art]), el('p', '', g.beschreibung));
+      detail.append(bild(auswahl, 'detail-bild'), el('h3', '', anzahl > 1 ? `${g.name} (${anzahl})` : g.name), el('p', 'klein', ARTEN[g.art]), el('p', '', g.beschreibung));
       const fakten = el('ul', 'fakten');
       if (g.essen) for (const w of wirkungen(g.essen)) fakten.append(el('li', '', w));
       if (g.werkzeug) fakten.append(el('li', '', `Werkzeug: ${WERKZEUGNAMEN[g.werkzeug.art] ?? g.werkzeug.art}`));
@@ -178,11 +186,13 @@ export function erzeugeMenue({
       const karte = el('article', `rezept${kann ? ' kann' : ''}`);
       karte.dataset.rezept = r.id;
       const kopf = el('div', 'rezept-kopf');
-      kopf.append(el('span', 'rezept-bild', r.bild ?? ''), el('b', '', (r.menge ?? 1) > 1 ? `${r.menge} × ${r.name}` : r.name), el('span', 'rezept-beruf', `${BERUFE[r.beruf].name} ${r.stufe}`));
+      kopf.append(bild(r.ergebnis ?? r.bauwerk, 'rezept-bild'), el('b', '', (r.menge ?? 1) > 1 ? `${r.menge} × ${r.name}` : r.name), el('span', 'rezept-beruf', `${BERUFE[r.beruf].name} ${r.stufe}`));
       const zutaten = el('div', 'zutaten');
       for (const [id, menge] of Object.entries(r.zutaten)) {
         const g = gegenstand(id), hat = inventar.anzahl(id);
-        zutaten.append(el('span', `zutat${hat < menge ? ' fehlt' : ''}`, `${g.bild ?? ''} ${g.name} ${Math.min(hat, menge)}/${menge}`));
+        const z = el('span', `zutat${hat < menge ? ' fehlt' : ''}`, ` ${g.name} ${Math.min(hat, menge)}/${menge}`);
+        z.prepend(bild(id, 'zutat-bild'));
+        zutaten.append(z);
       }
       if (r.werkzeug) {
         const da = r.werkzeug.some((id) => inventar.hat(id));
@@ -297,7 +307,7 @@ export function erzeugeMenue({
       const zeile = el('div', 'handel-zeile');
       const k = knopf('Kaufen', () => { handel.kaufe(haendler, id); zeichne(); }, 'knopf-text klein');
       k.disabled = inventar.muenzen < preis;
-      zeile.append(el('span', 'bild', g.bild ?? ''), el('span', 'name', g.name), el('span', 'preis', `${preis} Kupfer`), k);
+      zeile.append(bild(id), el('span', 'name', g.name), el('span', 'preis', `${preis} Kupfer`), k);
       kaufen.append(zeile);
     }
     const verkaufen = el('section', 'karte');
@@ -310,7 +320,7 @@ export function erzeugeMenue({
       const knoepfe = el('span', 'handel-knoepfe');
       knoepfe.append(knopf('Verkaufen', () => { handel.verkaufe(haendler, d.id, 1); zeichne(); }, 'knopf-text klein'));
       if (d.anzahl > 1) knoepfe.append(knopf('Alle', () => { handel.verkaufe(haendler, d.id, d.anzahl); zeichne(); }, 'knopf-text klein'));
-      zeile.append(el('span', 'bild', d.bild ?? ''), el('span', 'name', d.anzahl > 1 ? `${d.name} (${d.anzahl})` : d.name), el('span', 'preis', `${preis} Kupfer`), knoepfe);
+      zeile.append(bild(d.id), el('span', 'name', d.anzahl > 1 ? `${d.name} (${d.anzahl})` : d.name), el('span', 'preis', `${preis} Kupfer`), knoepfe);
       verkaufen.append(zeile);
     }
     wrap.append(kopf, kaufen, verkaufen, el('p', 'klein hinweis', 'Wer an einem Tag viel vom Gleichen verkauft, bekommt dafür etwas weniger. Ausstrahlung bringt bessere Preise.'));

@@ -1,5 +1,5 @@
 // Fotografiert das Spiel an bestimmten Orten und Uhrzeiten (zur Prüfung der Grafik).
-// node werkzeuge/foto_spiel.mjs hoch "name:x:z:blickSeite:blickHoehe:stunde[:ich]" ...
+// node werkzeuge/foto_spiel.mjs hoch "name:x:z:blickSeite:blickHoehe:stunde[:ich[:f]]" (f: mit Fackel) ...
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 import { starteServer } from '../scripts/server.mjs';
@@ -19,11 +19,15 @@ await seite.goto(url);
 await seite.waitForFunction(() => window.spiel?.geladen && window.spiel?.bereit, null, { timeout: 600000 });
 console.log('geladen nach', ((Date.now() - t0) / 1000).toFixed(1), 's');
 await seite.click('#wahl-er', { timeout: 900000 });
+await seite.click('#editor-fertig', { timeout: 900000 });
 await seite.waitForFunction(() => window.spiel.figur, null, { timeout: 120000 });
+// Die erste Erzähltafel („Aufstehen“) abwarten und schließen
+await seite.waitForFunction(() => window.spiel.ereignisse.aktuell, null, { timeout: 300000 }).catch(() => {});
 await seite.keyboard.press('KeyE');
 for (const auftrag of auftraege) {
-  const [name, x, z, bs, bh, stunde, ich] = auftrag.split(':');
-  await seite.evaluate(([x, z, bs, bh, stunde, ich]) => {
+  const [name, x, z, bs, bh, stunde, ich, extra = ''] = auftrag.split(':');
+  await seite.evaluate(([x, z, bs, bh, stunde, ich, extra]) => {
+    if (extra.includes('f') && !window.spiel.inventar.hat('fackel')) window.spiel.inventar.gib('fackel', 2);
     window.spiel.teleport(Number(x), Number(z));
     window.spiel.blick(Number(bs), Number(bh));
     window.spiel.setzeZeit(Number(stunde));
@@ -33,7 +37,7 @@ for (const auftrag of auftraege) {
     }
     document.getElementById('ereignis').hidden = true;
     document.getElementById('hinweise').hidden = true;
-  }, [x, z, bs, bh, stunde, ich]);
+  }, [x, z, bs, bh, stunde, ich, extra]);
   // ein paar Bilder laufen lassen (Bäume einsortieren, Umgebungslicht, Kamera)
   const start = await seite.evaluate(() => window.spiel.bilder);
   await seite.waitForFunction((n) => window.spiel.bilder >= n + 4, start, { timeout: 900000, polling: 500 });

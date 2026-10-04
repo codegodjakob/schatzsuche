@@ -4,6 +4,7 @@
 // Höhe und Grasdichte kommen aus den Geländetexturen. Drei Ringe: nah dicht, weiter weg lichter.
 import * as THREE from 'three';
 import { rasterTexturen } from './gelaende.js';
+import { spurenBild } from './bodenspuren.js';
 import { WIND_GLSL, windUniforms } from './wind.js';
 
 const RINGE = [
@@ -51,6 +52,7 @@ uniform float uBreite;
 uniform float uHoehenFaktor;
 uniform sampler2D uHoehe;
 uniform sampler2D uMaske;
+uniform sampler2D uSpuren;
 uniform float uWeltGroesse;
 varying float vHoeheImHalm;
 varying vec3 vGrasFarbe;
@@ -80,6 +82,7 @@ const PLATZ = /* glsl */ `
   float wuchs = mix(0.35, 0.95, smoothstep(0.2, 0.8, flecken)) * (0.5 + 0.6 * pow(gHash(zelle + 9.1), 1.5)) + buesche * 0.45;
   wuchs *= mix(0.45, 1.0, maske.r);
   float groesse = ring * da * wuchs * uHoehenFaktor;
+  groesse *= 1.0 - texture(uSpuren, rasterUv).r; // niedergedrückt (bodenspuren.js)
   float gier = gHash(zelle + 5.3) * 6.2831 + halm.x;
   vec2 blatt = vec2(cos(gier), sin(gier));
   vec2 krumm = (gHash2(zelle + 1.9 + halm.x) - 0.5) * (1.0 + halm.z * 2.0);
@@ -132,7 +135,7 @@ export function erzeugeGras(qualitaet, sonnenLicht) {
     const uniforms = windUniforms({
       uMitte: mitte, uSpieler: spieler, uAbstand: { value: 0 }, uRasterN: { value: 0 },
       uInnen: { value: ring.innen }, uAussen: { value: ring.aussen }, uBreite: { value: ring.breite },
-      uHoehenFaktor: { value: ring.hoehe }, uHoehe: { value: hoehe }, uMaske: { value: maske },
+      uHoehenFaktor: { value: ring.hoehe }, uHoehe: { value: hoehe }, uMaske: { value: maske }, uSpuren: { value: spurenBild },
       uWeltGroesse: { value: groesse }, uSonnenRichtung: sonnenRichtung, uSonnenFarbe: sonnenFarbe,
     });
     mat.onBeforeCompile = (shader) => {

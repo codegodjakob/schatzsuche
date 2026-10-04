@@ -17,7 +17,7 @@ export const REZEPTE = [
   { id: 'lederwams', ergebnis: 'lederwams', zutaten: { lederfetzen: 4, schnur: 2 }, werkzeug: ['steinmesser'], ort: 'hand', beruf: 'handwerk', stufe: 2, erfahrung: 20 },
   { id: 'keule', ergebnis: 'keule', zutaten: { holzscheit: 2, schnur: 1 }, werkzeug: ['steinmesser'], ort: 'hand', beruf: 'handwerk', stufe: 2, erfahrung: 10 },
   { id: 'lagerfeuer', bauwerk: 'lagerfeuer', zutaten: { ast: 3 }, werkzeug: ['feuerstein'], ort: 'hand', beruf: 'handwerk', stufe: 1, erfahrung: 8, merker: 'kann-feuer' },
-  { id: 'fackel', ergebnis: 'fackel', zutaten: { ast: 1, fasern: 2 }, ort: 'feuer', beruf: 'handwerk', stufe: 1, erfahrung: 3 },
+  { id: 'fackel', ergebnis: 'fackel', menge: 2, zutaten: { ast: 1, fasern: 2 }, ort: 'hand', beruf: 'handwerk', stufe: 1, erfahrung: 3 },
   { id: 'gebratene_pilze', ergebnis: 'gebratene_pilze', zutaten: { steinpilz: 2 }, ort: 'feuer', beruf: 'kochen', stufe: 1, erfahrung: 8 },
   { id: 'fisch_rotauge', ergebnis: 'gebratener_fisch', zutaten: { rotauge: 1 }, ort: 'feuer', beruf: 'kochen', stufe: 1, erfahrung: 5 },
   { id: 'fisch_barsch', ergebnis: 'gebratener_fisch', zutaten: { barsch: 1 }, ort: 'feuer', beruf: 'kochen', stufe: 1, erfahrung: 5 },

@@ -1,4 +1,4 @@
-// Waffen und Werkzeug, die eine Figur in der rechten Hand trägt: Speer, Messer, Axt, Keulen.
+// Waffen und Werkzeug, die eine Figur in der Hand trägt: Speer, Messer, Axt, Keulen, Angelrute, Fackel.
 // Einfache Formen aus Holz und Stein; sie hängen am Handknochen und schwingen mit jeder Bewegung mit.
 import * as THREE from 'three';
 
@@ -79,6 +79,24 @@ FORMEN.angelrute = () => {
   return g;
 };
 
+// Fackel: Stab mit einem Kopf aus harzgetränkten Fasern, mit Schnur umwickelt (die Flamme kommt aus fackel.js)
+const pech = new THREE.MeshStandardMaterial({ color: 0x241a12, roughness: 0.95, emissive: 0xff5a1a, emissiveIntensity: 0 });
+FORMEN.fackel = () => {
+  const g = new THREE.Group();
+  g.add(stab(-0.18, 0.42, 0.017, 0.02, holz));
+  const kopf = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.028, 0.13, 8), pech);
+  kopf.name = 'fackelkopf';
+  kopf.position.y = 0.46;
+  g.add(kopf);
+  for (const y of [0.42, 0.47, 0.51]) {
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.034, 0.005, 4, 10), schnur);
+    band.rotation.x = Math.PI / 2;
+    band.position.y = y;
+    g.add(band);
+  }
+  return g;
+};
+
 export const hatForm = (id) => id in FORMEN;
 
 // Baut eine Form für sich (z. B. die Angelrute, die beim Angeln frei geführt wird)
@@ -88,10 +106,11 @@ export function baueForm(id) {
   return form;
 }
 
-// Hängt eine Waffe an die rechte Hand einer Figur (ersetzt die vorige). id = null: leere Hand.
+// Hängt eine Waffe an eine Hand einer Figur (ersetzt die vorige). id = null: leere Hand.
+// seite: 'r' (rechts, Waffen und Werkzeug) oder 'l' (links, die Fackel).
 // Der Griff liegt in der Faust, quer zur Hand, vom kleinen Finger zum Zeigefinger.
-export function inDieHand(figur, id) {
-  const hand = figur.rechteHand;
+export function inDieHand(figur, id, seite = 'r') {
+  const hand = seite === 'l' ? figur.linkeHand : figur.rechteHand;
   if (!hand) return null;
   const alt = hand.getObjectByName('waffe');
   if (alt) hand.remove(alt);
@@ -99,9 +118,9 @@ export function inDieHand(figur, id) {
   const waffe = baueForm(id);
   waffe.name = 'waffe';
   waffe.userData.form = id;
-  const mitte = hand.getObjectByName('middle_01_r')?.position ?? new THREE.Vector3(0, -0.09, 0);
-  const zeige = hand.getObjectByName('index_01_r')?.position;
-  const klein = hand.getObjectByName('pinky_01_r')?.position;
+  const mitte = hand.getObjectByName(`middle_01_${seite}`)?.position ?? new THREE.Vector3(0, -0.09, 0);
+  const zeige = hand.getObjectByName(`index_01_${seite}`)?.position;
+  const klein = hand.getObjectByName(`pinky_01_${seite}`)?.position;
   // Faust: etwas vor dem Ansatz des Mittelfingers
   waffe.position.copy(mitte).multiplyScalar(0.85);
   const achse = zeige && klein ? zeige.clone().sub(klein).normalize() : new THREE.Vector3(0, 0, 1);

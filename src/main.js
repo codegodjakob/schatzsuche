@@ -7,7 +7,7 @@ import { erzeugeGras } from './welt/gras.js';
 import { erzeugeBaeume } from './welt/baeume.js';
 import { erzeugeNatur } from './welt/natur.js';
 import { erzeugeWasser } from './welt/wasser.js';
-import { erzeugeFeuer, erzeugeFeuerlichter } from './welt/feuer.js';
+import { erzeugeFeuer, erzeugeFeuerlichter, erzeugeFlamme } from './welt/feuer.js';
 import { erzeugeSammeln } from './welt/sammeln.js';
 import { erzeugeMarkierung } from './welt/markierung.js';
 import { erzeugeRaeuberlager } from './welt/raeuberlager.js';
@@ -247,8 +247,47 @@ const benutzen = erzeugeBenutzen({
     },
     // Mit der Angel am Ufer (wer Durst hat, trinkt zuerst)
     () => (ueberleben.werte.wasser >= DURSTIG && angeln.kannWerfen() ? { text: 'Angel auswerfen', kurz: 'Angeln', tue: angeln.wirfAus } : null),
+    // Nachts am Feuer: schlafen bis zum Morgen
+    () => (kannSchlafen() ? { text: 'Am Feuer schlafen', kurz: 'Schlafen', tue: schlafe } : null),
   ],
 });
+
+// ---------------------------------------------------------------- Schlafen
+// Nachts an einem brennenden Feuer kann man schlafen. Man wacht bei Sonnenaufgang auf: ausgeruht und
+// warm, aber hungriger und durstiger. Solange Feinde in der Nähe sind, findet man keine Ruhe.
+const istNacht = () => zeit.stunde >= 20 || zeit.stunde < 5;
+let schlaeft = false;
+function kannSchlafen() {
+  return istNacht() && !schlaeft && amFeuer() && !gegner.imKampf().length;
+}
+function schlafe() {
+  if (!kannSchlafen()) return false;
+  schlaeft = true;
+  steuerung.zustand.aktiv = false;
+  const vorhang = document.getElementById('schlaf');
+  vorhang.textContent = 'Du schläfst am Feuer …';
+  vorhang.classList.add('zu');
+  setTimeout(() => {
+    const stunden = (24 + 6.5 - zeit.stunde) % 24;
+    if (zeit.stunde >= 20) zeit.tag += 1;
+    zeit.stunde = 6.5;
+    tageszeitSchritt(0);
+    const w = ueberleben.werte;
+    w.saettigung = Math.max(5, w.saettigung - stunden * 2);
+    w.wasser = Math.max(5, w.wasser - stunden * 2.5);
+    w.waerme = 100;
+    ueberleben.heile(60);
+    vorhang.textContent = 'Der Morgen graut.';
+    setTimeout(() => {
+      vorhang.classList.remove('zu');
+      steuerung.zustand.aktiv = !ueberleben.tot;
+      schlaeft = false;
+      nachricht(`Du hast ${Math.round(stunden)} Stunden geschlafen. ${uhrzeitText()}.`);
+      speichereBald();
+    }, 1600);
+  }, 1600);
+  return true;
+}
 
 // ---------------------------------------------------------------- Kampf
 const anzeige = erzeugeKampfanzeige(kamera);
@@ -341,16 +380,47 @@ function machFeuer() {
   herstellen.stelleHer(rezept);
 }
 
-// Nachts brennt eine Fackel von selbst, wenn man eine dabeihat; jede hält zwei Spielstunden.
-// Ihr Licht kommt aus demselben festen Vorrat wie das der Lagerfeuer.
-const FACKEL_STUNDEN = 2;
-let fackelAn = false, fackelStunden = 0, fackelLicht = 0, fackelUhr = 0;
-const fackel = { ort: new THREE.Vector3(), brennt: () => fackelAn, feuer: { helligkeit: () => fackelLicht } };
+// Die Fackel: Nachts nimmt man sie von selbst in die linke Hand, wenn man eine dabeihat; mit T steckt man
+// sie weg oder zündet sie an (dann gilt das bis zur nächsten Dämmerung). Jede brennt drei Spielstunden.
+// Sie hat ein eigenes Licht, das immer da ist und nur hell oder dunkel geschaltet wird (ein neues Licht
+// zu jeder Zeit ließe die Grafikkarte alles neu übersetzen, und das Bild stünde kurz still).
+const FACKEL_STUNDEN = 3;
+let fackelAn = false, fackelStunden = 0, fackelUhr = 0, fackelWunsch = null, warNacht = false;
+const fackelFlamme = erzeugeFlamme();
+fackelFlamme.objekt.visible = false;
+szene.add(fackelFlamme.objekt);
+const fackelLampe = new THREE.PointLight(0xff9a48, 0, 28, 1.1);
+szene.add(fackelLampe);
+const fackelKopf = new THREE.Vector3();
+// So hält man eine Fackel: Oberarm locker am Körper, Unterarm angewinkelt nach vorn, die Fackel aufrecht
+const FACKEL_ARM = { oberarm: new THREE.Vector3(0.25, -0.85, 0.3), unterarm: new THREE.Vector3(0.18, 0.4, 0.95) };
+const FACKEL_AUFRECHT = new THREE.Vector3(0.1, 1, 0.3).normalize();
+const _qHand = new THREE.Quaternion(), _qFig = new THREE.Quaternion(), _richtung = new THREE.Vector3();
+function richteFackelAuf() {
+  const hand = figur?.linkeHand, fackelForm = hand?.getObjectByName('waffe');
+  if (!fackelForm) return;
+  _richtung.copy(FACKEL_AUFRECHT).applyQuaternion(figur.objekt.getWorldQuaternion(_qFig));
+  hand.getWorldQuaternion(_qHand).invert();
+  fackelForm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), _richtung).premultiply(_qHand);
+}
+function fackelUmschalten() {
+  if (!inventar.hat('fackel')) { nachricht('Du hast keine Fackel. Mach dir eine aus einem Ast und Fasern (Herstellen).'); return; }
+  fackelWunsch = !fackelAn;
+}
 function fackelSchritt(dt) {
-  const soll = spielLaeuft && !ueberleben.tot && zeit.hell < 0.35 && inventar.hat('fackel');
+  const nacht = zeit.hell < 0.35;
+  if (nacht !== warNacht) { warNacht = nacht; fackelWunsch = null; }
+  const soll = spielLaeuft && !ueberleben.tot && inventar.hat('fackel') && (fackelWunsch ?? nacht);
   if (soll && !fackelAn) nachricht('Du zündest eine Fackel an.');
+  if (soll !== fackelAn || (soll && !figur?.linkeHand?.getObjectByName('waffe'))) {
+    if (figur) {
+      inDieHand(figur, soll ? 'fackel' : null, 'l');
+      figur.setzeArm?.('l', soll ? FACKEL_ARM : null);
+    }
+  }
   fackelAn = soll;
-  if (!fackelAn) return;
+  fackelFlamme.objekt.visible = fackelAn;
+  if (!fackelAn) { fackelLampe.intensity = 0; return; }
   if (!pausiert) {
     fackelStunden += dt / SEKUNDEN_JE_STUNDE;
     if (fackelStunden >= FACKEL_STUNDEN) {
@@ -360,9 +430,13 @@ function fackelSchritt(dt) {
     }
   }
   fackelUhr += dt;
-  fackelLicht = 2.4 + Math.sin(fackelUhr * 11) * 0.3 + Math.sin(fackelUhr * 6.7) * 0.25;
-  const o = steuerung.zustand.ort;
-  fackel.ort.set(o.x, o.y + 1.0, o.z);
+  richteFackelAuf();
+  const kopf = figur?.linkeHand?.getObjectByName('fackelkopf');
+  if (kopf) kopf.getWorldPosition(fackelKopf);
+  else fackelKopf.copy(steuerung.zustand.ort).y += 1.2;
+  fackelFlamme.aktualisiere(pausiert ? 0 : dt, fackelKopf, wind.richtung.value);
+  fackelLampe.position.copy(fackelKopf).y += 0.2;
+  fackelLampe.intensity = 9 + Math.sin(fackelUhr * 11) * 0.9 + Math.sin(fackelUhr * 6.7) * 0.7;
 }
 
 // ---------------------------------------------------------------- Essen, Menü, Hinweise
@@ -426,6 +500,7 @@ Object.assign(window.spiel, {
   handel, angeln, dorf, wasserspiegel: wasserspiegel(),
   speichere: () => speichereJetzt(),
   fackelBrennt: () => fackelAn,
+  schlaeft: () => schlaeft,
   // Prüfhilfen (für werkzeuge/foto_spiel.mjs und die Browser-Konsole)
   setzeZeit: (h) => { zeit.stunde = h; tageszeitSchritt(0); },
   teleport: (x, z) => steuerung.setzeOrt(x, z),
@@ -525,7 +600,6 @@ wahl.then(async (art) => {
   spielLaeuft = true;
   window.spiel.figur = figur;
   if (stand) nachricht(`Willkommen zurück${aussehen.name ? `, ${aussehen.name}` : ''}. ${uhrzeitText()}.`);
-  if (ereignisse.merker.has('hilfe-aus')) document.getElementById('hinweise').hidden = true;
   speichereJetzt();
 });
 
@@ -555,16 +629,24 @@ function sterben(grund) {
 }
 
 // ---------------------------------------------------------------- Tasten
+// Die Steuerung steht nicht ständig im Bild: Knopf „?“ oben rechts oder Taste H klappt sie auf und zu
+function hilfeUmschalten(offen) {
+  const h = document.getElementById('hinweise');
+  h.hidden = !(offen ?? h.hidden);
+  document.getElementById('hilfe-knopf').setAttribute('aria-expanded', String(!h.hidden));
+}
+document.getElementById('hilfe-knopf').addEventListener('click', () => hilfeUmschalten());
+
 addEventListener('keydown', (e) => {
   if (e.repeat) return;
   if (e.code === 'KeyH') {
-    const h = document.getElementById('hinweise');
-    if (spielLaeuft) h.hidden = !h.hidden;
+    if (spielLaeuft) hilfeUmschalten();
     return;
   }
   if (!steuerung.zustand.aktiv) return;
   if (e.code === 'KeyE' && !ereignisse.aktuell) benutzen.benutze(steuerung.zustand.ort, steuerung.zustand.blickSeite);
   if (e.code === 'KeyF') machFeuer();
+  if (e.code === 'KeyT') fackelUmschalten();
   if (e.code === 'KeyX') schlage();
   if (e.code === 'KeyG') {
     wechsleGrafik();
@@ -687,10 +769,11 @@ renderer.setAnimationLoop(() => {
   for (const f of feuerstellen) if (f.brennt()) f.feuer.aktualisiere(dt, wind.richtung.value, zeit.hell);
   dorf.aktualisiere(dt, wind.richtung.value, zeit.hell);
   fackelSchritt(dt);
-  feuerlichter.verteile(fackelAn ? [...feuerstellen, fackel] : feuerstellen, blickpunkt);
+  feuerlichter.verteile(feuerstellen, blickpunkt);
   einsiedler?.aktualisiere(dt, blickpunkt);
   doerfler?.aktualisiere(dt, blickpunkt);
   markierung.schritt(dt);
+  sammeln.aktualisiere(dt, zeit.hell, renderer.getPixelRatio());
   // Augen gewöhnen sich an die Dunkelheit
   renderer.toneMappingExposure = THREE.MathUtils.lerp(1.05, 0.62, zeit.hell);
 
@@ -727,10 +810,6 @@ renderer.setAnimationLoop(() => {
       }
     }
     spielzeit += dt;
-    if (spielzeit > 240 && !ereignisse.merker.has('hilfe-aus')) {
-      ereignisse.merker.add('hilfe-aus');
-      if (!amHandy()) { document.getElementById('hinweise').hidden = true; nachricht('Tipp: Mit H zeigst du die Tastenhilfe wieder an.'); }
-    }
     if (!ueberleben.tot) {
       speicherUhr -= dt;
       if (speicherUhr <= 0) speichereJetzt();

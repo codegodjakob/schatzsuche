@@ -195,6 +195,8 @@ const GESCHICHTE = [
           s.merke('kann-feuer');
           s.sage('Du kannst jetzt Feuer machen: im Menü unter „Herstellen“ oder mit F. Du brauchst drei Äste und einen Feuerstein.');
           if (!s.hat('feuerstein')) { s.gib('feuerstein'); s.sage('„Nimm den hier, ich habe noch einen.“'); }
+          s.gib('fackel', 2);
+          s.sage('„Und zwei Fackeln für den Heimweg. Die Nacht kommt schneller, als man denkt.“ Eine Fackel machst du dir selbst aus einem Ast und Flachsfasern.');
         },
       },
     ],

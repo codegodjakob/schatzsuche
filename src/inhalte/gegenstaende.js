@@ -52,7 +52,7 @@ export const GEGENSTAENDE = {
   // --- Rüstung (getragen wird von selbst die beste, die man dabeihat) ---
   lederwams: { name: 'Lederwams', bild: '🦺', art: 'ruestung', wert: 30, stapel: 1, schutz: 0.2, beschreibung: 'Aus Lederfetzen genäht. Hält ein Fünftel jedes Schlags ab.' },
   angelrute: { name: 'Angelrute', bild: '🎣', art: 'werkzeug', wert: 10, stapel: 1, werkzeug: { art: 'angel', stufe: 1 }, beschreibung: 'Haselstock, Schnur und Haken. Damit fängst du am Ufer Fische (Benutzen am Wasser).' },
-  fackel: { name: 'Fackel', bild: '🔥', art: 'werkzeug', wert: 4, beschreibung: 'Brennt nachts von selbst, solange du sie dabeihast, jede etwa zwei Spielstunden lang.' },
+  fackel: { name: 'Fackel', bild: '🔥', art: 'werkzeug', wert: 4, beschreibung: 'Nachts trägst du sie von selbst in der linken Hand, sie leuchtet weit. Taste T: wegstecken oder anzünden. Jede brennt etwa drei Spielstunden.' },
 
   // --- Heilmittel ---
   heilsalbe: { name: 'Heilsalbe', bild: '🧴', art: 'nahrung', wert: 12, essen: { leben: 35 }, beschreibung: 'Aus Johanniskraut. Heilt Wunden.' },

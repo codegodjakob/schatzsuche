@@ -49,7 +49,8 @@ export function lichtFuerZeit(ziel) {
     ziel.richtung.copy(zeit.sonne);
   } else {
     ziel.farbe.copy(LICHT.nacht);
-    ziel.staerke = 0.22 * THREE.MathUtils.smoothstep(zeit.mond.y, 0.0, 0.25);
+    // Nie ganz finster: Auch ohne Mond hellt der Sternenhimmel etwas auf; der Mond deutlich mehr
+    ziel.staerke = 0.14 + 0.46 * THREE.MathUtils.smoothstep(zeit.mond.y, 0.0, 0.25);
     ziel.richtung.copy(zeit.mond);
   }
   return ziel;
